@@ -1,17 +1,18 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),{randomUUID}=require('node:crypto'),{Database,backup}=require('node:sqlite');
-const {validateSnapshot,SNAPSHOT_VERSION}=require('../server/room-store');
+const {validateSnapshot,SNAPSHOT_VERSION,SCHEMA_VERSION}=require('../server/room-store');
 function validateFile(filename){
  const db=new Database(filename,{readOnly:true});try{
   if(db.prepare('PRAGMA quick_check').get().quick_check!=='ok')throw Error('Database integrity check failed.');
-  if(db.prepare('PRAGMA user_version').get().user_version!==SNAPSHOT_VERSION)throw Error('Unsupported database version.');
+  const version=db.prepare('PRAGMA user_version').get().user_version;
+  if(![1,SCHEMA_VERSION].includes(version))throw Error('Unsupported database version.');
   if(db.prepare('PRAGMA foreign_key_check').all().length)throw Error('Database references are incomplete.');
   for(const row of db.prepare('SELECT code,revision,snapshot_version,state_json FROM rooms').all()){
    if(row.snapshot_version!==SNAPSHOT_VERSION)throw Error('Unsupported snapshot version.');
    const room=JSON.parse(row.state_json);validateSnapshot(room);if(room.code!==row.code||room.revision!==row.revision)throw Error('Snapshot metadata mismatch.');
   }
   // Validate the tables used for reconnects and duplicate-command recovery too.
-  for(const table of ['seat_credentials','command_receipts','entry_intents'])db.prepare('SELECT count(*) AS n FROM '+table).get();
+  for(const table of ['seat_credentials','command_receipts','entry_intents',...(version>=2?['engagement_meta','engagement_daily','engagement_active']:[])])db.prepare('SELECT count(*) AS n FROM '+table).get();
  }finally{db.close();}
 }
 async function copyDatabase(from,to){

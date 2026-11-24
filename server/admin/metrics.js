@@ -1,0 +1,25 @@
+(function(){
+ 'use strict';
+ const root=document.getElementById('metrics-app'),i18n=window.URAMAKU_I18N;
+ let lang=i18n.getLanguage(),range='30',data=null,busy=false,error=false;
+ const t=key=>i18n.get('metrics'+key,lang),esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const number=(value,digits=0)=>value===null||value===undefined?'—':new Intl.NumberFormat(lang==='jp'?'ja-JP':'en-US',{maximumFractionDigits:digits}).format(value);
+ const date=value=>new Date(value).toLocaleString(lang==='jp'?'ja-JP':'en-US');
+ const minutes=value=>value===null?'—':number(value/60000,1)+' '+t('Minutes');
+ const card=(label,value)=>`<article class="panel"><div class="section-title">${esc(t(label))}</div><div class="metrics-value">${esc(value)}</div></article>`;
+ const table=(heading,labels,rows)=>`<section class="panel"><h2>${esc(t(heading))}</h2><div class="table-wrap"><table class="rules-table"><thead><tr>${labels.map(label=>`<th scope="col">${esc(t(label))}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((v,index)=>index?`<td>${esc(v)}</td>`:`<th scope="row">${esc(v)}</th>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+ function render(){
+  document.documentElement.lang=lang==='jp'?'ja':'en';document.title='URAMAKU · '+t('Title');
+  const totals=data?.totals,current=data?.current,db=data?.runtime.db;
+  root.innerHTML=`<header class="row metrics-header"><div class="metrics-title"><div>URAMAKU</div><h1>${esc(t('Title'))}</h1></div><button id="languageToggle" class="language-toggle small" aria-label="${esc(i18n.get('languageToggleAria',lang))}">EN ⇄ JP</button></header><div class="row metrics-controls"><label for="range">${esc(t('Range'))}</label><select id="range" ${busy?'disabled':''}>${['7','30','90','all'].map(v=>`<option value="${v}" ${v===range?'selected':''}>${esc(t(v==='all'?'All':v+'Days'))}</option>`).join('')}</select><button id="refresh" ${busy?'disabled':''}>${esc(t(busy?'Loading':'Refresh'))}</button></div><div role="status" aria-live="polite">${error?`<p class="metrics-error">${esc(t('Error'))}</p>`:''}</div>${data?`<p class="muted-light">${esc(t('Since'))} ${esc(date(data.since))} · ${esc(t('UTC'))}</p><section class="metrics-grid" aria-label="${esc(t('Totals'))}">${card('RoomsCreated',number(totals.roomsCreated))}${card('Started',number(totals.started))}${card('Completed',number(totals.completed))}${card('Completion',totals.completionRate===null?'—':number(totals.completionRate*100,1)+'%')}${card('SeatJoins',number(totals.playerSeatJoins))}${card('Participations',number(totals.playerParticipations))}${card('AveragePlayers',number(totals.averagePlayers,1))}${card('AverageDuration',minutes(totals.averageDurationMs))}</section>${table('Modes',['Mode','Started','Completed','AveragePlayers','AverageDuration'],data.modes.map(m=>[t(m.id),number(m.started),number(m.completed),number(m.averagePlayers,1),minutes(m.averageDurationMs)]))}${table('Now',['WaitingRooms','ActiveMatches','ConnectedPlayers','ConnectedSpectators','Connections'],[[number(current.waitingRooms),number(current.activeMatches),number(current.connectedPlayers),number(current.connectedSpectators),number(current.connections)]] )}${table('Details',['PublicStarts','PrivateStarts','SpectatorJoins','ClosedLobbies','AverageTurns'],[[number(totals.publicStarts),number(totals.privateStarts),number(totals.spectatorSeatJoins),number(totals.lobbiesClosedWithoutStart),number(totals.averageTurns,1)]])}${table('Daily',['Date','RoomsCreated','Started','Completed','SeatJoins'],data.daily.slice().reverse().map(d=>[d.day,number(d.roomsCreated),number(d.started),number(d.completed),number(d.playerSeatJoins)]))}<section class="panel"><h2>${esc(t('Timing'))}</h2><p>${esc(t('RuntimeSince'))} ${esc(date(data.runtime.since))}</p><div class="metrics-grid">${card('Writes',number(db.transactions))}${card('MeanWrite',number(db.meanMs,2)+' ms')}${card('P95Write',db.p95Over1000Ms?'> 1,000 ms':db.p95UpperMs===null?'—':'≤ '+number(db.p95UpperMs)+' ms')}${card('FailedWrites',number(db.failed))}</div><p class="muted">${esc(t('TimingNote'))}</p></section><section class="panel metrics-notes"><h2>${esc(t('Definitions'))}</h2>${['CountsNote','CompletionNote','DurationNote','HistoryNote','PrivacyNote'].map(key=>`<p>${esc(t(key))}</p>`).join('')}</section><p class="muted-light metrics-updated">${esc(t('Updated'))} ${esc(date(data.generatedAt))}</p>`:''}`;
+  document.getElementById('languageToggle').onclick=()=>{lang=lang==='en'?'jp':'en';i18n.setLanguage(lang);render();};
+  document.getElementById('range').onchange=event=>{range=event.target.value;data=null;load();};
+  document.getElementById('refresh').onclick=load;
+ }
+ async function load(){
+  if(busy)return;busy=true;error=false;render();
+  try{const response=await fetch('/admin/metrics/data?days='+range,{cache:'no-store',credentials:'same-origin',headers:{Accept:'application/json'}});if(!response.ok)throw Error();data=await response.json();}
+  catch{error=true;}finally{busy=false;render();}
+ }
+ load();
+})();

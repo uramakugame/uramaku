@@ -113,3 +113,7 @@ The live service is configured with a persistent `/data` volume and the custom d
 - [Config-as-code migration](https://docs.railway.com/config-as-code)
 - [Pricing](https://docs.railway.com/pricing)
 - [Node SQLite online backup](https://nodejs.org/api/sqlite.html)
+
+## Private engagement dashboard
+
+After deploying the metrics update, optionally set `METRICS_PASSWORD` to a fresh 24–256 character password in the **uramaku service** and deploy the variable changes. Visit `https://uramakugame.com/admin/metrics` and sign in as `admin`. Counts persist in the same volume; the dashboard is disabled while the password is unset. See [engagement-metrics.md](engagement-metrics.md) for definitions, installation boundaries and server write timings.

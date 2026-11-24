@@ -3,7 +3,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {Database}=require('node:sqlite');
 const ROLES=require('../shared/roles');
-const VERSION=1;
+const VERSION=1,SCHEMA_VERSION=2;
+const engagement=require('./engagement');
 
 // Only engine state is serialized. Transport objects and bearer secrets are
 // never part of the snapshot. Credentials are already one-way hashes.
@@ -30,7 +31,7 @@ class RoomStore{
     if(filename!==':memory:')fs.chmodSync(this.filename,0o600);
     this.db.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
     const version=this.db.prepare('PRAGMA user_version').get().user_version;
-    if(version>VERSION){this.db.close();throw Error('Database schema is newer than this application');}
+    if(version>SCHEMA_VERSION){this.db.close();throw Error('Database schema is newer than this application');}
     if(version===0)this.transaction(()=>this.db.exec(`
       CREATE TABLE rooms(code TEXT PRIMARY KEY, snapshot_version INTEGER NOT NULL, revision INTEGER NOT NULL, state_json TEXT NOT NULL, updated_at INTEGER NOT NULL) STRICT;
       CREATE TABLE seat_credentials(room_code TEXT NOT NULL REFERENCES rooms(code) ON DELETE CASCADE, seat_id TEXT NOT NULL, token_hash TEXT NOT NULL UNIQUE, PRIMARY KEY(room_code,seat_id)) STRICT;
@@ -39,6 +40,7 @@ class RoomStore{
       CREATE INDEX entry_code ON entry_intents(code);
       PRAGMA user_version=1;
     `));
+    if(version<2)this.transaction(()=>{engagement.migrate(this.db);this.db.exec('PRAGMA user_version=2;');});
   }
   transaction(fn){
     let began=false,finishing=false,committed=false;const started=this.onTransaction?performance.now():0;
@@ -65,8 +67,9 @@ class RoomStore{
   save(room,expectedRevision,{receipt,consumeIntent,remove=false}={}){
     if(!remove)validate(room);
     return this.transaction(()=>{
-      const existing=this.db.prepare('SELECT revision FROM rooms WHERE code=?').get(room.code);
+      const existing=this.db.prepare('SELECT revision,state_json FROM rooms WHERE code=?').get(room.code);
       if((existing?.revision??null)!==expectedRevision)throw Error('Room revision conflict');
+      engagement.record(this.db,room,existing?JSON.parse(existing.state_json):null,remove);
       if(remove){this.db.prepare('DELETE FROM rooms WHERE code=?').run(room.code);this.db.prepare('DELETE FROM entry_intents WHERE code=?').run(room.code);return;}
       this.db.prepare('INSERT INTO rooms VALUES(?,?,?,?,?) ON CONFLICT(code) DO UPDATE SET snapshot_version=excluded.snapshot_version,revision=excluded.revision,state_json=excluded.state_json,updated_at=excluded.updated_at').run(room.code,VERSION,room.revision,encode(room),Date.now());
       // At most eight seats plus spectators; update only changed credentials.
@@ -99,4 +102,4 @@ class RoomStore{
   healthy(){return !this.closed&&!this.writeError&&this.db.prepare('SELECT 1 AS ok').get().ok===1;}
   close(){if(this.closed)return;this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)');this.db.close();this.closed=true;}
 }
-module.exports={RoomStore,cloneRoom,encode,validateSnapshot:validate,SNAPSHOT_VERSION:VERSION};
+module.exports={RoomStore,cloneRoom,encode,validateSnapshot:validate,SNAPSHOT_VERSION:VERSION,SCHEMA_VERSION};

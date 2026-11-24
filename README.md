@@ -104,3 +104,7 @@ Stage E adds a Dockerfile, persistent-volume/origin checks, local load measureme
 - [Current playtest priorities](docs/playtest.md)
 - [Elimination action feedback](docs/attack-feedback.md)
 - [Historical release notes](docs/history/README.md)
+
+## Private engagement metrics
+
+Room creation, match starts/completions, four mode combinations and player participation are recorded as daily aggregates in SQLite. The optional password-protected EN/JP dashboard lives at `/admin/metrics`; set `METRICS_PASSWORD` in the Railway service to enable it. See [engagement-metrics](docs/engagement-metrics.md) for setup, exact definitions, privacy, migration and timing diagnostics.

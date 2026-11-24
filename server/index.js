@@ -17,6 +17,7 @@ const config=settings(process.env),abuse=new AbuseGuard(config);
 const {runtimeConfig,allowOrigin}=require('./runtime-config');
 const runtime=runtimeConfig(process.env);
 const telemetry=require('./telemetry').createTelemetry(process.env);
+const metricRuntime=require('./metrics-runtime').runtimeMetrics();
 
 const app=express();
 const server=http.createServer(app);
@@ -24,7 +25,7 @@ const io=new Server(server,{maxHttpBufferSize:16384,allowRequest:(request,callba
 const rooms=new Map();
 const socketsByPlayer=new Map();
 const challengeTimers=new Map();
-const store=new RoomStore(runtime.filename,{onTransaction:telemetry?.recordTransaction});
+const store=new RoomStore(runtime.filename,{onTransaction:(ms,ok)=>{metricRuntime.recordTransaction(ms,ok);telemetry?.recordTransaction(ms,ok);}});
 const transitions=new RoomTransitions(store,rooms);
 let shuttingDown=false;
 const browserSubscribers=new Set();
@@ -34,6 +35,7 @@ for(const room of store.loadAll()){
   rooms.set(room.code,room);
   transitions.run(room.code,null,'upgradeRoom',{},next=>{upgradeRoom(next);return {ok:true};});
 }
+require('./metrics-dashboard').installDashboard(app,{env:process.env,store,rooms,abuse,runtime:metricRuntime});
 app.use(express.static(path.join(__dirname,'..','public')));
 app.use('/shared',express.static(path.join(__dirname,'..','shared')));
 app.get('/health',(_,res)=>{
