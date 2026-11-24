@@ -1,0 +1,143 @@
+/* RESPONSIVE GAME ROOM: one sizing system for Actions, eight-seat board and Game Log.
+   The player board defines the content-driven height of grid row 2. Actions
+   stretch into that same row. The deck occupies the top-right cell; the log
+   stretches into the board row below it.
+   No fixed 74px action rows or 700px board minimum on desktop. */
+@media (min-width:960px){
+  .game-shell .game-layout{
+    display:grid;
+    grid-template-columns:clamp(170px,17vw,260px) minmax(535px,1fr) clamp(168px,16vw,270px);
+    grid-template-rows:auto auto;
+    align-items:stretch;
+    column-gap:clamp(7px,.8vw,12px);
+    row-gap:10px;
+    overflow-x:visible;
+  }
+  .game-shell .game-layout>.game-actions-sidebar,
+  .game-shell .game-layout>.game-main{display:contents}
+  .game-shell .game-layout .game-room-code{grid-column:1;grid-row:1;min-width:0}
+  .game-shell .game-layout .action-flow,
+  .game-shell .game-layout .game-main>.action-flow{grid-column:2;grid-row:1;min-width:0}
+  .game-shell .game-layout .game-players-panel{
+    grid-column:2;grid-row:2;min-width:0;
+    align-self:stretch;overflow:visible;container-type:inline-size;
+  }
+  .game-shell .game-layout .game-actions-panel{
+    grid-column:1;grid-row:2;align-self:stretch!important;
+    display:flex;flex-direction:column;
+    height:auto!important;min-height:0!important;
+    overflow:visible!important;
+    gap:clamp(5px,.75vw,10px);
+    container-type:inline-size;
+  }
+  .game-shell .game-layout .game-actions-panel .actions{
+    display:grid!important;flex:1 1 0!important;
+    min-height:0!important;height:auto!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:repeat(8,minmax(32px,1fr))!important;
+    grid-auto-rows:minmax(32px,1fr)!important;
+    align-content:stretch!important;
+    gap:clamp(3px,.5vw,7px);
+  }
+  .game-shell .game-layout .game-actions-panel .action,
+  .game-shell .game-layout .game-actions-panel .action.held,
+  .game-shell .game-layout .game-actions-panel .action.bluff,
+  .game-shell .game-layout .game-actions-panel .action.neutral{
+    display:grid!important;
+    grid-template-columns:clamp(25px,19cqw,60px) minmax(0,1fr)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    height:100%!important;min-height:0!important;max-height:none!important;
+    padding:clamp(2px,.5cqw,5px)!important;
+    gap:clamp(3px,.7cqw,8px)!important;
+    align-items:stretch!important;
+    overflow:hidden!important;
+  }
+  .game-shell .game-layout .game-actions-panel .action .action-portrait{
+    grid-column:1!important;grid-row:1!important;
+    display:block!important;
+    height:100%!important;width:100%!important;
+    min-width:0!important;min-height:0!important;
+    max-width:100%!important;max-height:100%!important;
+    object-fit:cover!important;
+  }
+  .game-shell .game-layout .game-actions-panel .action b{
+    grid-column:2!important;grid-row:1!important;
+    min-width:0!important;min-height:0!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    margin:0!important;padding:2px!important;
+    line-height:1.15!important;text-align:center!important;
+    font-size:calc(clamp(10px,5.5cqw,15px) + 2pt)!important;
+    overflow-wrap:anywhere;
+  }
+  .game-shell .game-layout .game-actions-panel .actions-rules-bottom{
+    margin-top:0!important;flex:0 0 auto;align-self:center!important;
+  }
+  .game-shell .game-layout .game-players-panel>.players{
+    display:grid!important;
+    width:100%!important;min-width:0!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    /* Reserve two rows even when fewer than five seats are occupied. */
+    grid-template-rows:repeat(2,minmax(clamp(135px,calc(21cqw + 23px),340px),max-content));
+    gap:clamp(4px,.6cqw,9px);
+    overflow:visible;
+    padding:0;
+    align-items:stretch;
+  }
+  .game-shell .game-layout .game-players-panel .player{
+    min-width:0;max-width:none;width:100%;min-height:0;
+    align-self:stretch;
+  }
+  .game-shell .game-layout>.game-sidebar{
+    display:contents;
+  }
+  .game-shell .game-layout>.game-sidebar>.game-deck-panel{
+    grid-column:3;grid-row:1;min-width:0;min-height:0;align-self:stretch;
+  }
+  .game-shell .game-layout>.game-sidebar>.game-log-panel{
+    grid-column:3;grid-row:2;align-self:stretch;
+    position:static;
+    height:auto;min-height:0;min-width:0;
+    margin:0;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .game-shell .game-layout>.game-sidebar>.game-log-panel>.log{
+    min-height:0!important;max-height:none!important;flex:1 1 0;
+    overflow-y:auto;
+  }
+}
+/* At compact sizes, stack the panels rather than squeeze the four-seat board
+   or force the entire desktop grid to scroll sideways. */
+@media (max-width:959px){
+  .game-shell .game-layout{display:flex;flex-direction:column;overflow:visible}
+  .game-shell .game-layout>.game-actions-sidebar,
+  .game-shell .game-layout>.game-main{display:contents}
+  .game-shell .game-layout .game-room-code{order:0}
+  .game-shell .game-layout .action-flow{order:1}
+  .game-shell .game-layout .game-players-panel{order:2;min-width:0;overflow-x:auto}
+  .game-shell .game-layout .game-actions-panel{order:3;position:static;height:auto!important;min-height:0!important;overflow:visible!important}
+  .game-shell .game-layout>.game-sidebar{order:4;display:grid;gap:10px}
+  .game-shell .game-layout>.game-sidebar .game-log-panel>.log{max-height:380px;overflow-y:auto}
+  .game-shell .game-layout .game-players-panel>.players{
+    min-width:600px!important;width:100%!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  }
+  .game-shell .game-layout .game-actions-panel .actions{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:repeat(4,minmax(70px,auto))!important;
+    height:auto!important;flex:0 0 auto!important;
+  }
+  .game-shell .game-layout .game-actions-panel .action{
+    height:auto!important;min-height:70px!important;max-height:none!important;
+  }
+}
+/* Target selection uses the same right-hand Current Turn decision region as
+   role challenges and counters; the board itself never gets a text banner. */
+.game-shell .game-layout .action-flow.has-target-selection .target-selection-decision{
+  min-width:0;
+}
+.game-shell .game-layout .action-flow .target-selection-decision .decision-question{
+  margin:0;font-size:clamp(12px,1vw,15px);line-height:1.35;
+}
+.game-shell .game-layout .action-flow .target-selection-decision .decision-buttons{
+  margin-top:6px;
+}

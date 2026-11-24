@@ -1,0 +1,115 @@
+/* Shared turn feedback for multiplayer and tutorial. No overlay blocks input. */
+.challenge-clock{margin-top:8px}
+.challenge-progress{height:5px;margin-top:6px;border-radius:4px;background:#d7c5a8;overflow:hidden}
+.challenge-progress>span{display:block;height:100%;width:100%;background:#92682d;transition:width .1s linear}
+.deadline-near .challenge-progress>span{background:#a33337}
+.deadline-near [data-challenge-countdown]{color:#8f252b;font-weight:700}
+.challenge-claim-summary{margin:2px 0!important;font-weight:650;font-size:13px;line-height:1.4}
+.game-shell .game-layout .game-actions-panel .action-slot{min-height:0;min-width:0;display:grid;align-items:stretch}
+.game-shell .game-layout .game-actions-panel .action-slot>.action{width:100%;height:100%!important}
+.action-slot:focus-visible{outline:3px solid #ad7341;outline-offset:2px;border-radius:5px}
+.action-slot>.action:disabled{pointer-events:none}
+.game-shell .game-layout .game-actions-panel .action b{flex-direction:column;gap:2px}
+.game-shell .game-layout .game-actions-panel .action .action-cost{display:block;font-size:10px;font-weight:600;line-height:1.1;letter-spacing:0;text-transform:none;opacity:.9}
+.tooltip-unavailable{padding:7px 8px;margin-bottom:8px;background:#f4debd;color:#702d27;border-left:3px solid #a94c3e;font-weight:650;font-size:12px}
+.feedback-token{position:fixed;z-index:5100;pointer-events:none;user-select:none;font-size:14px;font-weight:800;line-height:1.2;border-radius:12px;padding:3px 7px;box-shadow:0 2px 7px #23150a30}
+.feedback-card{font-size:10px;width:44px;min-height:56px;border:1px solid #ad8760;border-radius:4px;display:grid;place-items:center;text-align:center;background:#e8d7ba;color:#5c402b}
+.coin-gain{color:#3a541f;background:#efedc8}
+.coin-loss{color:#792b26;background:#f6ded0}
+.coin-transfer{color:#3b2813;background:#eac26d;border:1px solid #8b662a}
+.coin-gain,.coin-loss,.coin-transfer{font-size:17.5px;padding:3.75px 8.75px;border-radius:15px}
+/* Compact shared desktop header; longer decisions scroll within the panel. */
+.game-shell .game-layout{--turn-panel-height:160px}
+.game-shell .game-layout .action-flow:has(>.flow-status),
+.game-shell .game-layout:has(.flow-status) .game-room-code{min-height:var(--turn-panel-height);box-sizing:border-box}
+@media(min-width:960px){
+ .game-shell .game-layout:has(.flow-status){grid-template-rows:var(--turn-panel-height) auto}
+ .game-shell .game-layout .action-flow:has(>.flow-status),
+ .game-shell .game-layout:has(.flow-status) .game-room-code{height:var(--turn-panel-height);max-height:var(--turn-panel-height);overflow-y:auto}
+}
+.sound-controls{position:fixed;bottom:12px;right:12px;z-index:1000;display:flex;gap:4px;align-items:center}
+.sound-controls .sound-toggle{position:static;font-size:11px;padding:6px 9px}
+.sound-settings-button{font-size:11px;padding:6px 9px;min-height:30px;background:#302b2b;color:#f0e2c4;border:1px solid #9a7a4d;border-radius:16px;cursor:pointer}
+.sound-settings-panel{position:absolute;right:0;bottom:42px;width:min(300px,calc(100vw - 24px));padding:14px;background:#f1e3cc;color:#34251c;border:1px solid #a38562;box-shadow:0 6px 24px #21130a55;max-height:calc(100dvh - 70px);overflow:auto}
+.sound-settings-panel[hidden]{display:none}
+.sound-panel-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px}
+.sound-panel-heading button{padding:1px 8px;font-size:20px}
+.sound-volume-row{display:grid;grid-template-columns:1fr auto;gap:4px;margin:10px 0;font-size:13px}
+.sound-volume-row input{grid-column:1/-1;width:100%;accent-color:#9d6634}
+.sound-warning-row{display:flex;gap:7px;align-items:center;font-size:12px;margin:12px 0}
+@media(prefers-reduced-motion:reduce){.challenge-progress>span{transition:none}.feedback-token{display:none}}
+
+.game-shell .game-layout .action-flow .game-decision-panel{max-height:calc(var(--turn-panel-height) - 24px)!important}
+.lobby-timer-duration{display:grid;grid-template-columns:1fr 76px;gap:6px 12px;align-items:center;margin:0 0 14px;padding:0 12px;font-size:13px}
+.lobby-timer-duration input{width:76px;padding:6px;box-sizing:border-box}
+.lobby-timer-duration small{grid-column:1/-1;color:#6b5541}
+
+.attack-trail{position:fixed;z-index:4900;height:0;opacity:0;pointer-events:none;transform-origin:0 50%;border-top:2px solid currentColor;filter:drop-shadow(0 1px 2px #21140b45)}
+.attack-trail::after{content:"";position:absolute;right:-1px;top:-5px;border-left:8px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent}
+.attack-overthrow{border-top-style:dashed;border-top-width:3px}
+.attack-hireBlade{border-top-width:1px}
+.attack-assassinate{border-top-style:dotted}
+@media(prefers-reduced-motion:reduce){.attack-trail{display:none}}
+
+/* Full-distance attack copy uses shared player styling and leaves inputs usable. */
+.attack-flight{position:fixed!important;z-index:4901;opacity:0;pointer-events:none!important;padding:0!important;margin:0!important;min-width:0!important;max-width:none!important;background:transparent!important;border:0!important;box-shadow:none!important;transform-origin:center center}
+.attack-flight *{pointer-events:none!important}
+.attack-flight .game-layout,.attack-flight .game-players-panel{display:block!important;position:static!important;margin:0!important;padding:0!important;min-width:0!important;max-width:none!important;height:100%!important;overflow:visible!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.attack-flight .game-players-panel{container-type:inline-size}
+@media(prefers-reduced-motion:reduce){.attack-flight{display:none!important}}
+
+/* A single shared 3D turn reveals the existing face underneath the card back. */
+.room-role-card.card-flipping{position:relative!important;overflow:visible!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important;outline-color:transparent!important}
+.card-flipping::before,.card-flipping::after{opacity:0!important}
+.card-flip-covered{opacity:0!important}
+.card-flip-layer{position:absolute;inset:-1px;z-index:6;perspective:900px;pointer-events:none!important}
+.card-flip-layer *{pointer-events:none!important}
+.card-flip-turner{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(0deg)}
+.card-flip-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.card-flip-front{transform:rotateY(180deg)}
+.card-flip-face>.room-role-card{position:absolute!important;inset:0;width:100%!important;height:100%!important;min-width:0!important;max-width:none!important;margin:0!important;box-sizing:border-box}
+@media(prefers-reduced-motion:reduce){.card-flip-layer{display:none!important}.card-flip-covered{opacity:1!important}}
+
+/* Approved backs fill the slot, remain centered, and receive only the requested 10% darkening. */
+.room-role-card.hidden-role-card{--card-back-ground:#cead8a}
+.room-role-card.hidden-role-card.order{--card-back-ground:#d3b48f}
+.room-role-card.hidden-role-card.underworld{--card-back-ground:#9f8382}
+.game-layout .player-roles .room-role-card.hidden-role-card.default-hidden-portrait,.room-role-card.hidden-role-card{padding:0!important;position:relative;background:var(--card-back-ground)!important}
+.game-layout .player-roles .room-role-card.hidden-role-card::before,.game-layout .player-roles .room-role-card.hidden-role-card::after,.room-role-card.hidden-role-card::before,.room-role-card.hidden-role-card::after{content:none!important;display:none!important}
+.room-role-card.hidden-role-card .default-hidden-art{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;padding:0!important;margin:0!important;background:transparent!important;filter:none!important;overflow:hidden!important}
+.room-role-card.hidden-role-card .default-hidden-art>.card-back-image{display:block!important;position:absolute!important;inset:0;width:100%!important;height:100%!important;max-width:100%!important;min-height:0!important;aspect-ratio:auto!important;object-fit:cover!important;object-position:center!important;padding:0!important;border:0!important;filter:brightness(.9)!important;transform:scale(1.08);transform-origin:center center}
+.card-motion-layer{perspective:none}
+.card-motion-card{position:absolute;inset:0;pointer-events:none!important}
+.card-motion-card>.room-role-card{position:absolute!important;inset:0;width:100%!important;height:100%!important;min-width:0!important;max-width:none!important;margin:0!important;box-sizing:border-box}
+.card-discard-float{position:fixed!important;z-index:5100;opacity:0;pointer-events:none!important;container-type:inline-size;padding:0!important;margin:0!important;min-width:0!important;max-width:none!important;background:transparent!important}
+.card-discard-float *{pointer-events:none!important}
+.card-discard-float .game-layout,.card-discard-float .player-roles{display:block!important;margin:0!important;padding:0!important;min-width:0!important;width:100%!important;height:100%!important}
+.card-discard-float .room-role-card{width:100%!important;height:100%!important;max-width:none!important}
+@media(prefers-reduced-motion:reduce){.card-discard-float{display:none!important}}
+
+.game-layout .player-roles .room-role-card.hidden-role-card.default-hidden-portrait.card-flipping{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+
+/* Match introduction completes before the current-turn outline is restored. */
+.match-start-popup{position:fixed;left:50%;top:19%;transform:translate(-50%,-50%);z-index:5100;pointer-events:none;padding:16px 34px;border:1px solid #b68a4e;background:#302421f2;color:#f7e7ca;box-shadow:0 8px 28px #1c120a55;font:700 clamp(20px,3vw,32px) Cinzel,serif;letter-spacing:.06em;text-align:center;white-space:nowrap}
+
+/* The same hidden-card renderer supplies the top of the public draw pile. */
+.game-shell .game-layout .game-deck-panel{margin:0;display:flex;flex-direction:column;justify-content:center;gap:8px;box-sizing:border-box;min-width:0;padding:10px 12px}
+.game-deck-panel>.section-title{margin:0}
+.deck-summary{display:flex;align-items:center;justify-content:center;gap:12px;min-width:0}
+.deck-stack{position:relative;isolation:isolate;flex:0 0 auto;width:clamp(64px,5.1vw,75px);aspect-ratio:74/130;margin:0 5px 5px 0}
+.deck-stack.is-stacked::before,.deck-stack.is-stacked::after{content:"";position:absolute;inset:0;background:#49332e;border:1px solid #a98a65;box-sizing:border-box;z-index:-1}
+.deck-stack.is-stacked::before{transform:translate(3px,3px)}
+.deck-stack.is-stacked::after{transform:translate(6px,6px);z-index:-2}
+.game-shell .game-layout .game-deck-panel .deck-stack>.room-role-card{position:absolute;inset:0;width:100%;height:100%;min-height:0;max-width:none;margin:0;box-sizing:border-box;overflow:hidden}
+.deck-details{display:flex;flex-direction:column;gap:3px;min-width:0;line-height:1.2}
+.deck-count{font-size:clamp(25px,2.3vw,34px);font-variant-numeric:tabular-nums;color:#6c332d}
+.deck-count-label{font-size:11px;color:#68533f}
+.deck-next-faction,.deck-empty-note{font-size:10px;color:#705942;overflow-wrap:anywhere}
+.deck-empty-slot{position:absolute;inset:0;border:1px dashed #ad9576;box-sizing:border-box;background:#b99e7914}
+
+/* Summon reveals the deck's top card with the same full-bleed influence styles.
+   Instructions and choices stay in Current Turn; this panel holds cards/counts only. */
+.deck-draw[hidden],.summon-choice[hidden]{display:none!important}
+.game-shell .game-layout .deck-stack .player-roles.deck-draw{position:absolute;inset:0;z-index:1;display:block;min-width:0;margin:0;padding:0;container-type:inline-size}
+.game-shell .game-layout .deck-stack .player-roles>.room-role-card{position:absolute;inset:0;width:100%;height:100%!important;min-height:0;max-width:none;margin:0;box-sizing:border-box}
+.challenge-penalty-note{margin:0;border-left:3px solid #a33e35;padding:5px 8px;background:#a33e350d;font-size:13px;line-height:1.4}

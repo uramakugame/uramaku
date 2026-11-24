@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 240">
+<defs><linearGradient id="paper" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#e7d0b1"/><stop offset=".6" stop-color="#caa487"/><stop offset="1" stop-color="#b78076"/></linearGradient><clipPath id="leaf"><path d="M100 203 L16 115 Q48 41 124 34 Q179 42 212 99 Z"/></clipPath></defs>
+<!-- Traditional Japanese sensu, held at an angle: paper leaf, exposed black ribs, floral pattern. -->
+<g transform="translate(-8 -5) rotate(-14 112 137)" stroke-linejoin="round" stroke-linecap="round">
+<path d="M100 203 L16 115 Q48 41 124 34 Q179 42 212 99 Z" fill="url(#paper)" stroke="#251b1c" stroke-width="6"/>
+<g clip-path="url(#leaf)"><path d="M6 139Q103 17 219 119" fill="none" stroke="#d4b9a0" stroke-width="4"/>
+<g fill="#a94443" opacity=".88"><path d="M66 105q-11-17-1-22 12-3 14 9 6-15 16-9 7 10-6 18 17-1 16 10-7 12-20 2-5 16-16 11-7-8 4-19Z"/><path d="M131 91q-9-13 0-18 10-2 11 9 8-11 15-4 5 9-8 15 14 3 11 12-8 8-17-1-7 11-15 4-4-7 4-15Z"/><path d="M102 139q-9-12-1-17 10-2 12 8 7-10 14-3 5 9-7 13 13 3 9 11-8 7-16-2-6 10-14 4-5-6 3-14Z"/></g>
+<g stroke="#5f4b41" stroke-width="2.6" opacity=".7"><path d="M100 203L16 115 M100 203L42 74 M100 203L70 50 M100 203L101 36 M100 203L132 35 M100 203L161 49 M100 203L188 72 M100 203L212 99"/></g></g>
+<path d="M100 203L40 145 Q76 118 122 116 Q164 114 184 145 L100 203Z" fill="#241c20" stroke="#a9825d" stroke-width="2"/>
+<g stroke="#a77d55" stroke-width="2"><path d="M100 203L40 145 M100 203L63 129 M100 203L89 119 M100 203L115 117 M100 203L140 122 M100 203L164 132 M100 203L184 145"/></g>
+<path d="M100 203L96 229" stroke="#2c2223" stroke-width="7"/><circle cx="100" cy="203" r="6" fill="#d4a66d" stroke="#2b1c1c" stroke-width="2"/>
+</g></svg>

@@ -1,0 +1,50 @@
+# Interface flow
+
+The welcome screen offers Create room, Join room and the guided tutorial. The lobby lets the owner change match settings, manage guests and start after all players are ready.
+
+The game uses the shared Actions sidebar, Current Turn area, player board and log. Target selection highlights eligible player cards. Influence selection highlights the player's actual role cards. Action and counter challenge prompts show a countdown synchronized with the server deadline when the host enables the timer. The default is ten seconds, editable from 1–60 seconds in the lobby. Turning the timer off waits for everyone to challenge or pass.
+
+Summon automatically draws one private card after its claim resolves. The deck’s top card turns in place using the shared influence-card style. Its instructions and Discard draw button appear in Current Turn; clicking a held influence directly keeps and replaces. There is no modal or separate Keep step. Intrigue concealment also selects directly on the player’s cards. Other participants see waiting status and a hidden deck. Loot is unavailable to all players while Summon or challenge penalties are resolving.
+
+Room chat is draggable and resizable. Draft text, input focus and geometry survive state updates. Announcements stack over the board with independent expiry and staggered fade-outs. The victory dialog provides a route back to the lobby.
+
+The shared card renderer, artwork catalog, localization and source stylesheets serve the live game and tutorial. UI checks are grouped under `test/ui/` and `test/tutorial/`.
+
+Challenge and counter-challenge decisions name the claimant, claimed role, action or counter, and target. The buttons read Challenge and Pass. A shrinking bar and localized text follow the configured server deadline. Untimed claims omit the clock and warning. A warning sounds once near the deadline for eligible players who have not passed. Challenge coaching and double-loss explanations are covered in the tutorial and rules reference, leaving the prompt with the claim summary and response buttons.
+
+Paid action cards show their coin costs. Disabled action cards retain a focusable tooltip. It flags unmet requirements such as insufficient coins; ordinary turn and waiting status do not add tooltip text. The exact general-action description is retained. The browser availability checks mirror the existing rules, including Riot Loot and the Summon guard.
+
+Personal turn and response cues are independent of public log sounds. Draw, replacement, discard, victory and defeat have distinct cues. Sound settings provide master volume, separate gameplay/chat volumes, and a deadline-warning toggle; preferences survive reloads. Brief target highlights, coin deltas/transfers and card effects observe confirmed state updates and never delay or advance a game action. Reduced-motion preferences disable those effects. The tutorial shares the same action decoration, audio and animation helpers.
+
+Coin gain/loss badges are 25% larger and fade over 1475 ms; transfer badges use 1175 ms. Every floating badge has a transparent underlying state and retains its final fade frame until removal on animation completion or cancellation. A delayed cleanup timer cannot make it reappear.
+
+The desktop Current Turn and Room Code panels share a compact reserved 160 px height, reduced from the oversized 288 px reserve. Decisions scroll within this space when needed, keeping the board steady between turn phases. At compact widths they retain the shared minimum height and can grow to fit wrapped content. The tutorial uses its teaching panel above the shared board.
+
+Replacement effects target the individual influence slot, including identical-role draws and successful claim proofs. Summon remembers the locally selected slot until the server confirms the replacement. Discarding the drawn card does not animate the held hand. Tutorial cards retain stable slot IDs after another influence is lost. No opponent hidden roles are used to select effects.
+
+See [current playtest priorities](playtest.md) and [elimination action feedback](attack-feedback.md).
+
+Purge, Overthrow, Hire Blade and Assassinate each have a distinct synthesized sound. Their declarations briefly move the initiating player card toward the target and draw a directional trail. Movement and sound are shared with scripted tutorial attack events and do not delay input or resolve gameplay. Attack motion indicates a declaration; influence loss occurs only after the normal rules resolve. Reduced-motion preferences suppress the motion and trail while sound follows the existing volume controls.
+
+The guided Standard match starts all four players at 1 coin, keeps You → Mei → Akira → Sora seating order, and uses the shared engine. Actions are clicked on the left, targets and influence choices on player cards, and counters in the normal decision controls. Back restores a checkpoint and Restart restores the initial deal. Both languages use the same scenario. See [tutorial route](tutorial.md).
+
+Eligible target cards have a persistent gold border, tinted background and outline before hover. The inactive-player reset excludes selectable targets. The tutorial instruction also names its intended opponent. Both views install `public/js/components/role-tooltips.js` and use the same semantic tooltip sections and shared styles, including action requirements and faction visibility.
+
+Newly discovered influence cards turn from the shared hidden back to the visible role over 650 ms. A private Summon draw turns in place on top of the deck. After keeping a Summon draw or proving a genuine claim, only the exchanged card slides down (280 ms); its replacement descends face down (400 ms) and turns once in position (650 ms). Other viewers see the replacement remain face down unless entitled to know it. Already-known cards are not treated as new reveals. Flip events use only knowledge available to the local viewer, so private Intrigue or Gossip does not animate a reveal for uninvolved players. Repeated snapshots and reconnects do not replay reveals.
+
+
+Opening cards descend face down with a small stagger, then turn for their owner. The tutorial uses this same sequence on entry and Restart. Normal re-renders, language changes and reconnects do not deal the cards again. Rejecting a Summon draw slides its preview down for 350 ms; both held influences remain still. Reduced motion shows the final cards immediately. The approved red Standard back is used with factions hidden; gold Order and purple Underworld backs are used when faction visibility is enabled. The PNGs fill their card bounds with centered cover scaling and 10% darkening. Their original bytes are preserved.
+
+
+A shared Match Start popup (対戦開始 in Japanese) appears during the initial deal. The current player's outline and first turn cue wait until every arriving card and permitted opening flip finishes, followed by the popup's 350 ms fade. Normal renders preserve the pending highlight; a language switch updates the popup. Reduced motion skips the introduction's visual delay.
+
+Attack declarations reserve a short presentation interval for their target. Purge uses 600 ms of flight plus 80 ms of separation; Overthrow uses 560 ms plus 80 ms. An opponent choosing the lost influence before that interval ends does not start its reveal early. Loss flips hold their face-down frame during the remaining delay; the loss badge waits as well. Delayed eliminated-card flips retain their layer across renders. This is presentation timing only: decisions, challenge timers and game rules continue unchanged.
+
+Hire Guard counter declarations use the Hire Blade-style full-distance flight from the defender to the original attacker. False Trail counter declarations nudge the defending card 10 px toward the original attacker and return, without a flight or attack trail. A claim can still be challenged normally; its motion does not guarantee success. End-of-match sound and victory dialogs wait for pending attacks, replacement motions and loss turns to finish.
+
+Draw and discard now have separate paper-like cues synthesized locally with filtered noise. A draw uses a longer, brighter sliding envelope; discard uses a shorter, lower rustle and a soft landing tap. Cues start with their corresponding motion stage rather than duplicating the controller's semantic cue. They respect mute/master/gameplay volume and require no network download. Tone fallbacks remain available if the browser cannot synthesize the paper texture.
+
+
+The deck panel sits in the top-right cell above Game Log. Its visible Deck heading is removed, with a taller card stack and unchanged remaining-card text size. On desktop, the log occupies exactly the same grid row as Players & Influences, with internal scrolling. The tutorial uses the identical shared panel and grid rules. The deck shows its actual remaining count and uses a Standard red back when factions are hidden. With factions visible, the top card's actual Order gold or Underworld purple back is public and changes after a draw or reshuffle. A drawn Summon preview retains that drawn card's faction back while the deck changes to the next card. Empty piles show a dashed outline and either “Reshuffles on next draw” or “Draw pile empty”; they never predict an unperformed shuffle. Compact views stack the deck and log.
+
+All card-back images retain centered cover fitting and 10% darkening, plus an additional 8% center zoom with clipped overflow to hide the supplied bleed. The role/action/counter name columns in the Actions reference are slightly narrower: 18%, 11.5% and 10.5%, respectively. Faction remains 9%; the two description columns use 28% and 23%. The fixed table layout and existing compact-screen horizontal scrolling remain shared between languages.

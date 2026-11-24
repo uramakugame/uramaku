@@ -1,0 +1,10 @@
+# Enforce 2 coins and shared tutorial presentation
+
+- Enforce takes **2 coins from the original Extort attacker and pays the Magistrate claimant**. With 0 or 1 coin, the attacker loses one influence without partial payment. An unsuccessful challenge by that attacker against a truthful Magistrate claim costs both influences when fewer than 2 coins remain. Third-party challenge penalties stay separate.
+- Updated English/Japanese role descriptions, Actions / How to play content, logs, tutorial lessons and coin-transfer effects. Extort remains 2 coins; approved artwork is unchanged.
+- Removed the requested double-loss coaching sentence from challenge prompts. The tutorial and rules still explain combined losses.
+- Fixed a shared inactive-player rule that cleared selectable opponents' outlines. Eligible targets now have a persistent gold outline, border and tinted background before hover. Tutorial targeting also names the opponent.
+- Extracted the game's semantic tooltip renderer into `public/js/components/role-tooltips.js`, used by both pages. Removed the plain-text tutorial renderer and tutorial-only whitespace override. Both pages use identical shared styles, localization, faction settings, keyboard/hover behavior and escaping.
+- Adjusted Mei's round-2 Extort to target you and added an explicit Allow action decision. This keeps Summon legal at 8 coins after Income and reaches exactly 7 for the final Purge under the stronger Enforce payout. The tutorial has 48 lessons, the same fixed order and one Earn demonstration.
+
+Validation: 37 test files pass; generated CSS is current; 280 randomized matches finish with no economy invariant violations. New regressions cover 0/1/2/5 coin boundaries in Standard and Treasury modes, direct payments, both losses, third-party/correct challenges, final-card auto-resolution, single turn advancement, EN/JP tooltip parity, hover/focus lifecycle and Sora's target eligibility. Browser visual and audio playback review remains a local playtest step.

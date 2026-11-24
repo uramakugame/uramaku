@@ -1,0 +1,225 @@
+/* Base palette, general controls, shared card definitions, and initial layout. */
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Noto+Serif+JP:wght@400;600;700&display=swap");
+:root{--ink:#171311;--paper:#eee5d2;--paper2:#e4d6bc;--red:#8d2427;--gold:#b08a4c;--muted:#746958;--line:#c5b595}*{box-sizing:border-box}body{margin:0;background:#211c19;color:var(--ink);font-family:"Noto Serif JP",Georgia,serif;min-height:100vh;background-image:radial-gradient(ellipse at top,#44342b 0,#211c19 60%)}button,input{font:inherit}button{border:1px solid #7f6744;background:#29211c;color:#f5e9d1;padding:10px 14px;cursor:pointer;border-radius:3px;transition:.15s}button:hover{background:var(--red);border-color:#b65b50}button:disabled{opacity:.35;cursor:not-allowed}.shell{max-width:1100px;margin:0 auto;padding:28px 18px}.mast{text-align:center;color:var(--paper);margin:10px 0 25px}.mast .jp{font-size:clamp(32px,6vw,54px);letter-spacing:.18em;color:#d4b477}.mast .sub{font:12px Cinzel,serif;letter-spacing:.32em;color:#c5b595}.panel{background:var(--paper);border:1px solid var(--gold);box-shadow:0 12px 40px #0007;padding:22px;margin:12px 0}.panel h2,.panel h3{margin:0 0 14px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.stack{display:grid;gap:12px}.field{display:grid;gap:6px;flex:1;min-width:180px}.field label,.muted{color:var(--muted);font-size:13px}input{padding:11px;border:1px solid var(--line);background:#f9f4e9;color:var(--ink);min-width:0}.primary{background:var(--red);border-color:#6f1d20}.primary:hover{background:#6c191c}.small{font-size:12px;padding:7px 10px}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.player{border:1px solid var(--line);background:#f7efdf;padding:12px}.player.me{outline:2px solid var(--gold)}.player.dead{opacity:.42}.player .name{font-weight:700}.pill{display:inline-block;border:1px solid var(--line);padding:2px 7px;font-size:11px;margin:4px 4px 0 0}.pill.red{background:#ead0c8;border-color:#b87b70}.cards{display:flex;gap:8px;flex-wrap:wrap}.influence{width:130px;min-height:100px;border:1px solid var(--gold);background:linear-gradient(145deg,#f8f0df,#d9c7a6);padding:10px;text-align:center;display:grid;align-content:center;gap:5px}.influence strong{font-size:14px}.influence small{color:var(--muted)}.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.action{display:grid;text-align:left;gap:4px;min-height:76px}.action b{font-size:14px}.action small{font-size:11px;color:#d7c7aa}.log{background:#211c19;color:#e9dcc3;padding:12px;max-height:230px;overflow:auto;font-size:12px;line-height:1.8}.log div{border-bottom:1px solid #ffffff18;padding:2px 0}.notice{padding:10px;background:#f4d8cc;border-left:4px solid var(--red);margin:10px 0}.hidden{display:none}.section-title{font:600 13px Cinzel,serif;letter-spacing:.16em;text-transform:uppercase;color:#735b37;margin-bottom:10px}.turn{color:var(--red);font-weight:700}.footer{text-align:center;color:#8c7d68;font-size:11px;padding:20px}@media(max-width:600px){.shell{padding:16px 10px}.panel{padding:15px}.influence{width:calc(50% - 5px)}}
+.action.held{background:#294b36;border-color:#4e805c;box-shadow:inset 0 0 0 1px #79a982}.action.held small{color:#d7ead9}.action.bluff{background:#514039;border-color:#98765f}.action.bluff small{color:#ead3bd}.action.neutral{background:#29211c;border-color:#7f6744}.legend-held{color:#477653}.legend-bluff{color:#9a6143}.danger{background:#8d2427;border-color:#6f1d20}.modal-backdrop{position:fixed;inset:0;background:#000b;z-index:1000;display:grid;place-items:center;padding:18px}.modal{width:min(100%,950px);max-height:88vh;overflow:auto;margin:0;box-shadow:0 20px 70px #000b}.modal h2{margin:0}.table-wrap{overflow-x:auto}.rules-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}.rules-table th,.rules-table td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}.rules-table th{background:var(--paper2);white-space:nowrap}.rules-table td small{display:block;color:var(--muted);margin-top:3px}
+.influence{width:150px;min-height:205px;padding:8px;overflow:hidden}.influence-art{width:100%;height:125px;object-fit:cover;object-position:center 30%;border:1px solid var(--gold);display:block}.influence strong{font-size:13px}.reference-role{display:flex;align-items:center;gap:9px;min-width:145px}.reference-role img{width:66px;height:76px;object-fit:cover;object-position:center 28%;border:1px solid var(--gold);flex:none}.reference-role small{display:block;color:var(--muted);margin-top:3px}.rules-table td{vertical-align:middle}
+@media(max-width:600px){.influence{width:calc(50% - 5px);min-height:185px}.influence-art{height:105px}.reference-role img{width:52px;height:64px}}
+
+.player-roles{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}.room-role-card{width:74px;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:4px;background:#eee3ce;border:1px solid var(--gold);border-radius:3px;text-align:center;font-size:10px}.room-role-card img{width:100%;height:62px;object-fit:cover;object-position:center 28%;border:1px solid #9d8052}.room-role-card span{font-weight:700;line-height:1.2}.room-role-card small{font-size:8px;color:var(--muted)}.hidden-role-card{justify-content:center;background:repeating-linear-gradient(135deg,#3b3028,#3b3028 6px,#4a3b30 6px,#4a3b30 12px);color:#ead7b5;border-color:#8b7048}.hidden-role-card span{font:700 30px Cinzel,serif;color:#d5b77e}.hidden-role-card small{color:#d8c6a7}
+.revealed-title{margin-top:1.25rem}.revealed-cards{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.65rem}.revealed-card{width:112px;display:flex;flex-direction:column;gap:.2rem;padding:.45rem;border:1px solid var(--line,#9b794b);border-radius:10px;background:rgba(0,0,0,.18);font-size:.82rem}.revealed-card img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px}.revealed-card small{opacity:.75;line-height:1.25}
+.target-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}.target-tile{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;min-height:150px;background:#352920;padding:12px}.target-tile b{font-size:16px;color:#f5e9d1}.target-tile .target-coins{color:#e4c98e;font-size:13px}.target-cards{display:flex;gap:5px}.target-card-back{display:grid;place-items:center;width:34px;height:46px;border:1px solid #c5a56e;background:repeating-linear-gradient(135deg,#3b3028,#3b3028 5px,#4a3b30 5px,#4a3b30 10px);color:#e2c58d;font-style:normal;font-weight:bold}.target-tile small{color:#d7c7aa}.basic-rules{display:grid;gap:0;border:1px solid var(--line);margin:10px 0 16px}.basic-rules>div{display:grid;grid-template-columns:minmax(130px, .35fr) 1fr;gap:12px;padding:12px;background:#f7efdf;border-bottom:1px solid var(--line)}.basic-rules>div:last-child{border-bottom:0}.basic-rules b{color:#6d4c24}.basic-rules span{color:var(--ink);font-size:13px}.rules-table{min-width:850px}.notice{animation:notice-in .15s ease-out}@keyframes notice-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+/* Faction emblems and role/action affordances */
+.faction-mark{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-family:"Noto Serif JP",serif;font-weight:700;font-size:13px;border:1px solid currentColor;background:#f5ead2;line-height:1;flex:none}
+.faction-mark.order{color:#8b672d;box-shadow:inset 0 0 0 2px #d8bd82}
+.faction-mark.underworld{color:#593d78;box-shadow:inset 0 0 0 2px #b7a0c8}
+.role-card-mark{margin:0 auto 3px;width:22px;height:22px}
+.room-role-card .faction-mark{margin-top:1px}
+.shared-role-card{outline:2px solid #8b6ba6}
+.action{position:relative;grid-template-columns:54px 1fr;grid-template-rows:auto auto;align-items:center;column-gap:9px;min-height:78px}
+.action b,.action small{grid-column:2}
+.action-portrait{grid-column:1;grid-row:1 / span 2;width:54px;height:62px;object-fit:cover;object-position:center 25%;border:1px solid var(--gold);align-self:center}
+.intel-role{width:90px;display:grid;gap:4px;text-align:center;padding:5px;border:1px solid var(--gold);background:#f7efdf}
+.intel-role img{width:100%;height:82px;object-fit:cover;object-position:center 25%}
+.intel-role strong{font-size:12px}
+
+/* Readability and immediate role-card tooltips */
+.player-coins{color:#33251b;font-size:14px;font-weight:700;margin-top:4px}
+.room-role-card,.influence{position:relative;cursor:help}
+.room-role-card[data-tooltip]:hover::after,.influence[data-tooltip]:hover::after{content:attr(data-tooltip);white-space:pre-line;position:absolute;z-index:50;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);width:max-content;max-width:min(280px,80vw);padding:9px 11px;background:#211c19;color:#f4e8d2;border:1px solid var(--gold);border-radius:4px;box-shadow:0 5px 18px #0008;font-size:12px;line-height:1.45;pointer-events:none;transition:none}
+.share-selection{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 14px}
+.share-selection label{display:flex;align-items:center;gap:7px;padding:8px 11px;background:#f7efdf;border:1px solid var(--line);cursor:pointer}
+.share-selection input{min-width:auto;accent-color:var(--red)}
+.waiting-status{font-weight:700;color:#765b2f}
+.influence{overflow:visible}
+
+/* Compact action cards: title, portrait/placeholder, role label in a vertical stack. */
+.actions{grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.action{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;min-height:158px;padding:9px 7px}
+.action b{font-size:12px;line-height:1.25;min-height:30px;display:flex;align-items:center;justify-content:center}
+.action small{font-size:10px;line-height:1.2;color:#eadcc4}
+.action-portrait,.action .action-portrait{width:100%;max-width:88px;height:88px;object-fit:cover;object-position:center 25%;border:1px solid var(--gold);align-self:center}
+.action-placeholder{width:88px;height:88px;display:grid;place-items:center;border:1px dashed #b99a68;background:linear-gradient(145deg,#47372b,#241d19);color:#e4c98e;font-size:38px;font-family:"Noto Serif JP",serif}
+.action.held small,.action.bluff small{color:#f0e2cb}
+.counter-role-grid{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.counter-role-card{width:140px;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;padding:9px;background:#332820;border:1px solid var(--gold);color:#f5e9d1;text-align:center}
+.counter-role-card img{width:100%;height:112px;object-fit:cover;object-position:center 25%;border:1px solid var(--gold)}
+.counter-role-card .counter-role-name{font-size:13px;font-weight:700;color:#e4c98e}
+.counter-role-card strong{font-size:12px}
+.counter-role-card small{font-size:11px;color:#e5d5b8}
+/* The Assassin and Swordsman faces sit left of center in their source art. */
+.portrait-assassin img,.portrait-assassin .influence-art,.portrait-assassin .action-portrait{object-position:40% 24%}
+.portrait-swordsman img,.portrait-swordsman .influence-art,.portrait-swordsman .action-portrait{object-position:40% 26%}
+.room-role-card.portrait-assassin img{object-position:40% 24%}
+.room-role-card.portrait-swordsman img{object-position:40% 26%}
+.reference-role img[src*="assassin"]{object-position:40% 24%}
+.reference-role img[src*="swordsman"]{object-position:40% 26%}
+.intel-role img[src*="assassin"]{object-position:40% 24%}
+.intel-role img[src*="swordsman"]{object-position:40% 26%}
+.player-coins{font-size:14px;font-weight:700;color:#33251b}
+img.portrait-assassin,.action-portrait.portrait-assassin{object-position:40% 24%}
+img.portrait-swordsman,.action-portrait.portrait-swordsman{object-position:40% 26%}
+
+/* Player order and compact two-column seat cards. */
+.player{display:grid;grid-template-columns:minmax(170px,.82fr) minmax(170px,1.18fr);align-items:center;gap:12px;position:relative;padding:12px 12px 12px 42px}
+.player-meta{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.player-order{position:absolute;left:10px;top:12px;width:24px;height:24px;display:grid;place-items:center;border:1px solid var(--gold);border-radius:50%;background:#382b22;color:#e8ce9d;font:700 12px Cinzel,serif}
+.player-status{display:flex;flex-wrap:wrap;gap:2px}
+.player-status .pill{margin:2px 3px 0 0}
+.player-roles{min-width:0;display:flex;flex-wrap:wrap;align-content:center;gap:6px;margin:0;justify-content:flex-start}
+.player.active-player{border-color:#9d742f;box-shadow:inset 0 0 0 1px #b08a4c}
+.room-role-card{width:74px;height:130px;min-height:130px;flex:0 0 74px;box-sizing:border-box;overflow:hidden;gap:2px;padding:4px}
+.room-role-card img{height:58px;min-height:58px;width:100%;object-fit:cover}
+.room-role-card>span:not(.faction-mark){min-height:22px;display:flex;align-items:center;justify-content:center;font-size:9px}
+.room-role-card .faction-mark{width:18px;height:18px;font-size:10px;margin:0}
+.room-role-card small{min-height:10px;font-size:8px;line-height:1.1}
+.hidden-role-card{display:flex;align-items:center;justify-content:flex-start}
+.hidden-role-card>span{height:58px;width:100%;min-height:58px;font-size:30px}
+.hidden-role-card small{display:grid;place-items:center;min-height:18px}
+.spectator-list{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:12px;color:#69583f}
+/* Center-screen, opt-in room chat. */
+.chat-backdrop{position:fixed;inset:0;z-index:1500;background:#090706bb;display:grid;place-items:center;padding:16px}
+.chat-modal{width:min(560px,100%);max-height:min(78vh,680px);display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--gold);box-shadow:0 20px 80px #000c;padding:14px;gap:10px}
+.chat-modal header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;font:600 17px Cinzel,serif}
+.chat-messages{overflow:auto;min-height:150px;max-height:52vh;display:flex;flex-direction:column;gap:7px;padding:4px}
+.chat-message{display:flex;flex-direction:column;gap:2px;padding:7px 9px;background:#f8f0df;border:1px solid #d6c5a4;border-radius:3px;overflow-wrap:anywhere}
+.chat-message b{font-size:11px;color:#78572b}
+.chat-message span{font-size:13px;white-space:pre-wrap}
+.chat-compose{display:flex;gap:8px}
+.chat-compose input{min-width:0;flex:1;background:#fffaf0;color:var(--ink);border:1px solid var(--line);padding:10px}
+@media(max-width:520px){.player{grid-template-columns:96px minmax(0,1fr);gap:7px;padding-left:39px}.player-roles{gap:4px}.room-role-card{width:68px;flex-basis:68px}.player-status .pill{font-size:9px;padding:2px 4px}.player .name{font-size:13px}.player-coins{font-size:12px}}
+/* Face-aware crops: the subjects sit toward the right edge of the wide source art. */
+.portrait-assassin img,.portrait-assassin .influence-art,.portrait-assassin .action-portrait,.portrait-assassin .counter-role-card img{object-position:100% 30%}
+.portrait-swordsman img,.portrait-swordsman .influence-art,.portrait-swordsman .action-portrait,.portrait-swordsman .counter-role-card img{object-position:100% 24%}
+.reference-role img[src*="assassin"],.intel-role img[src*="assassin"]{object-position:100% 30%}
+.reference-role img[src*="swordsman"],.intel-role img[src*="swordsman"]{object-position:100% 24%}
+
+.action-portrait.portrait-assassin{object-position:100% 30%}.action-portrait.portrait-swordsman{object-position:100% 24%}
+@media(max-width:700px){.players{grid-template-columns:minmax(0,1fr)}}
+
+.next-turn{font-size:10px;font-weight:700;color:#6f7540;letter-spacing:.06em}.player:has(.next-turn){border-left:3px solid #8b9654}
+
+/* Player-card fit and compact information/role columns. */
+.players{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.player{grid-template-columns:minmax(100px,.72fr) minmax(0,1.28fr);min-width:0;overflow:hidden}
+.player-meta{min-width:0;overflow-wrap:anywhere}
+.player-status{display:none!important}
+.player-roles{min-width:0;max-width:100%;overflow:hidden;display:flex;flex-wrap:wrap;gap:5px;align-content:center}
+.room-role-card{width:74px;height:130px;min-width:0;min-height:130px;max-width:74px;flex:0 1 74px;overflow:hidden}
+.hidden-role-card{width:74px;height:130px;min-height:130px;flex:0 1 74px}
+.eliminated-role-card{border:2px solid #9b4242!important;background:linear-gradient(145deg,#e5d1c7,#c9aaa0)!important;filter:saturate(.55)}
+.eliminated-role-card small{color:#813b38!important;font-weight:700}
+.player.dead{opacity:1}
+@media(max-width:520px){.players{grid-template-columns:minmax(0,1fr)}.player{grid-template-columns:minmax(88px,.68fr) minmax(0,1.32fr);padding-left:39px}.room-role-card,.hidden-role-card{width:68px;max-width:68px;flex-basis:68px}}
+
+/* Player order is conveyed by card position; remove the number and turn labels. */
+.player{grid-template-columns:minmax(120px,.8fr) minmax(0,1.2fr);padding-left:12px}
+.player-order,.next-turn{display:none!important}
+.player:has(.next-turn){border-left:1px solid var(--line)}
+@media(max-width:520px){.player{grid-template-columns:minmax(90px,.68fr) minmax(0,1.32fr);padding-left:12px}}
+
+/* Keep the active TURN marker; card position already communicates turn order. */
+.player-name-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.turn-badge{display:inline-block;padding:2px 6px;border:1px solid #9d742f;border-radius:3px;background:#ead8ae;color:#65451e;font:700 9px Cinzel,serif;letter-spacing:.08em;white-space:nowrap}
+.player-order,.next-turn{display:none!important}
+.player:has(.next-turn){border-left:1px solid var(--line)}
+
+/* Compact, vertically stacked player cards: identity above side-by-side roles. */
+.players{grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));align-items:start;gap:8px}
+.player{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:7px;min-width:0;padding:9px;overflow:visible}
+.player-meta{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0}
+.player-name-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
+.player-coins{margin:0;font-size:12px}
+.player-roles{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:flex-start;align-content:flex-start;gap:5px;margin:0;min-width:0;max-width:100%;overflow:visible}
+.room-role-card,.hidden-role-card{width:74px;max-width:74px;min-width:0;flex:0 0 74px;height:130px;min-height:130px}
+.owner-badge{background:#e3dfd0;border-color:#8b7d60;color:#4e493a}
+@media(max-width:520px){.players{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}.player{padding:8px}.room-role-card,.hidden-role-card{width:74px;max-width:74px;flex-basis:74px}}
+
+/* Face-aware framing across all portrait uses, including player cards, actions, intel, rules and counters. */
+img[src*="/assets/portraits/lord.jpg"]{object-position:85% 24%!important}
+img[src*="/assets/portraits/courtesan.jpg"]{object-position:72% 27%!important}
+img[src*="/assets/portraits/assassin.jpg"]{object-position:83% 27%!important}
+img[src*="/assets/portraits/swordsman.jpg"]{object-position:80% 27%!important}
+img[src*="/assets/portraits/kingpin.jpg"]{object-position:55% 24%!important}
+img[src*="/assets/portraits/magistrate.jpg"]{object-position:47% 24%!important}
+
+/* Cinematic six-role banner appears only in the lobby, not during play. */
+.lobby-hero{margin:4px auto 18px;max-width:100%;overflow:hidden;border:1px solid var(--gold);box-shadow:0 12px 38px #0008;background:#33251d}
+.lobby-hero img{display:block;width:100%;height:auto;aspect-ratio:auto;object-fit:contain}
+@media(max-width:600px){.lobby-hero{margin:0 auto 12px}}
+
+/* Lobby readiness and per-card intrigue disclosure. */
+.lobby-ready{font-size:10px;font-weight:700;padding:3px 6px;border-radius:3px;border:1px solid #ad9a7b}
+.lobby-ready.is-ready{background:#dbe7d1;color:#345a32;border-color:#7b9d6d}
+.lobby-ready.is-not-ready{background:#ece2d9;color:#845044;border-color:#b9988b}
+.private-revealed-role-card{border:2px solid #a17b45!important}
+.private-revealed-role-card small{color:#75552e;font-weight:700}
+.player-roles .room-role-card small{overflow-wrap:anywhere;line-height:1.1}
+
+/* Optional faction-only influence backs, without revealing role portraits. */
+.room-options{padding:10px 12px;background:#f7efdf;border:1px solid var(--line)}
+.faction-setting{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.faction-setting input{width:18px;height:18px;min-width:18px;margin:2px 0 0;accent-color:var(--red)}
+.faction-setting span{display:grid;gap:4px}
+.faction-setting b{font-size:13px}
+.faction-setting small{font-size:11px;color:var(--muted);line-height:1.5}
+.faction-hidden-card{padding:4px!important;gap:3px!important}
+.faction-hidden-art{display:grid;place-items:center;width:100%;height:58px;min-height:58px;border:1px solid #a58a5c;background:radial-gradient(circle,#e8d7b6,#9a8059)}
+.faction-hidden-card.underworld .faction-hidden-art{background:radial-gradient(circle,#766581,#352c45);border-color:#8f7b9c}
+.faction-hidden-emblem{display:grid!important;place-items:center!important;width:43px!important;height:43px!important;min-height:43px!important;border-radius:50%;border:2px solid #d6bd84;color:#5f4320!important;background:#f4e7c7;font-size:23px!important;font-family:"Noto Serif JP",serif!important}
+.faction-hidden-card.underworld .faction-hidden-emblem{color:#e3cce9!important;background:#463652;border-color:#ae8fc0}
+.faction-hidden-card>span:not(.faction-mark){font-size:9px!important;color:#f1dfc0!important;min-height:22px!important}
+.faction-hidden-card small{color:#e0cdae!important}
+
+.rule-japanese-effect{display:block;margin-top:5px;color:#685748;font-size:.84em;line-height:1.4;white-space:normal}
+
+/* Optional audio, independent of the game UI re-render cycle. */
+.sound-toggle{position:fixed;bottom:16px;right:16px;z-index:1000;background:#302b2b;color:#f0e2c4;border:1px solid #9a7a4d;border-radius:18px;padding:7px 12px;font-size:12px;cursor:pointer;box-shadow:0 2px 8px #0004}
+.sound-toggle:hover{background:#44352d}
+.sound-toggle:focus-visible{outline:3px solid #cda76d;outline-offset:2px}
+
+.howto-modal{max-width:640px}.howto-steps{padding-left:23px;margin:18px 0;display:grid;gap:12px;line-height:1.5}.howto-steps li{padding-left:4px}.howto-steps strong{color:#795327}.howto-note{font-size:13px;line-height:1.5;background:#f4e9d5;padding:10px 12px;border-radius:6px;margin:10px 0}
+
+/* Non-blocking, draggable and resizable rules reference. */
+.rules-floating-window{position:fixed;top:9vh;left:8vw;width:min(940px,84vw);height:min(660px,80vh);min-width:360px;min-height:240px;max-width:96vw;max-height:92vh;resize:both;overflow:hidden;display:flex;flex-direction:column;padding:0!important;box-shadow:0 16px 55px #0008;border:1px solid var(--gold);z-index:1200}
+.rules-window-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 15px;background:#eee0c5;border-bottom:1px solid var(--line);cursor:move;touch-action:none;user-select:none;flex-shrink:0}
+.rules-window-header h2{font-size:19px;margin:0;pointer-events:none}
+.rules-window-header button{cursor:pointer}
+.rules-window-content{overflow:auto;min-height:0;flex:1;padding:15px}
+.rules-window-content .table-wrap{overflow:auto}
+@media(max-width:650px){.rules-floating-window{top:5vh!important;left:3vw!important;width:94vw;height:82vh;min-width:0;min-height:0;max-width:94vw;max-height:88vh;resize:none}.rules-window-header{cursor:default}.rules-window-header h2{font-size:16px}}
+
+/* Expanded gameplay workspace; lobby layout is unchanged. */
+body:has(.game-layout) .shell{max-width:1920px;width:100%;padding:10px clamp(10px,1.4vw,28px)}
+body:has(.game-layout) .mast{display:flex;align-items:baseline;justify-content:center;gap:18px;margin:0 0 7px}
+body:has(.game-layout) .mast .jp{font-size:23px;letter-spacing:.12em}
+body:has(.game-layout) .mast .sub{font-size:10px;letter-spacing:.16em}
+body:has(.game-layout) .footer{padding:6px}
+.game-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,22%);gap:12px;align-items:start}
+.game-main,.game-sidebar{min-width:0}
+.game-layout .panel{margin:0 0 10px;padding:13px}
+.game-layout .section-title{font-size:11px;margin-bottom:5px}
+.game-players-panel>.row{margin-bottom:8px}
+.game-players-panel h2,.game-turn-panel h2{font-size:19px;margin:0}
+.game-layout .players{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.game-layout .player{padding:8px;gap:5px}
+.game-layout .room-role-card{height:112px;min-height:112px}
+.game-layout .room-role-card img{height:48px;min-height:48px}
+.game-layout .room-role-card>span:not(.faction-mark){min-height:18px}
+.game-layout .hidden-role-card{height:112px;min-height:112px}
+.game-turn-panel{border-left:4px solid #9c763e!important}
+.game-decision-panel{border:2px solid #a33e35!important;background:#f8e8d8;box-shadow:0 0 0 3px #b65b5025,0 10px 28px #0005!important}
+.game-decision-panel>.section-title{font-weight:700;color:#8d2427;font-size:13px}
+.game-actions-panel .actions{grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:7px}
+.game-actions-panel .action{min-height:127px;padding:7px 5px;gap:3px}
+.game-actions-panel .action b{font-size:11px;min-height:27px}
+.game-actions-panel .action-portrait,.game-actions-panel .action-placeholder{width:72px;height:69px}
+.game-actions-panel .action small{font-size:9px}
+.game-log-panel{position:sticky;top:10px}
+.game-log-panel .log{max-height:calc(100vh - 115px);min-height:230px;padding:10px;font-size:12px;line-height:1.55}
+.game-log-panel .log>div{padding:7px 4px}
+.game-log-panel .log>.log-latest{background:#4b382a;color:#ffe7b6;border-left:3px solid #d1a85d;padding:8px;font-weight:700}
+@media(max-width:1050px){.game-layout{grid-template-columns:minmax(0,1fr) minmax(220px,27%)}.game-layout .players{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}
+@media(max-width:760px){.game-layout{display:flex;flex-direction:column}.game-main,.game-sidebar{width:100%}.game-log-panel{position:static}.game-log-panel .log{max-height:260px;min-height:0}.game-layout .players{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.game-layout .panel{padding:11px}}
+@media(max-width:420px){.game-layout .players{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}.game-layout .room-role-card{width:64px;max-width:64px;flex-basis:64px}.game-layout .actions{grid-template-columns:repeat(auto-fit,minmax(95px,1fr))}}
+
+/* Action resolution banner: server pending state, no private card information. */

@@ -1,0 +1,36 @@
+{
+  "approved": true,
+  "source": "User-supplied final card backs, 2026-11-21",
+  "backs": [
+    {
+      "id": "standard",
+      "asset": "/assets/card-backs/standard.png",
+      "dimensionsPx": [
+        825,
+        1125
+      ],
+      "sha256": "511bb35b0f6963357d1e4da382d7e2993322ffc11c5ad9b205659884390ca5ff",
+      "borderColor": "#cead8a"
+    },
+    {
+      "id": "order",
+      "asset": "/assets/card-backs/order.png",
+      "dimensionsPx": [
+        825,
+        1125
+      ],
+      "sha256": "201a51c1cc79a5d21c78e0eb5b1c65777d9551ddb323b65709d36a40c7129c23",
+      "borderColor": "#d3b48f"
+    },
+    {
+      "id": "underworld",
+      "asset": "/assets/card-backs/underworld.png",
+      "dimensionsPx": [
+        825,
+        1125
+      ],
+      "sha256": "2fc613296d5605ee365119302f172e2fc6d70ae28b593332926920da4986625b",
+      "borderColor": "#9f8382"
+    }
+  ]
+}

@@ -1,0 +1,322 @@
+/* Recent visual refinements; preserve order while consolidating selectors. */
+.game-shell .game-layout .game-actions-panel .action.neutral .action-role-label{
+  grid-column:2;grid-row:1;align-self:end;
+  margin:0 0 3px;
+}
+.game-shell .game-layout .game-actions-panel .action.neutral b{
+  grid-column:2!important;grid-row:2!important;align-self:start!important;
+  min-height:0;margin:0;
+}
+/* On compact cards hide the category, as with role actions; never stack Earn/Purge below the artwork. */
+@container (max-width:225px){
+  .game-shell .game-layout .game-actions-panel .action.neutral .action-role-label{display:none!important}
+  .game-shell .game-layout .game-actions-panel .action.neutral b{
+    grid-column:2!important;grid-row:1 / span 2!important;
+    align-self:center!important;justify-self:center;
+    min-height:0!important;
+  }
+}
+
+
+/* Restore the original ornate hidden-card back, slightly darker so revealed portraits stand out. */
+.game-layout .player-roles .room-role-card.default-hidden-portrait{
+  background:#171216!important;
+}
+.game-layout .player-roles .default-hidden-art{
+  filter:brightness(.72) saturate(.82);
+}
+.game-layout .player-roles .default-hidden-portrait::after{
+  content:""!important;
+  background:linear-gradient(180deg,rgba(8,6,9,.19),rgba(8,6,9,.08) 38%,rgba(8,6,9,.38))!important;
+}
+
+/* Shared neutral hidden-card label: used by game room and guided tutorial. */
+.game-layout .player-roles .default-hidden-portrait .hidden-card-status{
+  position:absolute;z-index:4;bottom:0;left:0;right:0;
+  display:block;padding:23px 3px 8px;
+  text-align:center;font-size:clamp(9px,4.5cqw,11px);
+  font-weight:400;line-height:1.1;color:#e7d6bb;
+  background:linear-gradient(0deg,rgba(12,9,12,.88),rgba(12,9,12,0));
+  pointer-events:none;
+}
+
+/* Neutral (unknown-faction) hidden cards show only the standard card status text. */
+.game-layout .player-roles .default-hidden-portrait .neutral-hidden-bottom{
+  justify-content:center!important;align-items:center!important;
+  text-align:center!important;gap:0!important;
+}
+.game-layout .player-roles .default-hidden-portrait .neutral-hidden-bottom small{
+  display:block!important;font-weight:400!important;
+  font-size:inherit;line-height:1.1;
+}
+
+/* Eight-seat capacity is now reserved by the responsive .players grid itself,
+   not a fixed minimum height on the entire board panel. */
+.game-layout .game-players-panel{min-height:0;}
+
+/* Multiplayer UI polish: do not obscure the board during decisions. */
+.game-layout .player-decision-overlay{
+ position:static!important;inset:auto!important;grid-column:2;grid-row:3;
+ z-index:auto;display:block;padding:0!important;margin:0!important;
+ background:transparent!important;backdrop-filter:none!important;border-radius:0;
+}
+.game-layout .player-decision-overlay .game-decision-panel{
+ width:100%!important;max-height:none!important;margin:0!important;
+ box-shadow:0 8px 25px #0003;border:1px solid var(--gold);
+}
+@media(max-width:760px){.game-layout .player-decision-overlay{width:100%}}
+/* Standard pointing hand for actionable cards and buttons. */
+.game-layout .game-actions-panel .action:not(:disabled),
+.game-layout .player-decision-overlay button:not(:disabled),
+.game-layout .room-role-card[data-tooltip],
+.game-layout .influence[data-tooltip]{cursor:pointer!important}
+/* Center the action reference button without changing action-card layout. */
+.game-shell .game-layout .game-actions-panel .actions-rules-bottom{
+ align-self:center!important;margin-left:auto!important;margin-right:auto!important;
+}
+/* Victory is a blocking dialog: keep it above final announcements (z-index: 5000). */
+.victory-backdrop{position:fixed;inset:0;z-index:6000;display:grid;place-items:center;background:#100b09a8;padding:16px}
+.victory-panel{width:min(440px,100%);text-align:center;padding:30px;box-shadow:0 18px 65px #0009}
+.victory-panel h2{margin:16px 0 24px;font-size:clamp(21px,3vw,30px)}
+
+/* UI polish: keep the Game Log aligned with the bottom of Players & Influences.
+   The log scrolls internally rather than extending below the board. */
+@media (min-width:761px){
+  .game-layout>.game-sidebar{
+    grid-row:1 / span 2!important;
+    align-self:stretch!important;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+  }
+  .game-layout>.game-sidebar>.game-log-panel{
+    position:relative;top:auto;
+    margin:0;
+    height:100%;min-height:0;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .game-layout>.game-sidebar>.game-log-panel>.log{
+    min-height:0;max-height:none;
+    flex:1 1 0;
+    overflow-y:auto;
+  }
+}
+/* Center both the role label and action name vertically in their respective rows. */
+.game-shell .game-layout .game-actions-panel .action .action-role-label{
+  align-self:center!important;
+  margin:0!important;
+}
+.game-shell .game-layout .game-actions-panel .action b{
+  align-self:center!important;
+  margin:0!important;
+  min-height:0!important;
+}
+/* Turn badge should not change the height of the name row or push cards down. */
+.game-layout .player-name-row{position:relative;flex-wrap:nowrap;min-height:0;}
+.game-layout .player-name-row .name{min-width:0;overflow-wrap:anywhere;}
+.game-layout .player-name-row .turn-badge{
+  flex:0 0 auto;
+  font-size:9px;
+  line-height:1;
+  padding:3px 5px;
+  margin:0;
+}
+
+.game-shell .action-flow .flow-person{display:inline-flex;align-items:center;padding:5px 11px;border:1px solid #a48259;border-radius:5px;background:linear-gradient(155deg,#fff8e8,#e7d1ac);color:#51341f;box-shadow:0 4px 0 #a8875c,0 8px 12px #3c281e3b,inset 0 1px 0 #fff;transform:translateY(-2px)}
+/* The action/status remains on the left; only the requested player sees a decision on the right. */
+.game-shell .game-layout .action-flow.has-decision{
+ display:grid!important;
+ grid-template-columns:minmax(215px,1fr) minmax(0,1.25fr);
+ align-items:center;
+ column-gap:clamp(12px,2vw,25px);
+}
+.game-shell .game-layout .action-flow .flow-status{min-width:0;overflow-wrap:anywhere}
+.game-shell .game-layout .action-flow.has-decision .player-decision-overlay{
+ position:static!important;inset:auto!important;grid-column:2;grid-row:1;
+ display:block!important;width:100%;min-width:0;margin:0!important;padding:0 0 0 clamp(10px,1.6vw,20px)!important;
+ border-top:0!important;border-left:1px solid #c7ae8d;
+ background:transparent!important;backdrop-filter:none!important;z-index:auto!important;
+}
+.game-shell .game-layout .action-flow .game-decision-panel{
+ display:flex;flex-direction:column;align-items:stretch;gap:7px!important;
+ width:100%!important;max-width:none!important;max-height:210px!important;overflow-y:auto!important;
+ min-width:0;padding:3px 1px!important;margin:0!important;
+ box-shadow:none!important;background:transparent!important;border:0!important;
+}
+.game-shell .game-layout .action-flow .game-decision-panel .section-title{margin:0 0 3px}
+.game-shell .game-layout .action-flow .game-decision-panel .row{min-width:0;flex-wrap:wrap;gap:6px}
+.game-shell .game-layout .action-flow .game-decision-panel button{white-space:normal;overflow-wrap:anywhere;min-width:0}
+.game-shell .game-layout .action-flow .game-decision-panel .cards{display:flex;flex-wrap:wrap;gap:6px}
+.game-shell .game-layout .action-flow .game-decision-panel .select-reveal{
+ width:clamp(105px,12vw,140px);min-height:0!important;padding:6px;gap:3px;
+}
+.game-shell .game-layout .action-flow .game-decision-panel .select-reveal .influence-art{height:70px}
+@media(max-width:1040px){
+ .game-shell .game-layout .action-flow.has-decision{grid-template-columns:minmax(0,1fr);row-gap:9px}
+ .game-shell .game-layout .action-flow.has-decision .player-decision-overlay{
+   grid-column:1;grid-row:2;padding:9px 0 0!important;border-left:0;border-top:1px solid #c7ae8d!important;
+ }
+ .game-shell .game-layout .action-flow .game-decision-panel{max-height:230px!important}
+}
+.role-quick-tooltip{background:linear-gradient(145deg,#fff5e3,#e9d7b8)!important;color:#34271e!important;border:2px solid #a17a54!important;box-shadow:0 14px 35px #0007,inset 0 1px 0 #fff9!important}
+.role-quick-tooltip .tooltip-heading{color:#33231a;border-bottom-color:#b59a76}
+.role-quick-tooltip .tooltip-faction{color:#493528;border-bottom-color:#b59a76}
+.role-quick-tooltip .tooltip-label{color:#75512f}
+.role-quick-tooltip .tooltip-section+.tooltip-section{border-top-color:#c9ad88}
+.role-quick-tooltip .tooltip-section-heading{color:#6d4329}
+.role-quick-tooltip .tooltip-ability-name{color:#33231a}
+.role-quick-tooltip .tooltip-description{color:#48392e}
+.role-quick-tooltip .tooltip-none{color:#77685b}
+
+/* Action cards show only the action name, using the shared game-room layout. */
+.game-shell .game-layout .game-actions-panel .action{
+  grid-template-rows:minmax(0,1fr)!important;
+  align-items:center!important;
+}
+.game-shell .game-layout .game-actions-panel .action .action-portrait{
+  grid-column:1!important;
+  grid-row:1!important;
+  align-self:stretch!important;
+}
+.game-shell .game-layout .game-actions-panel .action b{
+  grid-column:2!important;
+  grid-row:1!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:stretch!important;
+  justify-self:stretch!important;
+  text-align:center!important;
+  font-size:calc(clamp(11px,0.88vw,14px) + 2pt)!important;
+  font-weight:650!important;
+  line-height:1.2!important;
+  letter-spacing:.025em;
+  color:#f2dfbf!important;
+  padding:4px 6px!important;
+  overflow-wrap:anywhere;
+}
+.game-shell .game-layout .game-actions-panel .action.neutral b{
+  grid-column:2!important;
+  grid-row:1!important;
+}
+
+/* Flat sand/parchment tooltip, matching the board rather than a gradient. */
+.role-quick-tooltip{background:#f5e9d5!important}
+/* Short prompts placed in Current Turn; duplicate action details stay above. */
+.game-shell .action-flow .decision-question{font-size:1.08rem;font-weight:700;color:#422c1d;margin:0 0 9px}
+.game-shell .action-flow .decision-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+
+/* Faction-known backs share the exact neutral hidden-card art; faction icon only. */
+.game-layout .player-roles .room-role-card.faction-hidden-card.default-hidden-portrait{background:#231a1c!important}
+.game-layout .player-roles .room-role-card.faction-hidden-card .default-hidden-art{display:block!important}
+.game-layout .player-roles .room-role-card.faction-hidden-card::before,.game-layout .player-roles .room-role-card.faction-hidden-card::after{pointer-events:none}
+.game-layout .player-roles .room-role-card.faction-hidden-card .role-card-bottom{z-index:3}
+.game-layout .player-roles .room-role-card.faction-hidden-card .faction-mark{background:#f2e1bf!important}
+/* Elimination label is English-only and high contrast. */
+.game-layout .player-roles .room-role-card.eliminated-role-card .role-card-bottom small{color:#ffb7a7!important;font-weight:700!important;text-shadow:0 1px 3px #180000,0 0 8px #4a0505!important}
+/* Target choice takes place on the actual board. */
+.game-layout .game-players-panel.target-selecting{position:relative}
+.game-layout .target-select-hint{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:10px 14px;border:1px solid #ab834e;border-radius:7px;background:#f6e3c2;color:#4a301d;font-weight:700}
+.game-layout .target-select-hint button{font-size:.82rem}
+.game-layout .game-players-panel .player.selectable-target{cursor:pointer!important;outline:2px solid #a77a39;outline-offset:2px;box-shadow:0 0 0 3px #e6bd6a77,0 0 16px #b68549aa;transition:box-shadow .15s,transform .15s}
+.game-layout .game-players-panel .player.selectable-target:hover,.game-layout .game-players-panel .player.selectable-target:focus-visible{transform:translateY(-3px);outline:3px solid #e6a948;box-shadow:0 0 0 5px #e6bd6a99,0 4px 18px #8c633caa}
+/* Select the actual discovered portraits to share. */
+.share-portrait-selection{display:flex;flex-wrap:wrap;gap:12px}
+.share-portrait{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:136px;padding:7px;background:#e8d9bf;border:2px solid #b6a080;border-radius:8px;color:#3b291b;cursor:pointer}
+.share-portrait img{display:block;width:100%;aspect-ratio:74/130;object-fit:cover;border-radius:4px}
+.share-portrait span{font-weight:700}.share-portrait small{font-size:11px}
+.share-portrait.is-selected{border-color:#9a6b22;box-shadow:0 0 0 3px #d6a84e8a;background:#f9e6be}
+.share-portrait:not(.is-selected){opacity:.65;filter:saturate(.65)}
+/* Action announcement: overlays briefly but never blocks interaction. */
+
+
+
+
+
+/* Announcement drops into view as it fades in; rises as it fades out. */
+
+.share-portrait:not(.is-selected){opacity:.72}
+.share-portrait.is-selected{opacity:1}
+.game-decision-panel button[data-intrigue-share="true"]:disabled{opacity:.38;filter:grayscale(.6);cursor:not-allowed}
+
+/* Blocking Intrigue errors appear as a non-blocking toast rather than
+   shifting the board down during target selection. */
+.game-shell > .notice {
+  position:fixed;
+  top:clamp(14px,7vh,65px);
+  left:50%;
+  transform:translateX(-50%);
+  z-index:1100;
+  width:max-content;
+  max-width:min(92vw,560px);
+  margin:0;
+  padding:14px 20px;
+  border:1px solid #a65c46;
+  border-left:5px solid #9d342a;
+  border-radius:6px;
+  background:#f4e4cb;
+  color:#522d22;
+  box-shadow:0 12px 35px #0009;
+  text-align:center;
+  animation:intrigue-notice-pop .2s ease-out both;
+}
+@keyframes intrigue-notice-pop {
+  from{opacity:0;transform:translate(-50%,-12px)}
+  to{opacity:1;transform:translate(-50%,0)}
+}
+
+/* Visual cleanup: active player's red outline replaces the TURN badge. */
+.game-shell .player-name-row .turn-badge:not(.owner-badge){display:none!important}
+/* Plain-English current action text without raised name pills or arrows. */
+.game-shell .action-flow .flow-chain{display:block;margin:9px 0}
+.game-shell .action-flow .flow-chain strong{font-size:clamp(13px,1.1vw,17px);font-weight:750;line-height:1.45;color:#483020}
+.game-shell .action-flow .flow-person{display:inline!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;transform:none!important;color:inherit!important}
+.game-shell .action-flow .flow-arrow{display:none!important}
+/* Neutral action labels center within their available card area. */
+.game-shell .game-layout .game-actions-panel .action.neutral{grid-template-rows:minmax(0,1fr)!important;align-items:center!important}
+.game-shell .game-layout .game-actions-panel .action.neutral .action-portrait{grid-row:1!important;align-self:stretch!important}
+.game-shell .game-layout .game-actions-panel .action.neutral b{grid-column:2!important;grid-row:1!important;display:flex!important;align-items:center!important;justify-content:center!important;align-self:stretch!important;justify-self:stretch!important;text-align:center!important;margin:0!important;padding:4px 6px!important}
+/* Eliminated art should recede without making the English status unreadable. */
+.game-layout .player-roles .room-role-card.eliminated-role-card img{filter:brightness(.54) saturate(.45)!important}
+.game-layout .player-roles .room-role-card.eliminated-role-card::after{content:"";position:absolute;inset:0;background:#160d11aa;opacity:.22;pointer-events:none;z-index:1}
+.game-layout .player-roles .room-role-card.eliminated-role-card .role-card-bottom{z-index:3}
+/* No question-mark cursor anywhere; retain pointer for actual controls. */
+.room-role-card,.influence,.game-actions-panel .action[data-tooltip]{cursor:default!important}
+.game-layout .game-players-panel .player.selectable-target,.share-portrait,button:not(:disabled),a{cursor:pointer!important}
+
+/* Compact Current Turn: one primary sentence and, only when useful, one context line. */
+.game-shell .action-flow .flow-chain{margin:5px 0 0}
+.game-shell .action-flow .flow-summary{margin:3px 0 0;font-size:12px;line-height:1.35}
+
+/* Private Intrigue intel may be shared later from its own card. */
+/* Private Intel button participates in the same caption stack as its status.
+   The shared portrait renderer owns the markup; no floating overlay over status. */
+.private-intel-shareable{position:relative}
+.game-layout .player-roles .private-intel-shareable .role-card-bottom{gap:clamp(2px,1.1cqw,4px);padding-bottom:clamp(3px,1.8cqw,7px)}
+.game-layout .player-roles .private-intel-share-control{
+  display:block;position:relative;z-index:3;box-sizing:border-box;
+  width:calc(100% - 4px);min-width:0;margin:2px auto 0;
+  padding:clamp(3px,1.3cqw,5px) 2px!important;
+  font-size:clamp(8px,3.9cqw,11px)!important;line-height:1.12!important;
+  border-radius:4px;background:#ead5a9!important;color:#3d2a18!important;
+  border:1px solid #896b3f!important;cursor:pointer!important;pointer-events:auto;
+}
+.game-layout .player-roles .private-intel-shareable .role-card-bottom small{display:block}
+.intel-share-backdrop{position:fixed;inset:0;background:#1010149c;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.intel-share-dialog{width:min(420px,100%);padding:24px!important;background:#f5e9d5!important;color:#352a1c!important;border:2px solid #a18654!important;box-shadow:0 16px 45px #0007}
+.intel-share-dialog strong{font-size:20px}
+.intel-share-dialog .row{justify-content:center;gap:12px}
+
+/* Updated ensemble portraits are face-centered at source; do not reuse legacy off-center crops. */
+img[src*="/assets/portraits/swordsman.jpg"],img[src*="/assets/portraits/assassin.jpg"]{object-position:center center!important}
+
+/* Courtesan: keep her face centered in every portrait format. */
+img[src*="/assets/portraits/courtesan.jpg"]{object-position:45% 32%!important}
+/* Tutorial-public discoveries use the same unmistakable purple border as multiplayer. */
+.t-shell .game-layout .player-roles .room-role-card.t-public-intel{
+ outline:3px solid #8b6ba6!important;outline-offset:-2px;box-shadow:0 0 0 2px #c3a5e2!important;
+}
+
+/* Reframed character portraits: standardized vertical face-centered crops. */
+img[src*="/assets/portraits/courtesan.jpg"],img[src*="/assets/portraits/assassin.jpg"]{object-position:50% 36%!important}

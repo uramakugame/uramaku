@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict'),{harness}=require('../tutorial/browser-harness'),panels=require('../../public/js/components/game-panels'),g=require('../../server/game');
+for(const lang of ['en','jp']){
+ const h=harness(lang);h.value("while(tutorial.step.id!=='replace-courtesan')handle(tutorial.step.input)");
+ const before=h.state(),room=before.room,you=before.you,other={id:'mei',coins:2,influences:['assassin']};
+ assert(h.app.querySelector('.game-deck-panel .deck-stack #summonTray'));assert(h.app.querySelector('#summonTray .summon-drawn-card').closest('.player-roles'),'Preview inherits the same full-bleed card design');assert(!h.app.querySelector('.game-deck-panel .section-title'));assert(!h.app.querySelector('.game-deck-panel [data-summon-choice]'));assert(!h.app.querySelector('.game-deck-panel .decision-question'));assert(h.app.querySelector('.action-flow [data-summon-choice="discard"]'));assert(!h.app.querySelector('[data-summon-controls]').hidden);assert(h.app.querySelector('[data-summon-choice="discard"]').disabled,'Guided replacement keeps its required card choice');assert(!h.app.querySelector('#summonTray').hidden);assert(!h.app.querySelector('dialog'));assert(!h.app.querySelector('[data-summon-choice="keep"]'));
+ assert.equal(h.app.querySelectorAll('[data-summon-replace]').length,2);assert(h.app.querySelector('[data-summon-choice="discard"]'));
+ const liveControls=panels.summon({room,you,lang});assert(liveControls.includes('data-summon-choice="discard" '));assert(!liveControls.includes('disabled'),'Regular matches can discard');assert(!liveControls.includes('portrait-'));const html=panels.deck({room,you:other,lang});assert(!html.includes('summonTray'));assert(!html.includes('portrait-swordsman'),'Other clients receive no private preview');
+ h.click('[data-summon-replace="1"]');assert.deepEqual(h.state().you.influences,['magistrate','swordsman']);assert.equal(h.state().you.summonDrawnRole,null);assert(!h.app.querySelector('#summonTray'));assert.equal(h.state().room.drawPile.count,room.drawPile.count,'A board click never draws twice');
+ // Rendered legacy replace-stage snapshots use exactly the same private tray.
+ const copy=JSON.parse(JSON.stringify(before));copy.room.pending.stage='replace';assert(panels.deck({room:copy.room,you:copy.you,lang}).includes('summonTray'));
+ const r=g.createGame('SAFE',{id:'a',name:'<Alice>'});const note=panels.challengeLoss({room:{...r,challengeLosses:[{loserId:'a'}]},you:{id:'b'},lang});assert(!note.includes('<Alice>'));assert(note.includes('&lt;Alice&gt;'));
+}
+console.log('Shared Summon deck tray in EN/JP, real single-click board replacement, no modal/Keep step, private rendering, saved-stage support and escaped debt notices passed.');

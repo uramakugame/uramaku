@@ -1,0 +1,9 @@
+# Dealing, exchanges and approved card backs
+
+- Imported the three final user-supplied 825 × 1125 card backs without altering their bytes: red Standard, gold Order and purple Underworld. Hidden cards and animation faces share the same renderer and whole-image styling. Approved role portraits and Home/lobby banner are unchanged.
+- Opening deals descend face down and flip for the owner after reaching their slots. Opponents retain hidden backs. Live play and tutorial entry/Restart use shared feedback, without replay on routine renders or reconnects.
+- Kept Summon draws and successful action/counter proofs animate only the exchanged influence: discard down (280 ms), replacement down face down (400 ms), then turn in place (650 ms) for the entitled viewer. Same-role draws still animate. A rejected Summon draw slides only the private modal preview down (350 ms).
+- Added bounded public exchange metadata identifying only the player, slot, reason and sequence. Proof roles are already public; replacement identities and Summon discards are never included. Game rules, coin costs, challenge timing and knowledge invalidation remain unchanged.
+- Running decorative layers survive ordinary renders by transferring to the same visible card. Identity changes, detached elements, cancellation and fallback cleanup restore the live card. Reduced motion skips decorative motion. Shared controls, EN/JP labels and private knowledge remain intact.
+
+Validation: 42 regular test files, generated stylesheet validation and 280 randomized economy matches. Tests cover exact artwork bytes/dimensions, correct faction mapping, selected-slot exchanges, publicly proved roles, private replacements, no history replay, bounded metadata, stage ordering, cancellation, render transfers and reduced motion. Rendered visual review remains a local playtest step; use the new opening-deal and exchange checklist in `docs/playtest.md`.

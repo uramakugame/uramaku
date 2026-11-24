@@ -1,0 +1,361 @@
+/* Game interactions, player decisions, and supporting components. */
+/* More breathing room between each role-card element, scaled to its seat width. */
+.game-layout .player-roles .room-role-card,.game-layout .player-roles .hidden-role-card{gap:clamp(4px,2.6cqw,10px);padding:clamp(4px,1.8cqw,8px)}
+.game-layout .player-roles .room-role-card img{height:55%;flex-shrink:1}
+.game-layout .player-roles .room-role-card>span:not(.faction-mark),.game-layout .player-roles .room-role-card small{flex-shrink:1;min-height:0}
+
+/* Reference dialog keeps identical dimensions across tabs and language switches. */
+/* Let the English Actions reference grow to its full natural height on desktop.
+   Constrain only to the available viewport; on compact screens the body scrolls. */
+.rules-reference-modal{
+  height:min(930px, calc(100dvh - 12px));
+  max-height:calc(100dvh - 12px);
+  flex-shrink:0;
+}
+.rules-reference-body{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:auto;
+}
+/* Compact metadata columns; descriptions get the remaining space. */
+.rules-reference-body .rules-table th:nth-child(1){width:18%}
+.rules-reference-body .rules-table th:nth-child(2){width:9%}
+.rules-reference-body .rules-table th:nth-child(3){width:11.5%}
+.rules-reference-body .rules-table th:nth-child(4){width:28%}
+.rules-reference-body .rules-table th:nth-child(5){width:10.5%}
+.rules-reference-body .rules-table th:nth-child(6){width:23%}
+
+/* General actions use exactly the same two-line role/name arrangement. */
+.game-layout .game-actions-panel .action.neutral .action-role-label{
+  grid-column:2;
+  grid-row:1;
+  align-self:end;
+  justify-self:stretch;
+  margin:0 0 clamp(2px,1cqw,5px);
+}
+.game-layout .game-actions-panel .action.neutral b{
+  grid-column:2;
+  grid-row:2;
+  align-self:start;
+  justify-self:stretch;
+  margin:0;
+}
+
+/* Responsive refinement: keep the board's right padding visible when it scrolls. */
+.game-layout .game-players-panel{box-sizing:border-box;min-width:0;overflow-x:auto;scrollbar-gutter:stable}
+.game-layout .game-players-panel>.players{
+  box-sizing:border-box;
+  width:100%;
+  min-width:700px;
+  padding-right:clamp(10px,1.5vw,20px);
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+@media(max-width:760px){
+  .game-layout .game-players-panel>.players{width:100%;min-width:700px}
+}
+/* A little more type hierarchy and breathing room, without changing the card ratio. */
+.game-layout .player-roles .room-role-card,
+.game-layout .player-roles .hidden-role-card{
+  gap:clamp(5px,3.1cqw,13px);
+  padding:clamp(5px,2.2cqw,10px);
+  justify-content:flex-start;
+}
+.game-layout .player-roles .room-role-card img,
+.game-layout .player-roles .hidden-role-card>span:first-child,
+.game-layout .player-roles .faction-hidden-art{height:52%;}
+.game-layout .player-roles .room-role-card>span:not(.faction-mark){font-size:clamp(10px,6.6cqw,17px);line-height:1.18}
+.game-layout .player-roles .room-role-card small,
+.game-layout .player-roles .hidden-role-card small{font-size:clamp(9px,5.1cqw,13px);line-height:1.2}
+.game-layout .player-roles .room-role-card .faction-mark{width:clamp(14px,10cqw,25px);height:clamp(14px,10cqw,25px);font-size:clamp(9px,6cqw,15px)}
+/* When the sidebar becomes narrow, keep the action name but omit the role label. */
+.game-layout .game-actions-panel .action{container-type:inline-size}
+@container (max-width:175px){
+  .game-layout .game-actions-panel .action .action-role-label{display:none}
+  .game-layout .game-actions-panel .action b,
+  .game-layout .game-actions-panel .action.neutral b{grid-column:2;grid-row:1 / span 2;align-self:center;font-size:clamp(11px,8cqw,15px)}
+}
+
+/* Align the player count's right edge with the last seat and balance both board margins.
+   The panel supplies the outer padding; the grid must not add a second right inset. */
+.game-layout .game-players-panel{scrollbar-gutter:auto;overflow-x:auto}
+.game-layout .game-players-panel>.players{
+  padding-left:0;
+  padding-right:0;
+  margin-left:0;
+  margin-right:0;
+  width:100%;
+  min-width:700px;
+}
+.game-layout .game-players-panel>.row{width:100%;margin-left:0;margin-right:0}
+.game-layout .game-players-panel .game-board-controls{margin-right:0}
+
+/* EXPERIMENTAL CRIMSON PALETTE — remove this final block to revert the color test. */
+.game-shell{--red:#b9343d;--gold:#c8a364;--paper:#f4ebd9;--paper2:#eee0c9;--line:#d0bda1}
+.game-shell .game-actions-panel,.game-shell .game-players-panel,.game-shell .game-log-panel,.game-shell .game-deck-panel,.game-shell .game-room-code{background:#f4ebd9;border-color:#b79b78}
+.game-shell .player{background:#fbf2e2;border-color:#c9b393}
+.game-shell .player.me{outline-color:#bd3642}
+.game-shell .player .name{color:#34211e}
+.game-shell .action.held{background:#9d2734;border-color:#e4777a;box-shadow:inset 0 0 0 1px #e78b89}
+.game-shell .action.held:hover{background:#ba3643}
+.game-shell .action.held .action-role-label,.game-shell .action.held b{color:#fff2e5}
+.game-shell .legend-held{color:#ae2c3a}
+.game-shell .action.bluff{background:#60484b;border-color:#ad7c78}
+.game-shell .action.neutral{background:#493536;border-color:#b18b76}
+.game-shell .action-flow{border:1px solid #bd9b77!important;border-left:1px solid #bd9b77!important;background:#f3e5d0}
+.game-shell .action-flow.flow-attention{border-color:#c15b5d!important;background:#f8e7e1}
+.game-shell .flow-kicker{color:#7e3339}
+.game-shell .game-room-code strong{color:#9d2734}
+.game-shell .game-players-panel .player.me{border-color:#b93b42}
+.game-shell .game-actions-panel .action:focus-visible{outline:2px solid #db6a71;outline-offset:2px}
+
+/* Restore the pre-crimson dark unowned-action surface, leaving owned roles red. */
+.game-shell .action.bluff{background:#514039;border-color:#98765f}
+.game-shell .action.bluff:hover{background:#624c43}
+
+/* Illustrated-reference-inspired hover card, English only. */
+.role-quick-tooltip{width:320px;max-width:calc(100vw - 24px);white-space:normal;padding:17px 19px;background:linear-gradient(145deg,#28201e,#171514);border:2px solid #a17a54;border-radius:7px;color:#f7eee0;box-shadow:0 14px 35px #000b, inset 0 0 0 1px #5a4034;font-size:15px;line-height:1.48;text-align:left}
+.tooltip-heading{font-size:23px;font-weight:700;line-height:1.2;padding-bottom:12px;border-bottom:1px solid #90745b}
+.tooltip-faction{font-size:16px;padding:11px 0 13px;border-bottom:1px solid #90745b}
+.tooltip-label{font-weight:700;color:#e9d3ad}
+.tooltip-section{padding:12px 0 4px}
+.tooltip-section+.tooltip-section{margin-top:8px;border-top:1px solid #735d4b}
+.tooltip-section-heading{font-size:17px;font-weight:700;color:#f3d9ae;margin-bottom:6px}
+.tooltip-ability-name{font-size:17px;font-weight:700;padding-left:10px}
+.tooltip-description{font-size:15px;padding-left:10px;margin-top:3px;overflow-wrap:break-word}
+.tooltip-none{padding-left:10px;color:#b7a99a;font-style:italic}
+@media(max-width:520px){.role-quick-tooltip{width:270px;padding:12px 14px}.tooltip-heading{font-size:20px}.tooltip-faction,.tooltip-section-heading,.tooltip-ability-name{font-size:15px}.tooltip-description{font-size:14px}}
+
+/* Full-bleed portrait role cards with bottom-only faction emblem. */
+.game-layout .player-roles .room-role-card:not(.hidden-role-card){
+  position:relative;display:block;padding:0!important;gap:0!important;
+  overflow:hidden;isolation:isolate;aspect-ratio:74 / 130;height:auto!important;
+  min-height:0!important;background:#251b18;border:1px solid #b68a4c;
+}
+.game-layout .player-roles .room-role-card:not(.hidden-role-card)>img{
+  display:block;width:100%;height:100%!important;min-height:0!important;
+  object-fit:cover;object-position:center 28%;border:0;
+}
+.game-layout .player-roles .room-role-card.portrait-assassin>img,
+.game-layout .player-roles .room-role-card.portrait-swordsman>img{object-position:40% 25%}
+.game-layout .player-roles .room-role-card .role-card-bottom{
+  position:absolute;inset:auto 0 0;z-index:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;
+  gap:clamp(2px,1.8cqw,7px);padding:clamp(17px,10cqw,38px) 3px clamp(4px,2.3cqw,9px);
+  color:#fff2db;background:linear-gradient(0deg,rgba(19,13,12,.98) 0%,rgba(19,13,12,.84) 47%,transparent 100%);
+  text-align:center;pointer-events:none;
+}
+.game-layout .player-roles .room-role-card .role-card-bottom .role-card-name{
+  display:block;min-height:0!important;font-size:clamp(11px,7.6cqw,20px)!important;
+  font-weight:700;line-height:1.12;color:#fff1d8;text-shadow:0 1px 3px #000;
+}
+.game-layout .player-roles .room-role-card .role-card-bottom .faction-mark{
+  display:inline-grid;place-items:center;margin:0;
+  width:clamp(18px,10.5cqw,27px);height:clamp(18px,10.5cqw,27px);
+  font-size:clamp(11px,6.3cqw,17px);background:#f2e1bf;
+}
+.game-layout .player-roles .room-role-card .role-card-bottom small{
+  min-height:0;font-size:clamp(8px,4.3cqw,11px);color:#e7d6bb;line-height:1.1;
+}
+
+/* Faction-only concealed cards: full-height illustrated card treatment.
+   Intentionally use faction art, NEVER a role portrait: no hidden identity leakage. */
+.game-layout .player-roles .room-role-card.faction-portrait{
+  position:relative;display:block;padding:0!important;gap:0!important;
+  overflow:hidden;isolation:isolate;aspect-ratio:74 / 130;height:auto!important;
+  min-height:0!important;border:1px solid #b68a4c;background:#231a1c;
+}
+.game-layout .player-roles .faction-portrait-art{
+  position:absolute;inset:0;width:100%;height:100%!important;min-height:0!important;
+  overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(ellipse at 52% 23%,rgba(255,234,178,.30),transparent 44%),
+    repeating-linear-gradient(135deg,transparent 0 19px,rgba(66,40,22,.13) 19px 21px),
+    linear-gradient(155deg,#d6b77d 0%,#93704b 46%,#3c2b24 100%);
+}
+.game-layout .player-roles .faction-portrait.underworld .faction-portrait-art{
+  background:
+    radial-gradient(ellipse at 52% 23%,rgba(194,157,223,.30),transparent 44%),
+    repeating-linear-gradient(135deg,transparent 0 19px,rgba(8,6,22,.23) 19px 21px),
+    linear-gradient(155deg,#8a719b 0%,#594664 46%,#241c30 100%);
+}
+.game-layout .player-roles .faction-portrait-pattern{
+  position:absolute;inset:9% 9% 23%;border:2px solid rgba(248,225,180,.34);
+  border-radius:45% 45% 7% 7%;box-shadow:0 0 0 5px rgba(41,24,18,.11),inset 0 0 35px rgba(28,17,15,.16);
+}
+.game-layout .player-roles .faction-portrait-pattern::before{
+  content:"✿";position:absolute;inset:0;display:grid;place-items:center;
+  font-family:serif;font-size:clamp(48px,32cqw,116px);color:rgba(255,230,176,.35);
+  text-shadow:0 3px 12px rgba(20,11,9,.25);
+}
+.game-layout .player-roles .faction-portrait.underworld .faction-portrait-pattern::before{
+  content:"影";color:rgba(220,195,237,.33);font-family:"Noto Serif JP",serif;
+}
+.game-layout .player-roles .faction-portrait .role-card-bottom{
+  position:absolute;inset:auto 0 0;z-index:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;
+  gap:clamp(2px,1.8cqw,7px);padding:clamp(17px,10cqw,38px) 3px clamp(4px,2.3cqw,9px);
+  background:linear-gradient(0deg,rgba(19,13,12,.98) 0%,rgba(19,13,12,.84) 47%,transparent 100%);
+  color:#fff2db;text-align:center;pointer-events:none;
+}
+.game-layout .player-roles .faction-portrait .role-card-bottom .role-card-name{
+  display:block;min-height:0!important;font-size:clamp(11px,7.6cqw,20px)!important;
+  font-weight:700;line-height:1.12;color:#fff1d8;text-shadow:0 1px 3px #000;
+}
+.game-layout .player-roles .faction-portrait .role-card-bottom .faction-mark{
+  display:inline-grid;place-items:center;margin:0;
+  width:clamp(18px,10.5cqw,27px);height:clamp(18px,10.5cqw,27px);
+  font-size:clamp(11px,6.3cqw,17px);background:#f2e1bf;
+}
+.game-layout .player-roles .faction-portrait .role-card-bottom small{
+  min-height:0;font-size:clamp(8px,4.3cqw,11px);color:#e7d6bb;line-height:1.1;
+}
+
+/* Hidden-card art refresh: portrait backs, subdued faction art, non-text emblems. */
+.game-layout .player-roles .room-role-card.default-hidden-portrait{
+  position:relative;display:block;overflow:hidden;isolation:isolate;
+  padding:0!important;gap:0!important;aspect-ratio:74 / 130;
+  height:auto!important;min-height:0!important;border:1px solid #a58156;
+  background:#241b20;
+}
+.game-layout .player-roles .default-hidden-art{
+  position:absolute;inset:0;background:url("/assets/icons/hidden-card.svg") center / cover no-repeat;
+}
+.game-layout .player-roles .default-hidden-portrait::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(11,9,12,.08),transparent 35%,rgba(12,9,13,.34));
+}
+.game-layout .player-roles .faction-portrait-art{filter:brightness(.72) saturate(.75)}
+.game-layout .player-roles .faction-portrait-pattern::before{
+  content:"";background:url("/assets/icons/order-emblem.svg") center / 72% auto no-repeat;
+  opacity:.58;filter:sepia(1) brightness(1.8);
+}
+.game-layout .player-roles .faction-portrait.underworld .faction-portrait-pattern::before{
+  content:"";background:url("/assets/icons/underworld-emblem.svg") center / 76% auto no-repeat;
+  opacity:.63;filter:brightness(1.6);
+}
+.game-layout .player-roles .faction-portrait .role-card-bottom .faction-symbol img{
+  display:block;width:85%;height:85%;object-fit:contain;
+}
+
+/* Hidden cards: retain the actual URAMAKU logo from the lobby ensemble. */
+.game-layout .player-roles .default-hidden-art{
+  background:
+    url("/assets/images/logo.png") center 48% / 91% auto no-repeat,
+    radial-gradient(ellipse at 50% 48%,rgba(143,43,41,.38),transparent 70%),
+    repeating-linear-gradient(145deg,transparent 0 17px,rgba(211,167,113,.065) 18px 19px),
+    linear-gradient(145deg,#4a2929 0%,#221a1d 53%,#141318 100%);
+}
+.game-layout .player-roles .default-hidden-portrait::before{
+  content:"";position:absolute;z-index:1;inset:5px;pointer-events:none;
+  border:1px solid rgba(217,165,94,.52);box-shadow:inset 0 0 0 3px rgba(18,13,14,.32);
+}
+.game-layout .player-roles .default-hidden-portrait::after{
+  background:linear-gradient(180deg,rgba(10,7,10,.13),transparent 36%,rgba(8,6,10,.23));
+}
+/* All action cards use a neutral, unfilled surface; held roles have no special tint. */
+.game-shell .game-actions-panel .action,
+.game-shell .game-actions-panel .action.held,
+.game-shell .game-actions-panel .action.bluff,
+.game-shell .game-actions-panel .action.neutral,
+.game-shell .game-actions-panel .action-preview{
+  background:transparent!important;
+  border:1px solid #ad9274!important;
+  box-shadow:none!important;
+  color:#392923;
+}
+.game-shell .game-actions-panel .action .action-role-label,
+.game-shell .game-actions-panel .action.held .action-role-label,
+.game-shell .game-actions-panel .action b,
+.game-shell .game-actions-panel .action.held b{
+  color:#392923!important;
+}
+.game-shell .game-actions-panel .action:hover:not(:disabled){
+  background:rgba(141,69,55,.10)!important;
+  border-color:#9d4b49!important;
+}
+.game-shell .game-actions-panel .action:disabled:not(.action-preview){opacity:.72}
+.game-shell .game-actions-panel .action-preview{opacity:.55}
+.game-shell .game-actions-panel .action:focus-visible{outline:2px solid #a22e39;outline-offset:2px}
+
+/* Shared faction footer and utility controls; transparent room chrome is mode-independent. */
+.game-layout .player-roles .faction-portrait .role-card-bottom{gap:clamp(5px,3cqw,10px);padding-bottom:clamp(9px,5cqw,18px)}
+.game-shell .game-layout .game-room-code,
+.game-shell .game-layout .game-actions-panel{
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#f6ead7!important;
+  border:1px solid #a78668!important;
+}
+.game-shell .game-layout .game-room-code .section-title,
+.game-shell .game-layout .game-actions-panel .section-title,
+.game-shell .game-layout .game-room-code strong{color:#f4e3c8!important}
+.game-shell .game-layout .game-room-code button,
+.game-shell .game-layout .game-actions-panel .actions-rules-bottom{
+  background:#eee0c9!important;color:#302224!important;border:1px solid #c7a780!important;
+}
+.game-shell .game-layout .game-actions-panel .action,
+.game-shell .game-layout .game-actions-panel .action.held,
+.game-shell .game-layout .game-actions-panel .action.bluff,
+.game-shell .game-layout .game-actions-panel .action.neutral,
+.game-shell .game-layout .game-actions-panel .action-preview{
+  color:#f5e7d5!important;background:transparent!important;border-color:#927869!important;
+}
+.game-shell .game-layout .game-actions-panel .action .action-role-label,
+.game-shell .game-layout .game-actions-panel .action b,
+.game-shell .game-layout .game-actions-panel .action.held .action-role-label,
+.game-shell .game-layout .game-actions-panel .action.held b{color:#f5e7d5!important}
+.game-shell .game-layout .game-actions-panel .action:hover:not(:disabled){background:rgba(234,202,170,.14)!important}
+.game-shell .game-layout .game-actions-panel .action:disabled{opacity:.62}
+
+/* Wider, image-led Actions cards with an accessible held-role outline. */
+.game-shell .game-layout .game-actions-panel .action{
+  grid-template-columns:clamp(64px,36cqw,112px) minmax(0,1fr)!important;
+  column-gap:clamp(7px,3cqw,14px)!important;
+  padding:clamp(3px,1.3cqw,7px)!important;
+}
+.game-shell .game-layout .game-actions-panel .action .action-portrait{
+  width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;
+  aspect-ratio:auto!important;object-fit:cover!important;align-self:stretch!important;
+  border:1px solid #bda27c;
+}
+.game-shell .game-layout .game-actions-panel .action .action-role-label{font-size:clamp(13px,5.6cqw,19px)!important}
+.game-shell .game-layout .game-actions-panel .action b{font-size:clamp(12px,5cqw,17px)!important}
+.game-shell .game-layout .game-actions-panel .action.neutral b{grid-row:2!important;align-self:start!important}
+.game-shell .game-layout .game-actions-panel .action.held{
+  border:2px solid #d8a354!important;
+  box-shadow:inset 0 0 0 1px rgba(245,208,136,.35),0 0 0 1px rgba(216,163,84,.22)!important;
+}
+/* Owned actions keep the distinct held-role border without a checkmark. */
+.game-shell .game-layout .game-actions-panel .action{position:relative}
+.game-shell .game-layout .game-actions-panel .action.held .action-role-label{padding-right:0}
+@container (max-width:175px){.game-shell .game-layout .game-actions-panel .action{grid-template-columns:48px minmax(0,1fr)!important}}
+
+/* Faction backs: one subdued URAMAKU crest, with faction-specific tint preserved. */
+.game-layout .player-roles .faction-portrait-pattern::before,
+.game-layout .player-roles .faction-portrait.underworld .faction-portrait-pattern::before{
+  content:"";
+  background:url("/assets/images/logo.png") center 45% / 84% auto no-repeat;
+  opacity:.38;
+  filter:grayscale(.38) brightness(.78) saturate(.66);
+}
+.game-layout .player-roles .faction-portrait.underworld .faction-portrait-pattern::before{
+  opacity:.34;
+  filter:grayscale(.24) brightness(.76) saturate(.58);
+}
+/* Keep the reference control legible against the dark Actions panel. */
+.game-shell .game-layout .game-actions-panel .actions-rules-bottom{
+  font-weight:800!important;
+  letter-spacing:.015em;
+}
+
+/* Fix narrow Earn/Purge cards: keep art and text in the same row. */
+.game-shell .game-layout .game-actions-panel .action.neutral{
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr);
+  align-items:stretch;
+  min-height:0;
+}
+.game-shell .game-layout .game-actions-panel .action.neutral .action-portrait{
+  grid-column:1;grid-row:1 / span 2;
+  min-height:0;
+}

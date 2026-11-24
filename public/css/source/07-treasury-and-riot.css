@@ -1,0 +1,69 @@
+/* Treasury details sit between the board title and chat control.
+   Grid side columns are equal, so the treasury block stays truly centered. */
+.game-shell .game-layout .game-players-panel .game-board-header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;margin:0 0 12px;min-height:34px;
+}
+.game-shell .game-layout .game-players-panel .game-board-header.has-treasury{
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  column-gap:clamp(8px,1.5vw,20px);
+}
+.game-shell .game-layout .game-players-panel .game-board-header .section-title{
+  margin:0;min-width:0;
+}
+.game-shell .game-layout .game-players-panel .game-board-controls{
+  justify-self:end;justify-content:flex-end;margin:0;
+}
+.game-shell .game-layout .game-players-panel .game-board-treasury{
+  justify-self:center;display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:2px;min-width:0;line-height:1.25;
+  font-size:clamp(10px,.8vw,12px);color:#5d4834;
+}
+.game-shell .game-layout .game-players-panel .game-board-treasury strong{color:#654323}
+.game-shell .game-layout .game-players-panel .game-board-treasury.is-riot .board-treasury-balance strong{color:#a32a27}
+@media(max-width:1000px){
+  .game-shell .game-layout .game-players-panel .game-board-header.has-treasury{
+    grid-template-columns:minmax(0,1fr) auto;
+    row-gap:8px;
+  }
+  .game-shell .game-layout .game-players-panel .game-board-treasury{
+    grid-column:1/-1;grid-row:2;justify-self:center;
+  }
+  .game-shell .game-layout .game-players-panel .game-board-header .game-board-controls{grid-column:2;grid-row:1}
+}
+
+/* Riot swaps Earn for Loot and Purge for Overthrow without changing card height. */
+.game-shell .game-layout .game-actions-panel .action.riot-loot:not(:disabled){border-color:#dcb66b!important}
+.game-shell .game-layout .game-actions-panel .action.riot-overthrow{
+  border-color:#cb9c50!important;
+  box-shadow:inset 0 0 0 1px #9f6833,0 0 8px rgba(224,160,70,.27)!important;
+}
+.game-shell .game-layout .game-actions-panel .action.riot-overthrow b{
+  flex-direction:column!important;flex-wrap:nowrap!important;
+  gap:2px!important;line-height:1.1!important;
+}
+.game-shell .game-layout .game-actions-panel .action.forced-purge{border-color:#ead19b!important;box-shadow:0 0 12px rgba(235,188,100,.43)!important}
+
+/* Unrevealed opponent cards use art alone; only an owner's known role card
+   displays Hidden to indicate that its identity is still concealed from others. */
+.game-layout .player-roles .default-hidden-portrait .neutral-hidden-bottom{display:none!important}
+
+/* Center the mandatory-Purge explanation on the actual player board, not
+   the viewport. Closing the notice leaves all target cards selectable. */
+.game-layout .game-players-panel .forced-purge-explainer{
+  position:absolute;z-index:25;top:50%;left:50%;right:auto;
+  transform:translate(-50%,-50%);
+  width:min(360px,calc(100% - 24px));max-height:min(75vh,calc(100% - 24px));overflow-y:auto;
+  box-sizing:border-box;padding:15px 17px;
+  border:2px solid #9d4934;border-radius:8px;
+  color:#44291e;background:#f6e6ca;box-shadow:0 15px 45px #100a0870;
+  animation:mandatory-purge-appear .2s ease-out;
+}
+.forced-purge-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;color:#8c2a22}
+.forced-purge-heading strong{font-size:1.02rem}
+.forced-purge-heading button{font:20px/1 sans-serif;min-width:30px;min-height:30px;padding:0;color:#65442f;background:transparent;border:1px solid #a88b68;border-radius:4px}
+.forced-purge-heading button:hover{background:#e7cfad;color:#62271f}
+.forced-purge-explainer p{font-size:13px;line-height:1.45;margin:7px 0}
+.game-layout .target-select-hint.is-compulsory{border-color:#a34732;background:#f9dfc7;color:#6e2d22}
+@keyframes mandatory-purge-appear{from{opacity:0;transform:translate(-50%,calc(-50% - 12px))}to{opacity:1;transform:translate(-50%,-50%)}}
+@media(max-width:760px){.game-layout .game-players-panel .forced-purge-explainer{padding:12px 14px;max-height:min(70vh,calc(100% - 24px))}}

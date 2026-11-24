@@ -1,0 +1,15 @@
+node_modules/
+.DS_Store
+npm-debug.log*
+.env
+
+# Private runtime state (never include in source archives)
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Portable backup files and benchmark output can contain private runtime state
+backups/
+load-results/
+*.sqlite-journal

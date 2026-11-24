@@ -1,0 +1,15 @@
+node_modules
+.git
+.env
+.env.*
+data
+backups
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.zip
+.DS_Store
+npm-debug.log*
+test
+docs
+load-results

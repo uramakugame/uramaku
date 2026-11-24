@@ -1,0 +1,35 @@
+{
+  "name": "uramaku-browser-game",
+  "version": "0.1.0",
+  "private": true,
+  "description": "URAMAKU multiplayer hidden-role card game with English and Japanese localization",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node scripts/test.js && npm run test:css",
+    "test:gameplay": "node scripts/test.js gameplay",
+    "test:integration": "node scripts/test.js integration",
+    "test:ui": "node scripts/test.js ui",
+    "test:tutorial": "node scripts/test.js tutorial",
+    "test:localization": "node scripts/test.js localization",
+    "test:assets": "node scripts/test.js assets",
+    "test:economy": "node scripts/test.js economy",
+    "test:economy-stress": "node test/economy/random-matches.stress.test.js",
+    "build:css": "node scripts/build-css.js",
+    "test:css": "node scripts/build-css.js --check",
+    "db:backup": "node scripts/database-copy.js backup",
+    "db:restore": "node scripts/database-copy.js restore",
+    "test:load": "node scripts/load-test.js"
+  },
+  "dependencies": {
+    "express": "4.22.3",
+    "socket.io": "4.8.1"
+  },
+  "engines": {
+    "node": "26.x"
+  },
+  "devDependencies": {
+    "socket.io-client": "4.8.1"
+  }
+}

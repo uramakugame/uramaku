@@ -1,0 +1,82 @@
+/* Floating chat: independent of room state, with native corner resizing. */
+.chat-backdrop{position:fixed!important;inset:0;z-index:1500;background:transparent!important;display:block!important;padding:0!important;pointer-events:none!important}
+.chat-modal{position:fixed!important;pointer-events:auto!important;right:auto!important;bottom:auto!important;max-height:calc(100vh - 24px)!important;max-width:calc(100vw - 24px)!important;min-width:min(270px,calc(100vw - 24px));min-height:min(220px,calc(100vh - 24px));resize:both;overflow:hidden;display:flex;flex-direction:column;border:2px solid #ac8b60;box-shadow:0 18px 56px #090503bb;padding:0!important;gap:0!important;border-radius:8px}
+.chat-modal .chat-drag-handle{display:flex;align-items:center;gap:8px;min-height:43px;padding:8px 11px!important;margin:0!important;background:#ead5b5;border-bottom:1px solid var(--line);cursor:grab;touch-action:none;user-select:none}
+.chat-modal .chat-drag-handle:active{cursor:grabbing}
+.chat-modal .chat-drag-handle button{cursor:pointer;user-select:auto}
+.chat-window-hint{margin-left:auto;font:500 10px system-ui,sans-serif;color:#79634b;white-space:nowrap}
+.chat-modal .chat-messages{flex:1 1 auto;min-height:0!important;max-height:none!important;padding:11px;overflow-y:auto}
+.chat-modal .chat-compose{flex:0 0 auto;padding:10px;background:#f0e1c8;border-top:1px solid var(--line)}
+@media(max-width:540px){.chat-window-hint{display:none}.chat-modal .chat-drag-handle{min-height:38px}}
+/* Room code is a compact invitation ticket instead of competing with Current Turn. */
+.game-shell .game-layout .game-room-code{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:7px!important;padding:clamp(9px,1.15vw,15px)!important}
+.game-shell .game-layout .game-room-code .room-code-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0}
+.game-shell .game-layout .game-room-code .section-title{margin:0!important;font-size:clamp(9px,.72vw,12px);letter-spacing:.12em}
+.game-shell .game-layout .game-room-code .room-code-value{font-size:clamp(18px,1.7vw,27px)!important;line-height:1.1;letter-spacing:.13em;white-space:nowrap}
+.game-shell .game-layout .game-room-code .room-code-controls{display:flex;gap:6px;width:100%}
+.game-shell .game-layout .game-room-code .room-code-controls button{flex:1;min-width:0;padding:5px 4px;font-size:clamp(10px,.68vw,12px);white-space:normal}
+/* Only optional faction-visible matches show the emblems on influence cards. */
+.factions-off .game-players-panel .player-roles .faction-mark{display:none!important}
+/* Make target selection as attention-grabbing as challenge and counter prompts. */
+.game-shell .game-layout .action-flow.has-target-selection{border-left:4px solid #a32e2b!important;background:#fff0df!important;box-shadow:0 0 0 2px #a32e2b30!important}
+.game-shell .action-flow.has-target-selection .target-selection-decision .game-decision-panel{border-color:#a32e2b!important}
+/* Give horizontal action names slightly more presence at full widths. */
+@media(min-width:960px){.game-shell .game-layout .game-actions-panel .action b{font-size:calc(clamp(11px,6.4cqw,18px) + 2pt)!important}}
+/* Winner can close the announcement or return immediately to lobby. */
+.victory-panel .victory-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+/* Announcements are centered over the board by the shared room positioning helper.
+   No bottom-left override: the board's visible bounds are used on all screens. */
+
+/* Shared room chrome: the background art stays visible behind the Actions and Room Code panels. */
+.game-shell .game-layout .game-actions-panel,
+.game-shell .game-layout .game-room-code{background:transparent!important;box-shadow:none!important}
+/* The shared action-art frame has the same bottom shadow as an influence portrait. */
+.game-shell .game-layout .game-actions-panel .action{position:relative;isolation:isolate}
+.game-shell .game-layout .game-actions-panel .action:not(.neutral) .action-portrait{filter:brightness(.88);mask-image:linear-gradient(to bottom,#000 0%,#000 54%,rgba(0,0,0,.72) 76%,rgba(0,0,0,.4) 100%)}
+/* All card-based selections use the same overlay affordance (loss or conceal). */
+.game-shell .room-role-card:is(.selectable-loss,.selectable-conceal,.selectable-replace){cursor:pointer!important;position:relative;outline:2px solid #b58b43;outline-offset:1px;transition:filter .15s,transform .15s}
+.game-shell .room-role-card:is(.selectable-loss,.selectable-conceal,.selectable-replace):hover,
+.game-shell .room-role-card:is(.selectable-loss,.selectable-conceal,.selectable-replace):focus-visible{filter:brightness(.65);transform:translateY(-2px);outline:3px solid #ecc680}
+.game-shell .room-role-card:is(.selectable-loss,.selectable-conceal,.selectable-replace) .influence-choice-overlay{
+  position:absolute;inset:0;z-index:10;display:grid;place-items:center;padding:9px;text-align:center;
+  color:#fff0dd;background:#180c0cd4;opacity:0;font-size:clamp(10px,1vw,14px);font-weight:800;
+  line-height:1.3;transition:opacity .15s;pointer-events:none;
+}
+.game-shell .room-role-card:is(.selectable-loss,.selectable-conceal,.selectable-replace):hover .influence-choice-overlay,
+.game-shell .room-role-card:is(.selectable-loss,.selectable-conceal,.selectable-replace):focus-visible .influence-choice-overlay{opacity:1}
+.decision-dialog{width:min(calc(100% - 32px),430px);margin:auto}
+.decision-dialog::backdrop{background:#000b}
+.decision-dialog .decision-buttons{flex-wrap:wrap}
+.game-shell .room-role-card.conceal-not-eligible{filter:saturate(.6) brightness(.84)}
+
+/* Persistent bilingual toggle immediately to the left of chat. */
+.language-toggle{display:inline-flex!important;align-items:center;justify-content:center;gap:5px;min-width:96px;min-height:31px;border:1px solid #a58eac!important;border-radius:6px;background:#342e3c!important;color:#e1dce6!important;padding:4px 7px!important;white-space:nowrap;font:700 11px/1.1 system-ui,sans-serif;letter-spacing:.02em;flex-shrink:0}
+.language-toggle .language-option{opacity:.65;transition:opacity .15s;color:#e1dce6}
+.language-toggle .language-option.is-active{color:#fff9ff;opacity:1;text-decoration:underline;text-underline-offset:3px}
+.language-toggle .language-switch-arrow{font-size:13px;color:#bdaec6}
+.language-toggle:hover,.language-toggle:focus-visible{border-color:#f2e8f5!important;box-shadow:0 0 0 2px #c7b5d646}
+.lobby-roster-tools,.game-board-controls{display:flex;align-items:center;gap:8px}
+.lobby-entry-actions .language-toggle{min-width:96px}
+@media(max-width:520px){.language-toggle{min-width:83px;gap:3px;padding:4px!important}}
+
+/* Compact paired notes below the Game Guide general actions. */
+.rules-reference-body .basic-action-notes{display:grid;gap:4px;margin-top:8px}
+.rules-reference-body .basic-action-notes .howto-note{margin:0;padding:8px 12px}
+/* Both entry and room lobbies place language selection last, centered with their controls. */
+.lobby-entry-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap}
+.lobby-entry-actions>button:not(.language-toggle){flex:1 1 190px;max-width:310px}
+.lobby-entry-actions>.language-toggle{order:3;flex:0 0 auto;align-self:center;min-height:38px!important;box-shadow:none}
+.lobby-roster-tools{justify-content:center!important}
+.lobby-roster-tools>.language-toggle{order:3}
+@media(max-width:490px){.lobby-entry-actions{flex-direction:column}.lobby-entry-actions>button:not(.language-toggle){flex:auto;width:100%;max-width:none}.lobby-entry-actions>.language-toggle{width:auto}}
+
+/* Welcome lobby: Create and Join share the first row; language sits centered beneath. */
+.lobby-entry-actions{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:13px}
+.lobby-entry-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;width:100%}
+.lobby-entry-buttons>button{width:100%;min-width:0}
+.lobby-entry-language{display:flex;align-items:center;justify-content:center;width:100%}
+.lobby-entry-language>.language-toggle{font-size:11px!important;min-width:96px;min-height:38px!important;padding:4px 7px!important;flex:none}
+@media(max-width:490px){.lobby-entry-buttons{grid-template-columns:1fr;gap:10px}}
+
+/* Final card artwork uses centered faces across the shared portrait components. */
+img[src*="/assets/portraits/"]{object-position:50% 20%!important}

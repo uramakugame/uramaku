@@ -1,0 +1,353 @@
+{
+  "at": "2026-11-24T04:58:32.753Z",
+  "node": "v26.13.0",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M3 Pro",
+  "logicalCpus": 11,
+  "totalMemoryGiB": 18,
+  "method": "Local isolated Node server, SQLite WAL/FULL on local disk, real Socket.IO clients (90% WebSocket/10% polling), synthetic proxy/source IPs, normal abuse quotas, 4 seats per room, mixed Classic/Faction/Treasury. Generator shares host. Aggregate results contain no credentials or hands.",
+  "cases": [
+    {
+      "rooms": 25,
+      "playersPerRoom": 4,
+      "elapsedSeconds": 30.189,
+      "thinkMs": 300,
+      "seed": 20261124,
+      "commands": 3320,
+      "commandsPerSecond": 109.97383152804001,
+      "errors": 0,
+      "timeouts": 0,
+      "completedGames": 44,
+      "reconnects": 25,
+      "lobbyDepartures": 25,
+      "discoveryQueries": 69,
+      "events": {
+        "action": 811,
+        "passChallenge": 969,
+        "challenge": 162,
+        "declineCounter": 185,
+        "summonChoice": 27,
+        "loseInfluence": 178,
+        "counter": 79,
+        "intrigueReveal": 14,
+        "leaveRoom": 176,
+        "prepareEntry": 176,
+        "confirmEntry": 176,
+        "setRoomDetails": 44,
+        "listRooms": 44,
+        "ready": 132,
+        "startGame": 44,
+        "setRevealFactions": 14,
+        "setTreasuryMode": 14,
+        "chatMessage": 50,
+        "resumeSession": 25
+      },
+      "latencyMs": {
+        "p50": 2.221541000000798,
+        "p95": 8.886749999999665,
+        "p99": 13.314374999999927,
+        "max": 28.912000000000035
+      },
+      "actionLatencyMs": {
+        "p95": 9.688000000000102,
+        "p99": 19.72849999999994
+      },
+      "server": {
+        "peakConnections": 100,
+        "meanCpuCores": 0.14690624054834867,
+        "peakCpuCores": 0.19556004582252515,
+        "meanRssMiB": 85.891441599528,
+        "peakRssMiB": 111.56074523925781,
+        "eventLoopP95MaxMs": 23.052287
+      },
+      "database": {
+        "transactions": 3345,
+        "failures": 0,
+        "meanTransactionMs": 0.3679097955156895,
+        "p95TransactionUpperBoundMs": 1,
+        "maxTransactionMsIncludingSetup": 2.4630839999990712,
+        "fileBytes": 536576,
+        "walBytes": 4218912
+      },
+      "traffic": {
+        "stateJsonBytes": 70463575,
+        "commandJsonBytes": 449486,
+        "excludes": "Socket.IO framing, TLS, HTTP polling overhead and static asset downloads"
+      }
+    },
+    {
+      "rooms": 50,
+      "playersPerRoom": 4,
+      "elapsedSeconds": 30.196,
+      "thinkMs": 300,
+      "seed": 20261124,
+      "commands": 6622,
+      "commandsPerSecond": 219.30056961186912,
+      "errors": 0,
+      "timeouts": 0,
+      "completedGames": 88,
+      "reconnects": 50,
+      "lobbyDepartures": 50,
+      "discoveryQueries": 137,
+      "events": {
+        "action": 1618,
+        "challenge": 335,
+        "passChallenge": 1914,
+        "loseInfluence": 376,
+        "summonChoice": 49,
+        "counter": 176,
+        "declineCounter": 366,
+        "intrigueReveal": 16,
+        "leaveRoom": 348,
+        "prepareEntry": 348,
+        "confirmEntry": 348,
+        "setRoomDetails": 87,
+        "listRooms": 87,
+        "ready": 261,
+        "startGame": 87,
+        "chatMessage": 100,
+        "setRevealFactions": 29,
+        "resumeSession": 50,
+        "setTreasuryMode": 27
+      },
+      "latencyMs": {
+        "p50": 1.582125000000815,
+        "p95": 9.093417000003683,
+        "p99": 18.955666000001656,
+        "max": 39.77329199999804
+      },
+      "actionLatencyMs": {
+        "p95": 12.099624999995285,
+        "p99": 31.310041000004276
+      },
+      "server": {
+        "peakConnections": 200,
+        "meanCpuCores": 0.19303393839775,
+        "peakCpuCores": 0.29169666025731006,
+        "meanRssMiB": 111.56998214721679,
+        "peakRssMiB": 128.40614318847656,
+        "eventLoopP95MaxMs": 24.821759
+      },
+      "database": {
+        "transactions": 6672,
+        "failures": 0,
+        "meanTransactionMs": 0.25740388504196826,
+        "p95TransactionUpperBoundMs": 1,
+        "maxTransactionMsIncludingSetup": 2.7958330000001297,
+        "fileBytes": 987136,
+        "walBytes": 4239512
+      },
+      "traffic": {
+        "stateJsonBytes": 141629741,
+        "commandJsonBytes": 898953,
+        "excludes": "Socket.IO framing, TLS, HTTP polling overhead and static asset downloads"
+      }
+    },
+    {
+      "rooms": 100,
+      "playersPerRoom": 4,
+      "elapsedSeconds": 30.252,
+      "thinkMs": 300,
+      "seed": 20261124,
+      "commands": 13209,
+      "commandsPerSecond": 436.63228877429594,
+      "errors": 0,
+      "timeouts": 0,
+      "completedGames": 175,
+      "reconnects": 100,
+      "lobbyDepartures": 100,
+      "discoveryQueries": 272,
+      "events": {
+        "action": 3244,
+        "passChallenge": 3799,
+        "challenge": 693,
+        "summonChoice": 122,
+        "loseInfluence": 736,
+        "counter": 374,
+        "declineCounter": 701,
+        "intrigueReveal": 31,
+        "leaveRoom": 688,
+        "prepareEntry": 688,
+        "confirmEntry": 688,
+        "setRoomDetails": 172,
+        "setTreasuryMode": 55,
+        "listRooms": 172,
+        "ready": 516,
+        "setRevealFactions": 58,
+        "startGame": 172,
+        "chatMessage": 200,
+        "resumeSession": 100
+      },
+      "latencyMs": {
+        "p50": 1.7200410000077682,
+        "p95": 9.485332999989623,
+        "p99": 22.20958399999654,
+        "max": 52.44566599999962
+      },
+      "actionLatencyMs": {
+        "p95": 12.009749999997439,
+        "p99": 39.742874999996275
+      },
+      "server": {
+        "peakConnections": 400,
+        "meanCpuCores": 0.3296972654571915,
+        "peakCpuCores": 0.5182763405785968,
+        "meanRssMiB": 140.47105229695637,
+        "peakRssMiB": 150.89374542236328,
+        "eventLoopP95MaxMs": 26.230783
+      },
+      "database": {
+        "transactions": 13309,
+        "failures": 0,
+        "meanTransactionMs": 0.21553214253514325,
+        "p95TransactionUpperBoundMs": 0.5,
+        "maxTransactionMsIncludingSetup": 6.039708000000246,
+        "fileBytes": 1826816,
+        "walBytes": 4367232
+      },
+      "traffic": {
+        "stateJsonBytes": 284161354,
+        "commandJsonBytes": 1797061,
+        "excludes": "Socket.IO framing, TLS, HTTP polling overhead and static asset downloads"
+      }
+    },
+    {
+      "rooms": 200,
+      "playersPerRoom": 4,
+      "elapsedSeconds": 30.303,
+      "thinkMs": 300,
+      "seed": 20261124,
+      "commands": 26014,
+      "commandsPerSecond": 858.4628584628584,
+      "errors": 0,
+      "timeouts": 0,
+      "completedGames": 326,
+      "reconnects": 200,
+      "lobbyDepartures": 200,
+      "discoveryQueries": 522,
+      "events": {
+        "action": 6308,
+        "passChallenge": 7831,
+        "challenge": 1305,
+        "summonChoice": 274,
+        "declineCounter": 1408,
+        "loseInfluence": 1441,
+        "counter": 768,
+        "intrigueReveal": 70,
+        "leaveRoom": 1288,
+        "prepareEntry": 1288,
+        "confirmEntry": 1288,
+        "setRoomDetails": 322,
+        "listRooms": 322,
+        "ready": 966,
+        "startGame": 322,
+        "setRevealFactions": 109,
+        "setTreasuryMode": 104,
+        "chatMessage": 400,
+        "resumeSession": 200
+      },
+      "latencyMs": {
+        "p50": 1.1563749999913853,
+        "p95": 8.440667000002577,
+        "p99": 30.06462499999907,
+        "max": 83.4979170000006
+      },
+      "actionLatencyMs": {
+        "p95": 14.040540999994846,
+        "p99": 58.5877499999915
+      },
+      "server": {
+        "peakConnections": 800,
+        "meanCpuCores": 0.5133209127739655,
+        "peakCpuCores": 0.6467834574760554,
+        "meanRssMiB": 246.66589965820313,
+        "peakRssMiB": 300.6139907836914,
+        "eventLoopP95MaxMs": 24.100863
+      },
+      "database": {
+        "transactions": 26214,
+        "failures": 0,
+        "meanTransactionMs": 0.1725175132371981,
+        "p95TransactionUpperBoundMs": 0.25,
+        "maxTransactionMsIncludingSetup": 5.312416999999186,
+        "fileBytes": 3792896,
+        "walBytes": 4383712
+      },
+      "traffic": {
+        "stateJsonBytes": 567091321,
+        "commandJsonBytes": 3568907,
+        "excludes": "Socket.IO framing, TLS, HTTP polling overhead and static asset downloads"
+      }
+    }
+  ],
+  "slowerPace": {
+    "rooms": 50,
+    "playersPerRoom": 4,
+    "elapsedSeconds": 60.475,
+    "thinkMs": 2000,
+    "seed": 20261124,
+    "commands": 1912,
+    "commandsPerSecond": 31.616370400992146,
+    "errors": 0,
+    "timeouts": 0,
+    "completedGames": 8,
+    "reconnects": 50,
+    "lobbyDepartures": 50,
+    "discoveryQueries": 56,
+    "events": {
+      "action": 457,
+      "passChallenge": 632,
+      "challenge": 111,
+      "summonChoice": 19,
+      "loseInfluence": 113,
+      "declineCounter": 106,
+      "counter": 57,
+      "chatMessage": 250,
+      "intrigueReveal": 5,
+      "resumeSession": 50,
+      "leaveRoom": 24,
+      "prepareEntry": 24,
+      "confirmEntry": 24,
+      "setRoomDetails": 6,
+      "listRooms": 6,
+      "ready": 18,
+      "startGame": 6,
+      "setRevealFactions": 3,
+      "setTreasuryMode": 1
+    },
+    "latencyMs": {
+      "p50": 3.2027080000007118,
+      "p95": 14.604417000000012,
+      "p99": 16.966583000001265,
+      "max": 30.200916000000234
+    },
+    "actionLatencyMs": {
+      "p95": 15.687916999999288,
+      "p99": 18.85758399999986
+    },
+    "server": {
+      "peakConnections": 200,
+      "meanCpuCores": 0.03463955972772693,
+      "peakCpuCores": 0.13530526673730933,
+      "meanRssMiB": 100.74904795162013,
+      "peakRssMiB": 119.10844421386719,
+      "eventLoopP95MaxMs": 22.380543
+    },
+    "database": {
+      "transactions": 1962,
+      "failures": 0,
+      "meanTransactionMs": 0.259760140672764,
+      "p95TransactionUpperBoundMs": 1,
+      "maxTransactionMsIncludingSetup": 3.0956250000017462,
+      "fileBytes": 929792,
+      "walBytes": 4157112
+    },
+    "traffic": {
+      "stateJsonBytes": 47331964,
+      "commandJsonBytes": 274410,
+      "excludes": "Socket.IO framing, TLS, HTTP polling overhead and static asset downloads"
+    }
+  },
+  "slowerPaceAt": "2026-11-24T05:01:22.989Z"
+}

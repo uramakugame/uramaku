@@ -1,0 +1,160 @@
+{
+  "edition": "Warmer user-supplied portraits and rooftop banner, 2026-11-20",
+  "roles": [
+    {
+      "roleId": "lord",
+      "role": "Lord",
+      "sourceFile": "All_Cards_Warmer.png",
+      "sourceSHA256": "f3464141a91838e13fd6ae0055eeb68a4bc96c752b7ec1d99966f5c7fee1cd6a",
+      "crop": "Artwork crop from warmer card sheet, excluding the surrounding gutters, printed title and rules",
+      "asset": "/assets/portraits/lord.jpg",
+      "dimensionsPx": [
+        620,
+        670
+      ],
+      "bytes": 168069,
+      "sourceDimensionsPx": [
+        2048,
+        1861
+      ],
+      "cropBoxPx": [
+        714,
+        31,
+        1334,
+        701
+      ],
+      "assetSHA256": "223afab134066cb1006941bbf95c26ae4a5a808bb247225f48db6afd1f8e327d"
+    },
+    {
+      "roleId": "courtesan",
+      "role": "Courtesan",
+      "sourceFile": "All_Cards_Warmer.png",
+      "sourceSHA256": "f3464141a91838e13fd6ae0055eeb68a4bc96c752b7ec1d99966f5c7fee1cd6a",
+      "crop": "Artwork crop from warmer card sheet, excluding the surrounding gutters, printed title and rules",
+      "asset": "/assets/portraits/courtesan.jpg",
+      "dimensionsPx": [
+        620,
+        670
+      ],
+      "bytes": 175351,
+      "sourceDimensionsPx": [
+        2048,
+        1861
+      ],
+      "cropBoxPx": [
+        714,
+        962,
+        1334,
+        1632
+      ],
+      "assetSHA256": "0c26d98f2055f3ec7980f9f26e98d777467f377bf958f7ca8a543b89d14db949"
+    },
+    {
+      "roleId": "assassin",
+      "role": "Assassin",
+      "sourceFile": "All_Cards_Warmer.png",
+      "sourceSHA256": "f3464141a91838e13fd6ae0055eeb68a4bc96c752b7ec1d99966f5c7fee1cd6a",
+      "crop": "Artwork crop from warmer card sheet, excluding the surrounding gutters, printed title and rules",
+      "asset": "/assets/portraits/assassin.jpg",
+      "dimensionsPx": [
+        620,
+        670
+      ],
+      "bytes": 164139,
+      "sourceDimensionsPx": [
+        2048,
+        1861
+      ],
+      "cropBoxPx": [
+        1396,
+        962,
+        2016,
+        1632
+      ],
+      "assetSHA256": "05a15260c706612a6ac8f3b925804bba69070ae9c0a6b9b73dadac05c14cd043"
+    },
+    {
+      "roleId": "swordsman",
+      "role": "Swordsman",
+      "sourceFile": "All_Cards_Warmer.png",
+      "sourceSHA256": "f3464141a91838e13fd6ae0055eeb68a4bc96c752b7ec1d99966f5c7fee1cd6a",
+      "crop": "Artwork crop from warmer card sheet, excluding the surrounding gutters, printed title and rules",
+      "asset": "/assets/portraits/swordsman.jpg",
+      "dimensionsPx": [
+        620,
+        670
+      ],
+      "bytes": 166595,
+      "sourceDimensionsPx": [
+        2048,
+        1861
+      ],
+      "cropBoxPx": [
+        1396,
+        31,
+        2016,
+        701
+      ],
+      "assetSHA256": "c7910c7a1cf5e22cf1b5ebc870a9ff3b09d2a0fc372f1d26a367b115130d7feb"
+    },
+    {
+      "roleId": "kingpin",
+      "role": "Kingpin",
+      "sourceFile": "All_Cards_Warmer.png",
+      "sourceSHA256": "f3464141a91838e13fd6ae0055eeb68a4bc96c752b7ec1d99966f5c7fee1cd6a",
+      "crop": "Artwork crop from warmer card sheet, excluding the surrounding gutters, printed title and rules",
+      "asset": "/assets/portraits/kingpin.jpg",
+      "dimensionsPx": [
+        620,
+        670
+      ],
+      "bytes": 181324,
+      "sourceDimensionsPx": [
+        2048,
+        1861
+      ],
+      "cropBoxPx": [
+        31,
+        962,
+        651,
+        1632
+      ],
+      "assetSHA256": "4cd340f981dd8d3e7a3890d846f32bb09868ef7c6b49caf16f85632bb978d242"
+    },
+    {
+      "roleId": "magistrate",
+      "role": "Magistrate",
+      "sourceFile": "All_Cards_Warmer.png",
+      "sourceSHA256": "f3464141a91838e13fd6ae0055eeb68a4bc96c752b7ec1d99966f5c7fee1cd6a",
+      "crop": "Artwork crop from warmer card sheet, excluding the surrounding gutters, printed title and rules",
+      "asset": "/assets/portraits/magistrate.jpg",
+      "dimensionsPx": [
+        620,
+        670
+      ],
+      "bytes": 170705,
+      "sourceDimensionsPx": [
+        2048,
+        1861
+      ],
+      "cropBoxPx": [
+        31,
+        31,
+        651,
+        701
+      ],
+      "assetSHA256": "f1fe853508a9b5584797e7c7ca27afec5a9219ea7e711fe0dcc1022e650d2c47"
+    }
+  ],
+  "banner": {
+    "sourceFile": "URAMAKU six-character rooftop banner(1).png",
+    "sourceSHA256": "bf5746c9e8bd11362e2afc478c0992002f1e3069cd5742630db295d9ba4f0614",
+    "asset": "/assets/images/lobby-banner.png",
+    "dimensionsPx": [
+      1774,
+      887
+    ],
+    "assetSHA256": "bf5746c9e8bd11362e2afc478c0992002f1e3069cd5742630db295d9ba4f0614",
+    "bytes": 4001428
+  }
+}
