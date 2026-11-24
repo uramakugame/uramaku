@@ -1,6 +1,6 @@
 # Railway deployment preparation — Stage E
 
-Prepared 24 November 2026. This package does not create a Railway project or deploy the game. Complete a small private smoke test before sharing a public URL.
+Prepared 24 November 2026. URAMAKU is running on Railway Trial at `https://uramakugame.com`. HTTPS, health and polling-handshake checks passed; the owner confirmed gameplay, reconnection, restart persistence and public/private discovery. This guide covers the service settings and remaining checks before broader testing. Scheduled backups are intentionally disabled; spending alerts are deferred until the move to Hobby.
 
 ## Architecture and source
 
@@ -27,19 +27,24 @@ Railway's current documentation deprecates `railway.json`/`railway.toml` config-
 | `HOST` | `0.0.0.0` | Already the image default |
 | `PORT` | Railway provided | Do not pin it to the local port |
 | `ALLOWED_ORIGINS` | Empty initially | Browser Socket.IO requests must match the request host; production origins require HTTPS |
-| `TRUSTED_PROXY_HOPS` | `0` until verified | See the proxy gate below |
+| `TRUST_RAILWAY_PROXY` | `1` on Railway HTTP edge | Use Railway's validated `X-Real-IP`; requires a Railway-provided project/environment marker |
+| `TRUSTED_PROXY_HOPS` | `0` | Keep zero when Railway mode is enabled; reserved for a different verified fixed proxy path |
 | `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `10` | Time for graceful socket closure and SQLite checkpoint |
 | `RAILWAY_DEPLOYMENT_OVERLAP_SECONDS` | `0` | One writer/instance with the volume |
 
 `.env.example` is a reference, not an automatically loaded file. Put variables in Railway's Variables panel. The existing room/request limits are documented in `hosting-stage-d.md`; leave them unchanged for initial testing.
 
-## Proxy validation: required before public opening
+## Client IPs and the Railway edge
 
-Railway terminates HTTPS before requests reach Node. The IP quota code intentionally ignores forwarded IP headers by default. With `TRUSTED_PROXY_HOPS=0`, users behind the same platform proxy can share the 128-connection/IP ceiling and request buckets. This is safe for initial private testing but is not a finished public traffic configuration.
+Railway terminates HTTPS before requests reach Node. By default the quota code uses the socket peer, so players behind a platform proxy can share the 128-connection/IP ceiling and creation/entry/request buckets. This can reject unrelated players under load.
 
-During the first private deployment, inspect the actual peer and `X-Forwarded-For` chain in a temporary, access-restricted diagnostic deployment/log, using clients on two different networks. Verify that Railway appends/overwrites the trusted right-hand end. Repeat with an intentionally forged left-hand value; it must not control the selected IP. Remove diagnostics before public opening. If there is exactly one trusted appending proxy, set `TRUSTED_PROXY_HOPS=1`; otherwise use the verified fixed hop count. A direct route around that proxy must remain unavailable. Adding Cloudflare or another proxy requires repeating this check.
+After deploying the Railway-IP update, set `TRUST_RAILWAY_PROXY=1` and leave `TRUSTED_PROXY_HOPS=0`. This uses Railway's documented `X-Real-IP` header instead of assuming a fixed `X-Forwarded-For` chain. It accepts one valid IPv4/IPv6 address, normalizes IPv4-mapped addresses and falls back to the peer for missing or invalid values. Comma-separated chains and zone-qualified addresses are rejected. The flag fails startup outside a Railway-marked environment or if combined with fixed-hop mode. IPs stay in the existing bounded in-memory quota map; they are not added to database snapshots, public responses or logs.
 
-The local load tests use an explicit one-hop model and distinct synthetic client addresses. They verify that the existing quota implementation works under that model; they cannot establish Railway's actual forwarding topology. This is an outstanding live-platform check, not a reason to disable quotas or increase them to hide a shared-IP issue.
+Enable this only for ingress through Railway's HTTP edge. Do not expose a direct TCP path around the edge or enable the flag for localhost/ngrok. The generic fixed-hop option remains available for other independently verified proxy paths. Introducing an external CDN changes which network the edge sees and needs a separate review.
+
+Railway's official [networking specifications](https://docs.railway.com/networking/public-networking/specs-and-limits) document `X-Real-IP` as the client's remote IP. A 24 November check of the public diagnostic endpoint linked by Railway support showed that the edge replaced forged `X-Real-IP` and `X-Forwarded-For` inputs; its forwarding chain contained multiple addresses. That confirms the preference for the dedicated header, but it is not an inspection of this service's incoming headers. Local unit and real polling/WebSocket tests simulate the edge and verify independent clients, same-IP limits, missing/invalid headers and disconnect release. Test from separate networks on the deployed app before expanding public traffic.
+
+The earlier 25/50/100/200-room load results used an isolated one-hop model. They remain measurements of the original snapshot/transport workload, not a new load measurement of the Railway-header adapter or a guarantee of live-platform capacity.
 
 After generating the final domain, optionally set `ALLOWED_ORIGINS=https://YOUR-DOMAIN` (comma-separated HTTPS origins for multiple approved domains). A cross-origin browser handshake is then refused. Origin checks supplement token authorization; native clients without an Origin header still require valid membership, commands and quotas. Health checks do not pass through the browser-origin restriction.
 
@@ -50,7 +55,7 @@ After generating the final domain, optionally set `ALLOWED_ORIGINS=https://YOUR-
 - Refresh and navigate away/back in the same tab: the original seat and private state must return. A token from another room must not recover that seat. A new tab has a separate identity; closing a tab is not guaranteed recovery.
 - Restart/redeploy during a timed claim: the original deadline continues. Repeat during Summon plus a challenger penalty, Intrigue concealment and counter resolution. Reconnect all clients and check private hands/intel are still private.
 - Disconnect a guest; owner Kick should forfeit their remaining influences and disappear afterward. Check empty lobby cleanup after five minutes; completed empty rooms should disappear; offline active games must survive.
-- Create a backup, restore it to a fresh filename in a private test deployment and reconnect a test seat. Check Railway memory/CPU/volume graphs and error logs. Verify the actual proxy configuration above before opening public discovery to general traffic.
+- Check Railway memory/CPU/volume graphs and error logs. Use clients on different networks to test public entry after enabling Railway IP mode. A backup/restore rehearsal is optional for this beta; restart persistence on the attached volume is the required recovery check.
 
 `/health` checks application/SQLite readiness and returns 503 during shutdown or a recorded storage write failure. Railway's deployment health check is a startup/readiness check, not ongoing uptime monitoring. It reveals only readiness and room count. Add an external uptime check later if desired.
 
@@ -60,11 +65,11 @@ The store creates schema version 1 on a new database inside the volume. Existing
 
 SIGTERM stops maintenance/timers, closes Socket.IO and checkpoints/closes SQLite. An abrupt kill still relies on SQLite WAL recovery and committed snapshots. Railway volumes attach to one active deployment at a time, so a deploy can have a brief disconnect/downtime even with health checks. Plan for reconnect, not zero downtime. Never scale this SQLite/volume service to multiple writers.
 
-Before updating, make a backup and run the tests. Deploy compatible code against the same volume/path. Roll back source only when that source understands the saved schema/snapshots. Restoring a database rolls back all games to its timestamp; announce maintenance before doing that. Do not copy an older local `data/` directory over a live volume.
+Before updating, run the tests and deploy compatible code against the same volume/path. The attached volume preserves games during ordinary updates and redeployments. A manual backup is optional when preserving unfinished matches through a risky state/schema change matters. Roll back source only when that source understands the saved schema/snapshots. Restoring a database rolls back all games to its timestamp; announce maintenance before doing that. Do not copy an older local `data/` directory over a live volume.
 
 ## Backups and recovery
 
-Enable daily Railway volume backups and a weekly schedule if desired. Make a manual backup before each production update. Railway backups stay within the project/environment; an independent encrypted off-volume copy is useful for disaster recovery. Volume backups, portable exports and credentials contain private game state and must never be put under `public/` or committed to Git.
+Scheduled backups are not required for this beta. The owner accepts losing unfinished matches if the database is damaged; persistent storage covers ordinary code updates/redeployments. The optional manual tools below remain available for a future state/schema change. Backups contain private game state and must never be put under `public/` or committed to Git. Railway volume backups stay within the project/environment; wiping a volume also deletes its associated backups.
 
 For a portable consistent SQLite export, execute **inside the running service/container that has the volume**, using Railway SSH or its supported shell access:
 
@@ -84,13 +89,13 @@ This validates and writes a **new** independent database; it never overwrites th
 
 ## Budget and launch gates
 
-Start on Hobby, one service and one volume, with usage notifications around the $5–10 monthly target. A hard spending cap, if chosen, can stop games; it is a budget tradeoff rather than a reliability feature. See the measured scenarios in `load-test-report.md`. Local benchmarks do not prove a Railway instance size or monthly bill; repeat 25/50-room activity against a private Railway deployment and watch its actual CPU/RAM/egress before advertising capacity.
+Continue testing on the current Trial and monitor its remaining credits. Move to Hobby for ongoing hosting with the $5–10 monthly target; configure the proposed $8 Compute email alert when that control is available on the paid workspace. The alert is not a spending cap. A separate hard cap, if chosen, stops workloads when reached. See the measured scenarios in `load-test-report.md`. Local benchmarks do not prove a Railway instance size or monthly bill; repeat owner-authorized 25/50-room activity against a private Railway deployment and watch its actual CPU/RAM/egress before advertising capacity.
 
-Still required outside this package: Railway account/project, connected private source, persistent volume, generated domain, actual Docker build on Railway, live proxy validation, deployed smoke/restart/backup checks, and feedback/campaign destinations when ready. Docker/CLI are unavailable in this workspace, so the Dockerfile has been reviewed but not built here. A clean production-only dependency installation and runtime serving check passed locally, which does not substitute for the Linux container build. No live service was created and no billing was started.
+The live service is configured with a persistent `/data` volume and the custom domain above. The next code update adds the explicit Railway-IP option; enable it after that update is deployed. Remaining owner checks: one instance, Serverless disabled, On-failure restart policy, private testing from different networks, and actual resource use under a longer load. Spending alerts/Hobby remain deferred; campaign and feedback links remain placeholders. This patch does not change Railway settings or publish a deployment itself.
 
 ## Local verification for this package
 
-- `npm test`: 75/75 test files passed, including the small load-runner smoke test; compiled CSS is current.
+- `npm test`: 77/77 test files passed, including the Railway-IP unit/wire checks and the small load-runner smoke test; compiled CSS is current.
 - `npm run test:economy-stress`: 280/280 randomized matches completed without economy invariant failures.
 - 25/50/100/200-room real Socket.IO load runs and the slower 50-room comparison completed without command errors, timeouts or database failures. See the aggregate report for exact workload and limits.
 - Production-only `npm ci --omit=dev --ignore-scripts` install: startup, persistent SQLite, health, Home/About/tutorial and Socket.IO browser-client serving passed. The dev-only load client was absent.

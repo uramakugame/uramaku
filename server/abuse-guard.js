@@ -4,19 +4,33 @@ function integer(env,key,fallback,min=1,max=1000000){
   if(env[key]===undefined||env[key]==='')return fallback;
   const n=Number(env[key]);if(!Number.isSafeInteger(n)||n<min||n>max)throw Error(`Invalid ${key}`);return n;
 }
-function settings(env={}){return {
+function settings(env={}){
+  const trustRailwayProxy=integer(env,'TRUST_RAILWAY_PROXY',0,0,1)===1;
+  const trustedProxyHops=integer(env,'TRUSTED_PROXY_HOPS',0,0,8);
+  if(trustRailwayProxy&&!(env.RAILWAY_PROJECT_ID||env.RAILWAY_ENVIRONMENT_ID))throw Error('TRUST_RAILWAY_PROXY requires a Railway deployment.');
+  if(trustRailwayProxy&&trustedProxyHops)throw Error('Use TRUST_RAILWAY_PROXY or TRUSTED_PROXY_HOPS, not both.');
+  return {
   lobbyTtl:integer(env,'EMPTY_LOBBY_TTL_MS',300000,1,2592000000),cleanupInterval:integer(env,'ROOM_CLEANUP_INTERVAL_MS',5000,1,60000),
   maxRooms:integer(env,'MAX_ROOMS',500),maxSpectators:integer(env,'MAX_SPECTATORS_PER_ROOM',32),
   maxConnections:integer(env,'MAX_CONNECTIONS',2048),maxConnectionsPerIp:integer(env,'MAX_CONNECTIONS_PER_IP',128),
-  trustedProxyHops:integer(env,'TRUSTED_PROXY_HOPS',0,0,8),
+  trustedProxyHops,trustRailwayProxy,
   create:integer(env,'RATE_CREATE_PER_10_MIN',30),entry:integer(env,'RATE_ENTRY_PER_MIN',120),
   browse:integer(env,'RATE_BROWSE_PER_MIN',240),chat:integer(env,'RATE_CHAT_PER_MIN',30),
   packets:integer(env,'RATE_PACKETS_PER_SEC',30),ipPackets:integer(env,'RATE_IP_PACKETS_PER_SEC',300),
   maxBuckets:integer(env,'MAX_RATE_BUCKETS',10000)
 };}
-function address(socket,hops=0){
+function address(socket,hops=0,trustRailwayProxy=false){
   const normalize=ip=>ip?.startsWith('::ffff:')&&isIP(ip.slice(7))===4?ip.slice(7):ip;
   const peer=normalize(socket.handshake?.address||socket.conn?.remoteAddress||socket.request?.socket?.remoteAddress)||'unknown';
+  // Explicitly enabled only behind Railway's HTTP edge, which supplies
+  // X-Real-IP. A fixed X-Forwarded-For hop count is unreliable when Railway's
+  // CDN/proxy chain varies. Invalid/missing headers retain the peer quota.
+  if(trustRailwayProxy){
+    const raw=socket.handshake?.headers?.['x-real-ip'];
+    if(typeof raw!=='string'||raw.length>64)return peer;
+    const ip=raw.trim();
+    return !ip.includes('%')&&isIP(ip)?normalize(ip):peer;
+  }
   // Never trust a client-provided header by default. Enable fixed hops only
   // behind a known proxy path which overwrites/appends X-Forwarded-For.
   if(!hops)return peer;
@@ -37,17 +51,17 @@ class AbuseGuard{
     if(b.tokens<1)return false;b.tokens--;return true;
   }
   admit(socket){
-    const ip=address(socket,this.config.trustedProxyHops),n=this.connections.get(ip)||0;
+    const ip=address(socket,this.config.trustedProxyHops,this.config.trustRailwayProxy),n=this.connections.get(ip)||0;
     if(this.total>=this.config.maxConnections||n>=this.config.maxConnectionsPerIp)return false;
     this.total++;this.connections.set(ip,n+1);return true;
   }
   release(socket){
-    const ip=address(socket,this.config.trustedProxyHops),n=this.connections.get(ip)||0;
+    const ip=address(socket,this.config.trustedProxyHops,this.config.trustRailwayProxy),n=this.connections.get(ip)||0;
     if(n<=1)this.connections.delete(ip);else this.connections.set(ip,n-1);this.total=Math.max(0,this.total-1);
     for(const key of this.buckets.keys())if(key.startsWith(`socket:${socket.id}:`))this.buckets.delete(key);
   }
   allow(socket,event,data){
-    const ip=address(socket,this.config.trustedProxyHops),c=this.config;
+    const ip=address(socket,this.config.trustedProxyHops,this.config.trustRailwayProxy),c=this.config;
     if(!this.take(`ip:${ip}:packets`,c.ipPackets,1000)||!this.take(`socket:${socket.id}:packets`,c.packets,1000))return false;
     let group,limit,period=60000;
     if(event==='createRoom'||event==='prepareEntry'&&data?.kind==='create'){group='create';limit=c.create;period=600000;}
