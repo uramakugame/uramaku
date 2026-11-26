@@ -118,6 +118,6 @@
   if(/coin|tax|earn|income|extort|loot/.test(msg))return 'coin';
   return 'confirm';
  }
- window.UramakuAudio={play,renderToggle,gameEvent};
+ window.UramakuAudio={play,unlock,renderToggle,gameEvent};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',renderToggle);else renderToggle();
 })();

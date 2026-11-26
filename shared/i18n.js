@@ -192,7 +192,7 @@
    targetResponseQuestion:{en:'Challenge, allow, or counter?',jp:'チャレンジ・行動を認める・カウンターを選択'},
    counterQuestion:{en:'Do you wish to counter?',jp:'カウンターしますか？'},allowAction:{en:'Allow action',jp:'行動を認める'},
    revealAll:{en:'Reveal All Influences',jp:'すべての影響力を見せる'},payHideOne:{en:'Pay 1 Coin | Hide 1 Influence',jp:'1コイン支払う | 1枚隠す'},payHideAll:{en:'Pay 2 Coins | Hide All Influences',jp:'2コイン支払う | すべて隠す'},
-   tutorialContinue:{en:'Continue',jp:'次へ'},tutorialBack:{en:'Back',jp:'戻る'},tutorialRestart:{en:'Restart',jp:'最初から'},tutorialLobby:{en:'Back to lobby',jp:'ロビーへ戻る'},
+   tutorialStart:{en:'Start tutorial',jp:'チュートリアルを始める'},tutorialContinue:{en:'Continue',jp:'次へ'},tutorialBack:{en:'Back',jp:'戻る'},tutorialRestart:{en:'Restart',jp:'最初から'},tutorialLobby:{en:'Back to lobby',jp:'ロビーへ戻る'},
    tutorialFollow:{en:'Follow the highlighted instruction for this lesson.',jp:'この場面で強調されている操作を行ってください。'},tutorialTarget:{en:'Select {player}’s highlighted player card on the board.',jp:'盤面で強調されている{player}のプレイヤーカードを選んでください。'},
    tutorialMatch:{en:'Guided match · Standard Mode',jp:'ガイド付き対戦 · 通常モード'},tutorialSeats:{en:'You → Mei → Akira → Sora',jp:'あなた → メイ → アキラ → ソラ'},
    tutorialLessonProgress:{en:'Lesson {current} / {total}',jp:'レッスン {current} / {total}'},tutorialRound:{en:'Round {round}',jp:'ラウンド {round}'},tutorialYourResponse:{en:'Your response',jp:'あなたの選択'},

@@ -6,6 +6,7 @@ function setup(lang='en'){
  h.context.setTimeout=fn=>{timers.push(fn);return timers.length;};h.context.clearTimeout=()=>{};
  return{...h,animations,timers};
 }
+async function main(){
 for(const lang of ['en','jp']){
  const h=setup(lang),api=h.window.URAMAKU_CARD_MOTION;
  h.app.innerHTML='<div>'+cards.revealed({role:'kingpin',name:'Kingpin',slot:0,select:{type:'replace',index:0,label:'Replace'}})+cards.revealed({role:'lord',name:'Lord',slot:1})+'</div>';
@@ -47,6 +48,7 @@ for(const lang of ['en','jp']){
   window.matchMedia=()=>({matches:false});
   Element.prototype.animate=function(frames,options){const a={element:this,frames,options};animations.push(a);return{cancel(){},finished:{then(finish){a.finish=finish;}}};};
  });
+ assert.equal(animations.length,0,'The opening deal waits for Start tutorial');h.click('#startTutorial');
  for(const a of animations.filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();
  const arrivals=animations.filter(a=>a.element.classList.contains('card-arrival'));
  assert.equal(arrivals.length,8,'The four-player opening deals two cards per player');
@@ -54,9 +56,12 @@ for(const lang of ['en','jp']){
  for(const a of arrivals)a.finish();
  const turns=animations.filter(a=>a.element.classList.contains('card-flip-turner'));
  assert.equal(turns.length,2,'Only the learner’s own opening cards turn');
- for(const a of turns)a.finish();
+ for(const a of turns)a.finish();for(const a of animations.filter(a=>a.element.classList.contains('match-start-popup')))a.finish();for(let i=0;i<5;i++)await Promise.resolve();
  const completed=animations.length;h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.equal(animations.length,completed,'Language switches do not redeal');
- h.click('#continueLesson');assert.equal(animations.filter(a=>a.element.classList.contains('card-arrival')).length,8,'Beginning the first turn does not repeat the introduction deal');
+ h.click('#continueLesson');assert.equal(animations.filter(a=>a.element.classList.contains('card-arrival')).length,8,'Beginning the first turn does not repeat the introduction deal');for(let i=0;i<5;i++)await Promise.resolve();
  h.click('#restart');for(const a of animations.slice(completed).filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();assert.equal(animations.slice(completed).filter(a=>a.element.classList.contains('card-arrival')).length,8,'Restart uses the shared opening deal');
 }
 console.log('Sequential card motion: discard down → face-down arrival → owner flip, correct faction backs, opening stagger, preview rejection, untouched second card, EN/JP, cancellation, render transfer and reduced motion passed.');
+
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

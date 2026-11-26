@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');const {harness}=require('./browser-harness');
 for(const lang of ['en','jp']){
  const h=harness(lang);const initial=h.state();h.click('#languageToggle');assert.equal(h.document.documentElement.lang,lang==='en'?'ja':'en');h.click('#languageToggle');assert.deepEqual(h.state(),initial,'Language buttons preserve lesson and game state');assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);assert(h.app.querySelector('.t-empty-room'));assert(!h.app.innerHTML.includes('undefined'));
+ assert(h.app.querySelector('#startTutorial'));assert(h.app.querySelector('[data-reaction-toggle]'));h.click('#startTutorial');assert.deepEqual(h.state(),initial,'Starting the deal does not advance a lesson or grant Income');
  assert.equal(h.app.querySelectorAll('.game-actions-panel [data-action]').length,8);
  assert.deepEqual(h.app.querySelectorAll('.player[data-player-id]').map(p=>p.dataset.playerId),['you','mei','akira','sora']);
  let guard=0;

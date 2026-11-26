@@ -58,7 +58,7 @@ assert.equal(game.createGame('DEFAULT',{id:'host',name:'Host'}).challengeDuratio
 assert(!Object.values(i18n.STRINGS).some(dict=>dict.challengeDoubleRisk));
 assert.equal(game.ROLES.kingpin.effect,'Take 2 coins from a player.');
 // Re-rendering and language changes must leave the controller's actual room unchanged.
-const h=harness();
+const h=harness();h.click('#startTutorial');
 while(h.value('tutorial.step.input.type')!=='end'){
  const before=h.state();h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.deepEqual(h.state(),before);
  h.value('handle(tutorial.step.input)');

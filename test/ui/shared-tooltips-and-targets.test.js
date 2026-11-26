@@ -15,7 +15,7 @@ for(const lang of ['en','jp']){
   assert(html.includes('tooltip-heading'));assert(html.includes('tooltip-ability-name'));assert(html.includes('tooltip-description'));assert.equal(html.includes('tooltip-faction'),revealFactions);
   if(role==='magistrate')assert(html.includes(i18n.roleEffect(role,'counter',lang)),'Enforce displays the new 2-coin text');
  }
- const h=harness(lang);
+ const h=harness(lang);h.click('#startTutorial');
  assert.equal(h.document.body.querySelectorAll('.role-quick-tooltip').length,1);
  assert.equal(h.window.URAMAKU_TOOLTIPS.install({document:h.document,window:h.window}),h.value('roleTooltips'),'Repeated installation uses one tooltip and event lifecycle');
  const card=h.app.querySelector('[data-action="summon"]');h.dispatchDocument('pointerover',{target:card});
