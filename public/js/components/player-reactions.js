@@ -4,12 +4,12 @@
  const presets=root.URAMAKU_REACTIONS,i18n=root.URAMAKU_I18N,instances=new WeakMap();
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const word=(key,lang)=>i18n.get(key,lang);
- const eligible=(room,you)=>['playing','finished'].includes(room?.status)&&room.players.some(p=>p.id===you?.id);
- function controls({room,you,lang='en'}){
-  if(!eligible(room,you))return '';
+ const eligible=(room,you,preview=false)=>(['playing','finished'].includes(room?.status)||preview&&room?.status==='lobby')&&room.players.some(p=>p.id===you?.id);
+ function controls({room,you,lang='en',preview=false}){
+  if(!eligible(room,you,preview))return '';
   return `<div class="reaction-tools"><button type="button" class="small" data-reaction-toggle aria-expanded="false" aria-controls="reactionChoices">${esc(word('react',lang))}</button><div id="reactionChoices" class="reaction-menu" role="group" aria-label="${esc(word('reactionMenu',lang))}" hidden>${presets.ids.map(id=>`<button type="button" class="small" data-reaction="${id}">${esc(word(presets.keys[id],lang))}</button>`).join('')}</div></div>`;
  }
- function install({container,document=container.ownerDocument,window=root,socket=null,getRoom,getYou,getLanguage,report=()=>{},clock=()=>Date.now()}){
+ function install({container,document=container.ownerDocument,window=root,socket=null,getRoom,getYou,getLanguage,report=()=>{},clock=()=>Date.now(),preview=false}){
   if(instances.has(container))return instances.get(container);
   const bubbles=new Map();let code=null,match=null,open=false,nextAt=0,inFlight=false,cooldownTimer,generation=0;
   const find=id=>Array.from(container.querySelectorAll('.player[data-player-id]')).find(el=>el.dataset.playerId===id);
@@ -29,7 +29,7 @@
    if(code!==roomCode||match!==matchNumber){reset();code=roomCode;match=matchNumber;}
    const toggle=container.querySelector('[data-reaction-toggle]'),menu=container.querySelector('.reaction-menu');
    const cooling=nextAt>Date.now(),disabled=inFlight||cooling||(socket&&!socket.connected);
-   if(toggle){toggle.disabled=!!disabled;toggle.title=cooling?word('reactionCooldown',getLanguage()):'';toggle.setAttribute('aria-expanded',String(open));toggle.onclick=()=>{if(!eligible(getRoom(),getYou())||disabled)return;open=!open;sync();};}
+   if(toggle){toggle.disabled=!!disabled;toggle.title=cooling?word('reactionCooldown',getLanguage()):'';toggle.setAttribute('aria-expanded',String(open));toggle.onclick=()=>{if(!eligible(getRoom(),getYou(),preview&&!socket)||disabled)return;open=!open;sync();};}
    if(menu){menu.hidden=!open;menu.onkeydown=event=>{if(event.key==='Escape'){open=false;sync();toggle?.focus();}};}
    for(const button of container.querySelectorAll('[data-reaction]')){button.disabled=!!disabled;button.onclick=()=>choose(button.dataset.reaction);}
    for(const entry of [...bubbles.values()]){
@@ -49,7 +49,7 @@
   }
   function choose(reaction){
    const room=getRoom(),you=getYou();
-   if(!presets.valid(reaction)||!eligible(room,you)||inFlight||nextAt>Date.now()||socket&&!socket.connected)return;
+   if(!presets.valid(reaction)||!eligible(room,you,preview&&!socket)||inFlight||nextAt>Date.now()||socket&&!socket.connected)return;
    const roomCode=room.code,matchNumber=room.matchNumber||1,version=generation;open=false;inFlight=true;nextAt=Date.now()+presets.cooldown;
    clearTimeout(cooldownTimer);cooldownTimer=setTimeout(sync,presets.cooldown);sync();
    if(!socket){inFlight=false;receive({roomCode,matchNumber,playerId:you.id,reaction,expiresAt:clock()+presets.duration});sync();return;}

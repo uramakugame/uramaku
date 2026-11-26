@@ -7,7 +7,7 @@ for(const lang of ['en','jp']){
  let html=panels.matchInfo({room,lang});assert(html.includes(i18n.get('modeStateOrder',lang)));assert(html.includes('17 / 24'));assert(html.includes('14'));assert(!html.includes('Loot active'));
  html=panels.matchInfo({room:{...room,riot:true,treasuryCoins:0},lang});assert(html.includes(i18n.get('modeStateChaos',lang)));assert(html.includes('0 / 24'));
  const classic=panels.matchInfo({room:{...room,treasuryMode:false},lang});assert(!classic.includes('game-board-treasury'));assert(!classic.includes('mode-state'));
- const h=harness(lang);assert(h.app.querySelector('.table-board .table-match-info'));assert(h.app.querySelector('.table-board .game-deck-panel'));assert(!h.app.querySelector('.table-match-info .game-board-treasury'));
+ const h=harness(lang);h.click('#startTutorial');assert(h.app.querySelector('.table-board .table-match-info'));assert(h.app.querySelector('.table-board .game-deck-panel'));assert(!h.app.querySelector('.table-match-info .game-board-treasury'));
  assert.equal(h.app.querySelectorAll('.game-outcome-panel').length,1);assert(h.app.querySelector('[data-player-id="you"]').textContent.includes(lang==='en'?'Hidden':'非公開'));
  assert(h.app.querySelector('.game-board-header'));assert(!h.app.querySelector('.header-treasury'),'Classic tutorial has no treasury balance');
  const view=roomHarness(lang),seat=id=>({id,name:id,ready:true,connected:true});

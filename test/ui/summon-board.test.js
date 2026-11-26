@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),{harness}=require('../tutorial/browser-harness'),panels=require('../../public/js/components/game-panels'),g=require('../../server/game');
 for(const lang of ['en','jp']){
- const h=harness(lang);h.value("while(tutorial.step.id!=='replace-courtesan')handle(tutorial.step.input)");
+ const h=harness(lang);h.click('#startTutorial');h.value("while(tutorial.step.id!=='replace-courtesan')handle(tutorial.step.input)");
  const before=h.state(),room=before.room,you=before.you,other={id:'mei',coins:2,influences:['assassin']};
  assert(h.app.querySelector('.game-deck-panel .deck-stack #summonTray'));assert(h.app.querySelector('#summonTray .summon-drawn-card').closest('.player-roles'),'Preview inherits the same full-bleed card design');assert(!h.app.querySelector('.game-deck-panel .section-title'));assert(!h.app.querySelector('.game-deck-panel [data-summon-choice]'));assert(!h.app.querySelector('.game-deck-panel .decision-question'));assert(h.app.querySelector('.action-flow [data-summon-choice="discard"]'));assert(!h.app.querySelector('[data-summon-controls]').hidden);assert(h.app.querySelector('[data-summon-choice="discard"]').disabled,'Guided replacement keeps its required card choice');assert(!h.app.querySelector('#summonTray').hidden);assert(!h.app.querySelector('dialog'));assert(!h.app.querySelector('[data-summon-choice="keep"]'));
  assert.equal(h.app.querySelectorAll('[data-summon-replace]').length,2);assert(h.app.querySelector('[data-summon-choice="discard"]'));

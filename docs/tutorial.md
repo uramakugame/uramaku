@@ -32,6 +32,8 @@ Lesson 27 introduces Enforce’s 2-coin payment and the double-loss risk of chal
 
 ## Controls and shared presentation
 
+The welcome lesson offers Start tutorial. This user gesture unlocks audio and begins the shared opening deal; it does not advance a lesson or grant Income. Continue remains gated until the deal and Match Start fade finish. Restart deals again from its own click, while language changes and Back never redeal. React is available from the welcome lesson as a local-only preview; multiplayer waiting-lobby eligibility is unchanged. Reduced motion skips the visual deal while retaining its draw sound, subject to the existing mute/volume preferences.
+
 - Sidebar actions and board targets use the same action and player-card components as the live room.
 - Targets use the shared combined challenge/allow/counter panel; the three former pass-then-counter lesson pairs are merged. Other players and counter claims retain challenge/pass controls. The learner passes Enforce, selects Kingpin for the unaffordable-payment loss, and later challenges Sora’s final Extort. Counter buttons read “Claim [Influence] ([Counter])”; held counters share the actions bar’s gold border. Challenge reads “Challenge claim” and Allow action is the last choice.
 - The learner publishes Mei's Assassin using the same bilingual Make public control as multiplayer. Only already discovered, nonpublic influences still held by a player receive that control. Public information from other investigators is also rendered correctly.

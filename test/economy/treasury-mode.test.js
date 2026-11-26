@@ -216,7 +216,7 @@ for(let n=2;n<=6;n++){
  assert(app.includes('state.mandatoryPurge'));assert(markup.includes('riot-overthrow'));
  assert(markup.includes('<b>Overthrow</b>'));
  assert(!app.includes('riot-cost'),'Action card must not print the Riot cost');
- assert(app.includes("(visibility&1)?'Privately revealed':'Hidden'"));assert(require('../tutorial/browser-harness').harness().app.querySelector('[data-player-id="you"]').textContent.includes('Hidden'));
+ assert(app.includes("(visibility&1)?'Privately revealed':'Hidden'"));const welcome=require('../tutorial/browser-harness').harness();welcome.click('#startTutorial');assert(welcome.app.querySelector('[data-player-id="you"]').textContent.includes('Hidden'));
  assert(fs.existsSync(path.join(__dirname,'../../public/assets/icons/chaos-loot.svg')));
 }
 console.log('Riot Mode, Chaos, wealth victory, coin conservation, mandatory Purge, and UI checks passed.');

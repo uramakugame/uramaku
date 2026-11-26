@@ -11,19 +11,24 @@ function setup(lang='en'){
   Element.prototype.getBoundingClientRect=function(){return{left:this.dataset.playerId==='b'?320:20,top:20,width:120,height:180,right:440,bottom:200};};
  });return{...h,animations,timers,time(value){now=value;}};
 }
+async function main(){
+const tick=async()=>{for(let i=0;i<5;i++)await Promise.resolve();};
 for(const lang of ['en','jp']){
  const h=setup(lang),flow=h.window.URAMAKU_PRESENTATION;
  const banner=()=>h.document.body.querySelector('.match-start-popup');
- assert(banner());assert.equal(banner().textContent,lang==='en'?'Match Start':'対戦開始');
- h.click('#continueLesson');
- assert(!h.app.querySelector('.player.active-player'),'No turn outline while cards are dealing');assert(h.app.querySelector('.player.dealing-turn'));assert(!h.sounds.includes('turn'),'First turn sound waits too');
+ assert(!banner());assert.equal(h.animations.length,0);assert(h.app.querySelector('[data-reaction-toggle]'));h.click('#startTutorial');assert(banner());assert.equal(banner().textContent,lang==='en'?'Match Start':'対戦開始');
+ const welcome=h.state();h.click('#continueLesson');assert.deepEqual(h.state(),welcome,'The welcome cannot advance during the deal');assert(h.window.URAMAKU_PRESENTATION.busy(h.app));
+ assert(!h.app.querySelector('.player.active-player'),'No turn outline while cards are dealing');assert(!h.sounds.includes('turn'),'First turn sound waits too');
  for(const a of h.animations.filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();
  const arrivals=h.animations.filter(a=>a.element.classList.contains('card-arrival'));assert.equal(arrivals.length,8);for(const a of arrivals)a.finish();
  assert(!h.animations.some(a=>a.element.classList.contains('match-start-popup')),'Arrival is not completion: own cards still have to flip');
  const turns=h.animations.filter(a=>a.element.classList.contains('card-flip-turner'));assert.equal(turns.length,2);turns[0].finish();assert(!h.app.querySelector('.player.active-player'));turns[1].finish();
  const fade=h.animations.find(a=>a.element.classList.contains('match-start-popup'));assert(fade);assert(!h.app.querySelector('.player.active-player'),'Outline also waits for the popup fade');
  h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.equal(banner().textContent,lang==='en'?'対戦開始':'Match Start');assert(!h.app.querySelector('.player.active-player'),'Rerender cannot bypass the opening queue');
- fade.finish();assert(!banner());assert.equal(h.app.querySelector('.player.active-player').dataset.playerId,'you');assert.equal(h.sounds.filter(s=>s==='turn').length,1);
+ fade.finish();await tick();assert(!banner());assert(!flow.busy(h.app));assert.equal(h.state().you.coins,1);assert.equal(h.value('tutorial.step.id'),'welcome');assert(!h.app.querySelector('.player.active-player'));
+ const beforeIncome=h.animations.length;h.click('#continueLesson');await tick();assert.equal(h.app.querySelector('.player.active-player').dataset.playerId,'you');assert.equal(h.sounds.filter(s=>s==='turn').length,1);assert.equal(h.state().you.coins,2);
+ const income=h.animations.slice(beforeIncome).filter(a=>a.element.classList.contains('coin-gain')&&a.element.textContent==='+1');assert.equal(income.length,1,'The first Income uses the same +1 badge as later turns');assert.equal(income[0].options.duration,1475);assert(!flow.busy(h.app),'First Income animation is nonblocking');assert(h.document.body.querySelector('.coin-gain'));
+ h.value('render();render()');assert.equal(h.animations.slice(beforeIncome).filter(a=>a.element.classList.contains('coin-gain')).length,1,'Rerender does not replay the first Income');h.click('#continueLesson');await tick();assert.equal(h.value('tutorial.step.id'),'abilities','The next lesson is usable while +1 is still visible');assert.equal(h.state().you.coins,2);
  h.click('#restart');assert(banner());flow.sync(h.app,{code:null});assert(!banner(),'Leaving cancels the introduction');for(const a of h.animations.slice(-8))a.finish?.();assert(!banner(),'Old callbacks cannot revive a removed popup');
 }
 const person=(id,hand)=>({id,name:id,coins:7,alive:true,ready:true,influences:hand,intrigueVisibility:[0,0],privateInvestigations:{}});
@@ -52,7 +57,7 @@ for(const [role,action] of [['swordsman','hireGuard'],['assassin','falseTrail']]
 console.log('Opening deal → popup fade → turn outline/cue; delayed Purge/Overthrow reveals across renders; Hire Guard flight and False Trail nudge passed in EN/JP.');
 // An unavailable flip falls back once; it cannot finish the whole deal early.
 {
- const h=setup();h.click('#continueLesson');
+ const h=setup();h.click('#startTutorial');
  const prototype=Object.getPrototypeOf(h.app),animate=prototype.animate;prototype.animate=function(frames,options){if(this.classList.contains('card-flip-turner'))throw Error('animation unavailable');return animate.call(this,frames,options);};
  for(const a of h.animations.filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();
  const arrivals=h.animations.filter(a=>a.element.classList.contains('card-arrival'));
@@ -64,3 +69,6 @@ console.log('Opening deal → popup fade → turn outline/cue; delayed Purge/Ove
  const h=setup(),flow=h.window.URAMAKU_PRESENTATION;flow.sync(h.app,{code:'QUEUE'});h.app.innerHTML=board();h.animations.length=0;h.window.URAMAKU_FEEDBACK.animate(effects,{container:h.app});assert.equal(h.animations.find(a=>a.element.classList.contains('card-flip-turner')).options.delay,680);
  let stale=0;flow.whenIdle(h.app,()=>stale++);flow.sync(h.app,{code:null});for(const a of h.animations)a.finish?.();assert.equal(stale,0,'Leaving clears queued end-of-match callbacks');
 }
+
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),{harness}=require('../tutorial/browser-harness');
 async function main(){
 for(const lang of ['en','jp']){
- const h=harness(lang),animations=[],timers=[];
+ const h=harness(lang),animations=[],timers=[];h.click('#startTutorial');
  // Reach the actual approved closing scene without creating old decorative jobs.
  let guard=0;while(h.value('tutorial.step.id')!=='first-assassinate'&&guard++<60)h.value('handle(tutorial.step.input)');assert(guard<60);
  h.window.matchMedia=()=>({matches:false});

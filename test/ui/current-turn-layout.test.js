@@ -14,7 +14,7 @@ assert(currentTurnCss.includes('@media(max-width:1040px)'),'Narrow screens need 
 assert(app.includes("(visibility&1)?'Privately revealed':'Hidden'"),'Own unrevealed roles should show Hidden');
 assert(!require('../../public/js/components/role-cards').hidden().includes('<small>'),"Other players' standard hidden backs must have no visible status text");
 assert(!app.includes('<small>Hidden</small>'),"Opponents' hidden card backs must not show Hidden text");
-assert(require('../tutorial/browser-harness').harness().app.querySelector('[data-player-id="you"]').textContent.includes('Hidden'));
+const welcome=require('../tutorial/browser-harness').harness();assert(welcome.app.querySelector('[data-player-id="you"] .hidden-role-card'));welcome.click('#startTutorial');assert(welcome.app.querySelector('[data-player-id="you"]').textContent.includes('Hidden'));
 assert(!tutorial.includes('<small>Hidden</small>'),"Tutorial opponents' hidden backs must not show Hidden text");
 assert(require('../../public/js/components/role-cards').hidden().includes('aria-label="Hidden role"'),'Hidden card accessibility labels should remain');
 assert(tutorial.includes('URAMAKU_ROLE_CARDS.hidden({slot})'),'Tutorial hidden card should use the shared hidden-card element');
