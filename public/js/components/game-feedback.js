@@ -163,12 +163,13 @@
   for(const card of result.cards){
    if(card.type==='replace'&&!missedExchanges&&!result.motions.some(m=>m.id===card.id&&m.slot===card.slot)){
     const index=you?.influenceSlots?you.influenceSlots.indexOf(card.slot):card.slot;
-    result.motions.push({id:card.id,kind:'replace',slot:card.slot,fromRole:oldYou?.influences?.[index]||null});
+    const oldPlayer=before.players?.find(p=>p.id===card.id),nextPlayer=after.players?.find(p=>p.id===card.id);
+    result.motions.push({id:card.id,kind:'replace',slot:card.slot,fromRole:oldYou?.influences?.[index]||null,oldFaction:before.revealFactions?oldPlayer?.influenceFactions?.[index]:null,faction:after.revealFactions?nextPlayer?.influenceFactions?.[index]:null});
    }
    if(card.type==='draw'){const faction=after.roles?.[you?.summonDrawnRole]?.faction;result.motions.push({id:card.id,kind:'draw',faction:after.revealFactions&&faction?(faction.includes('Order')?'order':'underworld'):null});}
-   if(card.type==='discard'&&oldYou?.summonDrawnRole)result.motions.push({id:card.id,kind:'discard',fromRole:oldYou.summonDrawnRole});
+   if(card.type==='discard'&&oldYou?.summonDrawnRole)result.motions.push({id:card.id,kind:'discard',fromRole:oldYou.summonDrawnRole,faction:after.revealFactions?after.discardPile?.topFaction:null});
   }
-  if(entries.some(line=>/discards the card drawn with Summon\.$/.test(line))&&!result.motions.some(m=>m.kind==='discard'))result.pileDiscard=true;
+  if(entries.some(line=>/discards the card drawn with Summon\.$/.test(line))&&!result.motions.some(m=>m.kind==='discard')){result.pileDiscard=true;result.pileDiscardFaction=after.revealFactions?after.discardPile?.topFaction:null;}
   if(after.pending?.kind==='summon'&&before.pending?.kind!=='summon'&&after.pending.claimantId!==you?.id)result.pileDraw=true;
   if(entries.includes('The discard pile was shuffled to form a new deck.'))result.reshuffle=true;
   return result;
@@ -299,10 +300,10 @@
   for(const id of effects.targets||[])if(!effects.attacks?.some(attack=>attack.to===id))pulse(find(id),[{boxShadow:'0 0 0 3px #bf663c'},{boxShadow:'0 0 0 0 transparent'}],650);
   const moving=new Set(),lossMotions=new Set();
   const motion=root?.URAMAKU_CARD_MOTION||(typeof require==='function'?require('./card-motion'):null);
-  for(const [enabled,kind] of [[effects.pileDraw,'draw'],[effects.pileDiscard,'discard']])if(enabled){const done=flow?.hold(container);if(!motion?.pileMotion(container,{kind,onComplete:done}))done?.();}
+  for(const [enabled,kind] of [[effects.pileDraw,'draw'],[effects.pileDiscard,'discard']])if(enabled){const done=flow?.hold(container);if(!motion?.pileMotion(container,{kind,faction:kind==='discard'?effects.pileDiscardFaction:null,onComplete:done}))done?.();}
   if(effects.reshuffle)for(const el of container.querySelectorAll('[data-card-pile]'))pulse(el,[{opacity:.5,transform:'translateY(3px)'},{opacity:1,transform:'translateY(0)'}],280);
   for(const item of effects.motions||[]){
-   if(item.kind==='discard'){const complete=flow?.hold(container);if(!motion?.discardPreview({rect:previewRect,fromRole:item.fromRole,lang,container,onComplete:complete}))complete?.();continue;}
+   if(item.kind==='discard'){const complete=flow?.hold(container);if(!motion?.discardPreview({rect:previewRect,fromRole:item.fromRole,faction:item.faction,lang,container,onComplete:complete}))complete?.();continue;}
    if(item.kind==='draw'&&flow?.whenSummonReady&&container.querySelector('#summonTray')?.hidden){
     const preview=container.querySelector('#summonTray .summon-drawn-card');if(preview)moving.add(preview);
     flow.whenSummonReady(container,tray=>{const el=tray.querySelector('.summon-drawn-card'),complete=flow.hold(container);if(!el||!motion?.animate(el,{...item,lang,pileContainer:container,onComplete:complete}))complete();});continue;

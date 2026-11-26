@@ -5,6 +5,8 @@ for(const lang of ['en','jp']){
  for(const faction of ['order','underworld'])for(const treasuryMode of [false,true]){
   const room={revealFactions:true,treasuryMode,drawPile:{count:7,topFaction:faction,reshufflePending:false}},html=panels.deck({room,lang});
   assert(html.includes('/card-backs/'+faction+'.png'));assert(html.includes('class="deck-count">7<'));assert(!html.includes('deck-next-faction'),'Faction and Faction + Riot use the back image without a next-faction caption');assert(!html.includes(i18n.get('deckNextFaction',lang,{faction:i18n.get(faction,lang)})));assert(html.includes('aria-live="polite"'));assert(html.includes('deck-stack is-stacked'));
+  const discarded=panels.deck({room:{...room,discardPile:{count:2,topFaction:faction}},lang}).split('class="pile-column discard-pile"')[1];assert(discarded.includes('/card-backs/'+faction+'.png'));assert(!discarded.includes('/portraits/'),'The discard pile reveals its back only');
+  const neutral=panels.deck({room:{...room,revealFactions:false,discardPile:{count:2,topFaction:faction}},lang}).split('class="pile-column discard-pile"')[1];assert(neutral.includes('/card-backs/standard.png'));assert(!neutral.includes('/card-backs/'+faction+'.png'),'Games without factions ignore stale back metadata');
   const hidden=panels.deck({room:{...room,revealFactions:false},lang});assert(hidden.includes('/card-backs/standard.png'));assert(!hidden.includes('deck-next-faction'),'Standard mode never shows a faction even if supplied stale metadata');
  }
  const one=panels.deck({room:{drawPile:{count:1}},lang});assert(!one.includes('is-stacked'));

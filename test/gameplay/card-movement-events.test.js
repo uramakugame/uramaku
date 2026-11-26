@@ -22,7 +22,7 @@ for(const slot of [0,1]){
 }
 {
  const r=fixture();assert(game.performAction(r,'a','summon').ok);pass(r,'a');const before=view(r),observer=view(r,'b');assert(game.chooseSummon(r,'a','discard').ok);
- assert.equal(r.cardMoveNumber,0);assert.deepEqual(changes(before,view(r)).motions,[{id:'a',kind:'discard',fromRole:'kingpin'}]);assert.deepEqual(changes(observer,view(r,'b')).motions,[]);assert.deepEqual(r.players[0].influences,['lord','magistrate']);
+ assert.equal(r.cardMoveNumber,0);assert.deepEqual(changes(before,view(r)).motions,[{id:'a',kind:'discard',fromRole:'kingpin',faction:null}]);assert.deepEqual(changes(observer,view(r,'b')).motions,[]);assert.deepEqual(r.players[0].influences,['lord','magistrate']);
 }
 {
  const r=fixture();r.status='lobby';for(const p of r.players)p.influences=[];const before=view(r);game.startGame(r);const effect=changes(before,view(r));assert.equal(effect.motions.filter(m=>m.kind==='deal').length,6);assert.equal(effect.motions.filter(m=>m.id==='a').length,2);assert.equal(new Set(effect.motions.map(m=>m.id+':'+m.slot)).size,6);assert.deepEqual(changes(view(r),view(r)).motions,[]);

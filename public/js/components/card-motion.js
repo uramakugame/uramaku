@@ -52,7 +52,7 @@
   });};
   const pile=(kind,next)=>{
    if(done)return;
-   const job=pileMotion(table,{kind,faction,delay:kind==='draw'?delay:0,onComplete:()=>{if(!done)next();}});
+   const job=pileMotion(table,{kind,faction:kind==='draw'?faction:oldFaction,delay:kind==='draw'?delay:0,onComplete:()=>{if(!done)next();}});
    if(job)pileJobs.push(job);else next();
   };
   const arrive=()=>{if(!table?.querySelector('[data-card-pile="draw"]')){arriveAtPlayer();return;}pile('draw',()=>{delay=0;arriveAtPlayer();});};
@@ -77,7 +77,7 @@
   if(!container||reduced())return false;
   const target=container.querySelector(`[data-card-pile="${kind==='draw'?'draw':'discard'}"]`);
   if(!target?.animate)return false;
-  const doc=target.ownerDocument,layer=doc.createElement('div');layer.className='player-roles card-pile-motion';layer.setAttribute('aria-hidden','true');layer.setAttribute('inert','');layer.innerHTML=cards.hidden({faction:kind==='draw'?faction:null});target.appendChild(layer);
+  const doc=target.ownerDocument,layer=doc.createElement('div');layer.className='player-roles card-pile-motion';layer.setAttribute('aria-hidden','true');layer.setAttribute('inert','');layer.innerHTML=cards.hidden({faction});target.appendChild(layer);
   let s=pileSessions.get(container);if(!s){s=new Set();pileSessions.set(container,s);}
   let done=false,timer,animation,release;
   const finish=(notify=true)=>{if(done)return;done=true;clearTimeout(timer);layer.remove();s.delete(job);release?.();if(notify)onComplete?.();};
@@ -91,13 +91,13 @@
   const el=container?.querySelector('#summonTray .summon-drawn-card');if(!el)return null;
   const rect=el.getBoundingClientRect();return{left:rect.left,top:rect.top,width:rect.width,height:rect.height};
  }
- function discardPreview({rect,fromRole,lang='en',onComplete=null,container=null}={}){
+ function discardPreview({rect,fromRole,faction=null,lang='en',onComplete=null,container=null}={}){
   if(!rect||!fromRole||reduced()||typeof document==='undefined')return false;
   root?.UramakuAudio?.play('discard');
   const ghost=document.createElement('div');ghost.className='game-shell card-discard-float';ghost.style.opacity='0';ghost.setAttribute('aria-hidden','true');ghost.setAttribute('inert','');
   Object.assign(ghost.style,{left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px'});
   const layout=document.createElement('div');layout.className='game-layout';const roles=document.createElement('div');roles.className='player-roles';roles.innerHTML=cards.revealed({role:fromRole,name:i18n.role(fromRole,lang)});layout.appendChild(roles);ghost.appendChild(layout);document.body.appendChild(ghost);
-  let done=false;const remove=()=>{if(done)return;done=true;ghost.remove();if(!pileMotion(container,{kind:'discard',onComplete}))onComplete?.();};
+  let done=false;const remove=()=>{if(done)return;done=true;ghost.remove();if(!pileMotion(container,{kind:'discard',faction,onComplete}))onComplete?.();};
   try{const animation=ghost.animate([{transform:'translateY(0px)',opacity:1},{transform:`translateY(${rect.height+24}px)`,opacity:0}],{duration:350,easing:'ease-in',fill:'forwards'});animation?.finished?.then(remove,remove);setTimeout(remove,450);}
   catch(error){remove();return false;}
   return true;

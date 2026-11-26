@@ -10,7 +10,7 @@ Kick player enables a single-target owner selection mode during an active match.
 
 The overall desktop board footprint and influence-card sizing remain shared with the existing room design. Player positions occupy three columns over two rows; player four begins the second row. The fourth column holds borderless match information with restrained typography and a faded accent rule above the borderless card-pile area. Fewer-player matches retain both rows and the dedicated information locations. At compact sizes the board retains readable columns in its existing scroll area; actions and sidebar stack.
 
-The draw deck and reusable discard pile are side by side at influence-card size. Both show real counts. Discards stay face down and reveal no Summon identities. Eliminated influences stay visible on their player card and are excluded from reusable discards. Faction mode reveals only the actual top draw card's faction; the discard visual remains neutral. Summon retains the private deck-top preview and controls in Current Turn.
+The draw deck and reusable discard pile are side by side at influence-card size. Both show real counts. Discards stay face down and reveal no Summon identities. Eliminated influences stay visible on their player card and are excluded from reusable discards. Faction mode shows the actual top draw and discard cards' faction backs without revealing roles; games without factions use the standard back. Summon retains the private deck-top preview and controls in Current Turn.
 
 Latest outcome replaces the former top-right deck panel. It summarizes public resolved events and coin transfers; a new Income or pending declaration does not immediately replace the previous result. It reads no private investigation or hidden influence data. Full event history remains in Game Log.
 
@@ -21,7 +21,7 @@ Controls read: language switch → React → Open chat. Owner removal is another
 The existing player-card motions and easing stay in use:
 
 - Deal/replacement: a face-down card lifts upward from the deck (280 ms), then the existing face-down player arrival (400 ms) and authorized flip play.
-- Exchange: the outgoing player influence moves down (280 ms), then a neutral face-down card drops into the reusable discard pile (280 ms), followed by the replacement draw/arrival.
+- Exchange: the outgoing player influence moves down (280 ms), then a face-down card with the outgoing influence’s faction back drops into the reusable discard pile (280 ms), followed by the replacement draw/arrival.
 - Rejected Summon preview: the existing downward preview discard (350 ms), then a face-down discard-pile landing (280 ms).
 - A new Summon preview still flips on the deck; keeping it performs the exchange sequence in the selected player slot.
 - Unknown influence loss still reveals first, pauses for readability and finishes its existing loss motion. It does not enter the reusable discard pile.

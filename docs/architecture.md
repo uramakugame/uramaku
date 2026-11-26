@@ -28,7 +28,7 @@ A browser sends a socket event. A shared input boundary checks packet shape, fie
 
 ## Privacy and card identity
 
-The room stores the full deck and hands. `publicState` hides live influence identities, the reusable discard pile and the private Summon draw. `privateState` supplies the recipient's hand, discovered cards and their own pending decisions. Spectators receive public snapshots.
+The room stores the full deck and hands. `publicState` hides live influence identities, roles in the reusable discard pile and the private Summon draw. `privateState` supplies the recipient's hand, discovered cards and their own pending decisions. Spectators receive public snapshots.
 
 Knowledge is indexed by influence slot. Replacing a role invalidates knowledge for that slot. Losing a card shifts surviving slot indices. Lost influences enter the face-up eliminated-card collection. Proven claims and Summon discards enter the reusable face-down discard pile.
 
@@ -91,7 +91,7 @@ Card exchanges also emit bounded presentation metadata: `cardMoveNumber` and the
 
 ## Public draw-pile display
 
-`publicState.drawPile` exposes only `{count, topFaction, reshufflePending}`. Count is the actual draw pile length, excluding hands, eliminated influences, reusable discards and the private Summon preview. `topFaction` is Order/Underworld only when faction visibility is enabled and a top card exists; otherwise it is null. No role identity, discard identity, card order or lower-card faction is sent. Reading this projection never changes the deck or decides a future shuffle. Empty piles retain the existing lazy reshuffle: the next actual draw shuffles reusable discards.
+`publicState.drawPile` exposes only `{count, topFaction, reshufflePending}`. Count is the actual draw pile length, excluding hands, eliminated influences, reusable discards and the private Summon preview. `topFaction` is Order/Underworld only when faction visibility is enabled and a top card exists; otherwise it is null. `publicState.discardPile` exposes `{count, topFaction}` for the reusable discard pile under the same faction visibility setting. No role identity, card order or lower-card faction is sent. Reading this projection never changes the deck or decides a future shuffle. Empty piles retain the existing lazy reshuffle: the next actual draw shuffles reusable discards.
 
 Both browser controllers call `game-panels.deck` for the same bilingual panel. The current room snapshot supplies its count and back, so draws, proof replacements, reshuffles and reconnects update consistently. On desktop, the sidebar wrapper uses `display: contents`: the deck occupies grid column 3/row 1 and the log occupies column 3/row 2, the same row as the player board. The log scrolls internally. Compact layouts stack the shared panels. The deck reuses `role-cards.hidden` and the approved back image styling; a Summon preview uses the drawn card's own faction back, independently of the updated top card.
 

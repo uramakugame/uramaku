@@ -164,7 +164,7 @@ function publicState(room) {
     pending:room.pending?{...pending,...(pending.kind==='claim'?{options:counterOptions(pending.action,player(room,pending.targetId))}:{}),...(pending.kind==='informationShare'?{roles:undefined,indices:undefined}:{}),...(pending.kind==='information'?{unknownIndices:undefined}:{}),claimantName:player(room,pending.claimantId)?.name,targetName:player(room,pending.targetId)?.name}:null,
     cardMoveNumber:room.cardMoveNumber||0,cardMoves:clone(room.cardMoves||[]),
     stateTransitionNumber:room.stateTransitionNumber||0,stateTransitions:clone(room.stateTransitions||[]),
-    discardPile:{count:room.discard.length},
+    discardPile:{count:room.discard.length,topFaction:room.revealFactions===true&&room.discard.length?ROLES[room.discard.at(-1)]?.factionId||null:null},
     drawPile:{count:room.deck.length,topFaction:room.revealFactions===true&&room.deck.length?(ROLES[room.deck.at(-1)]?.faction.startsWith('秩序')?'order':'underworld'):null,reshufflePending:room.deck.length===0&&room.discard.length>0},
     log:publicLog(room),revealedCards:clone(room.revealedCards||[]),sharedInvestigations:clone(room.sharedInvestigations||[]),winner:room.winner,roles:Object.fromEntries(Object.entries(ROLES).map(([k,v])=>[k,{name:v.name,jp:v.jp,faction:v.faction,action:v.action,actionJp:v.actionJp,effect:v.effect,effectJp:v.effectJp,counter:v.counter,counterJp:v.counterJp,counterEffect:v.counterEffect,counterEffectJp:v.counterEffectJp}])) };
 }
