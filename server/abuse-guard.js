@@ -67,7 +67,10 @@ class AbuseGuard{
     if(event==='createRoom'||event==='prepareEntry'&&data?.kind==='create'){group='create';limit=c.create;period=600000;}
     else if(['prepareEntry','confirmEntry','joinRoom','joinSpectator','resumeSession'].includes(event)){group='entry';limit=c.entry;}
     else if(event==='listRooms'){group='browse';limit=c.browse;}
-    else if(event==='chatMessage'){
+    else if(event==='reaction'){
+      if(!this.take(`ip:${ip}:reactions`,c.chat*8,period))return false;
+      return this.take(`seat:${socket.data?.playerId||socket.id}:reactions`,1,require('../shared/reactions').cooldown);
+    }else if(event==='chatMessage'){
       // Bound individual chat seats as well as aggregate traffic behind NAT.
       if(!this.take(`ip:${ip}:chat`,c.chat*8,period))return false;
       group='chat';limit=c.chat;

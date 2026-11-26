@@ -21,7 +21,7 @@ for(const kind of ['turn','response','deadline','draw','replace','discard','vict
  const mute=fixture({},true);mute.audio.play('victory');assert.equal(mute.tones.length,0);
  const blocked=fixture();blocked.listeners.pointerdown();assert.equal(blocked.tones.length,0,'Unlocking audio alone must not produce sound');
 }
-assert.equal(fixture().audio.gameEvent('A loots 1 coin from B during Riot.'),'coin');
+assert.equal(fixture().audio.gameEvent('A loots 1 coin from B during Chaos.'),'coin');
 assert.equal(fixture().audio.gameEvent('A claims Assassin and declares Assassinate against B.'),'attackAssassinate','Declaring Assassinate must use its unique attack cue');
 console.log('Independent chat/gameplay volume, master/mute, deadline preference, cue coverage and delayed scheduling passed.');
 

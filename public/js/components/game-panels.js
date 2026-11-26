@@ -16,27 +16,63 @@
   if(role.counter&&role.counter!=='—')lines.push(`${word('counter',lang)} — ${lang==='jp'?role.counterJp:role.counter}: ${lang==='jp'?role.counterEffectJp:role.counterEffect}`);
   return lines.join('\n');
  }
+ function matchInfo({room,lang='en'}){
+  const mode=room.treasuryMode?(room.revealFactions?'modeTreasuryFaction':'modeTreasury'):(room.revealFactions?'modeFaction':'modeClassic');
+  return `<section class="table-match-info" aria-label="${esc(word('matchInformation',lang))}"><div class="section-title">${esc(word('matchInformation',lang))}</div><strong class="table-mode">${esc(word(mode,lang))}</strong><span class="table-remaining">${esc(word('playersRemaining',lang,{count:room.players?.filter(p=>p.alive).length||0}))}</span>${room.treasuryMode?`<div class="game-board-treasury ${room.riot?'is-riot':'is-order'}" role="status"><strong class="mode-state" data-mode-state>${esc(word(room.riot?'modeStateChaos':'modeStateOrder',lang))}</strong><span class="board-treasury-balance">${esc(word('treasuryBalance',lang,{count:room.treasuryCoins,total:room.totalCoins}))}</span><span class="board-wealth-goal">${esc(word('wealthGoal',lang,{count:room.economyWinThreshold}))}</span><small class="mode-state-notice" data-mode-state-notice aria-live="polite"></small></div>`:''}</section>`;
+ }
+ function board({room,you,lang='en',players=''}){
+  return `<div class="players table-board"><div class="table-seats">${players}</div>${matchInfo({room,lang})}${deck({room,you,lang})}</div>`;
+ }
  function deck({room,you,lang='en'}){
-  const pile=room.drawPile||{},count=Number.isInteger(pile.count)&&pile.count>=0?pile.count:0;
+  const pile=room.drawPile||{},count=Number.isInteger(pile.count)&&pile.count>=0?pile.count:0,discard=room.discardPile?.count||0;
   const faction=room.revealFactions&&['order','underworld'].includes(pile.topFaction)?pile.topFaction:null;
   const next=count>0&&faction?word('deckNextFaction',lang,{faction:word(faction,lang)}):'';
   const empty=count===0?word(pile.reshufflePending?'deckReshuffle':'deckEmpty',lang):'';
-  return `<section class="panel game-deck-panel" aria-label="${esc(word('deckTitle',lang))}"><div class="deck-summary"><div class="deck-stack${count>1?' is-stacked':''}${count===0?' is-empty':''}">${count>0?cards.hidden({faction}):'<div class="deck-empty-slot"></div>'}${summonCard({room,you,lang})}</div><div class="deck-details" role="status" aria-live="polite" aria-atomic="true"><strong class="deck-count">${count}</strong><span class="deck-count-label">${esc(word('deckRemaining',lang))}</span>${next?`<small class="deck-next-faction">${esc(next)}</small>`:''}${empty?`<small class="deck-empty-note">${esc(empty)}</small>`:''}</div></div></section>`;
+  return `<section class="panel game-deck-panel table-piles" aria-label="${esc(word('deckTitle',lang))}"><div class="player-roles pile-roles"><div class="pile-column draw-pile"><div class="deck-stack${count>1?' is-stacked':''}${count===0?' is-empty':''}" data-card-pile="draw">${count>0?cards.hidden({faction}):'<div class="deck-empty-slot"></div>'}${summonCard({room,you,lang})}</div><div class="deck-details" role="status" aria-live="polite" aria-atomic="true"><strong class="deck-count">${count}</strong><span class="deck-count-label">${esc(word('deckRemaining',lang))}</span></div></div><div class="pile-column discard-pile"><div class="discard-stack${discard>1?' is-stacked':''}${discard===0?' is-empty':''}" data-card-pile="discard" aria-label="${esc(word('discardPileTitle',lang))}">${discard>0?cards.hidden():`<div class="deck-empty-slot"></div>`}</div><div class="deck-details"><strong class="discard-count">${discard}</strong><span class="deck-count-label">${esc(word('discardPileLabel',lang))}</span></div></div></div>${next?`<small class="deck-next-faction">${esc(next)}</small>`:''}${empty?`<small class="deck-empty-note">${esc(empty)}</small>`:''}</section>`;
+ }
+ // Read only public resolved outcomes. Income and pending declarations do not
+ // replace the previous result; no hidden role or investigation payload is read.
+ function latestOutcome(room,lang='en'){
+  const entries=room.log||[];let result=null,attack=null;
+  const actionNames={Purge:'purge',Overthrow:'overthrow',Assassinate:'assassinate','Hire Blade':'hireBlade','Hire Guard':'hireGuard'};
+  const actionWord=id=>id==='hireGuard'?i18n.translate('Hire Guard',lang):i18n.action(id,lang);
+  for(const entry of entries){
+   let m;
+   if(/claims .+? and declares|takes Earn |collects \d+ coins? through Tax|through Extort|loots 1 coin/.test(entry))attack=null;
+   if((m=entry.match(/^(.+?) (?:claims (?:Assassin|Swordsman) and declares|uses) (Assassinate|Hire Blade|Purge|Overthrow) (?:against )(.+?)(?: during Chaos \(5 coins\))?\.$/)))attack={from:m[1],to:m[3],action:actionNames[m[2]]};
+   if((m=entry.match(/^(.+?) uses Hire Guard against (.+?)’s Assassinate\./)))attack={from:m[1],to:m[2],action:'hireGuard'};
+   if((m=entry.match(/^(.+?) takes Earn .* gains (\d+) coins?\.$/)))result={action:'earn',title:m[1]+' · '+i18n.action('earn',lang),detail:word('outcomeGain',lang,{player:m[1],count:m[2]})};
+   else if((m=entry.match(/^(.+?) collects (\d+) coins? through Tax\.$/)))result={action:'tax',title:m[1]+' · '+i18n.action('tax',lang),detail:word('outcomeGain',lang,{player:m[1],count:m[2]})};
+   else if((m=entry.match(/^(.+?) takes (\d+) coins? from (.+?) through Extort\.$/)))result={action:'extort',title:m[1]+' → '+m[3]+' · '+i18n.action('extort',lang),detail:word('outcomeTransfer',lang,{from:m[3],to:m[1],count:m[2]})};
+   else if((m=entry.match(/^(.+?) loots 1 coin from (.+?) during Chaos\.$/)))result={action:'loot',title:m[1]+' → '+m[2]+' · '+i18n.action('loot',lang),detail:word('outcomeTransfer',lang,{from:m[2],to:m[1],count:1})};
+   else if((m=entry.match(/^(.+?) uses Enforce against (.+?)’s Extort\. \2 pays 2 coins to \1\.$/)))result={action:'extort',title:m[1]+' · '+i18n.translate('Enforce',lang),detail:word('outcomeTransfer',lang,{from:m[2],to:m[1],count:2})};
+   else if((m=entry.match(/^(.+?) loses (an influence|both influences)(?: \((.+?)\))?\.$/)))result={action:attack?.to===m[1]?attack.action:null,title:attack?.to===m[1]?attack.from+' → '+m[1]+' · '+actionWord(attack.action):m[1],detail:word(m[2]==='both influences'?'outcomeLoss':'outcomeLossOne',lang,{player:m[1],count:m[2]==='both influences'?2:1})};
+   else if(/uses (?:Authority|False Trail|Intimidate) to block|uses Gossip with|investigates .+?\.|replaces an influence with Summon|discards the card drawn with Summon|shares Intrigue information|successfully challenges|wins (?:the game|by accumulating)/.test(entry))result={title:i18n.translate(entry,lang),detail:''};
+  }
+  return result;
+ }
+ function outcome({room,lang='en'}){
+  const item=latestOutcome(room,lang);
+  return `<section class="panel game-outcome-panel" aria-label="${esc(word('lastOutcome',lang))}"><div class="section-title">${esc(word('lastOutcome',lang))}</div>${item?`<div class="outcome-body">${item.action?`<img class="outcome-icon" src="${esc(art[item.action]||art.hireBlade)}" alt="">`:''}<div><strong>${esc(item.title)}</strong>${item.detail?`<p>${esc(item.detail)}</p>`:''}</div></div>`:`<p class="muted">${esc(word('noOutcome',lang))}</p>`}</section>`;
  }
  function actions({room,you,lang='en',allowedAction=null}){
   return [room.riot?'loot':'earn','tax','intrigue','hireBlade','assassinate','summon','extort',room.riot?'overthrow':'purge'].map(action=>{
    const role=roleMap[action],hint=role?roleHint(room,role,lang):word({earn:'hintEarn',loot:'hintLoot',purge:'hintPurge',overthrow:'hintOverthrow'}[action],lang);
    const classes=role?(you?.influences||[]).includes(role)?'held':'bluff':'neutral';
    const disabled=allowedAction===null?!!feedback.unavailableReason(room,you,action,lang):action!==allowedAction;
-   return `<button type="button" class="action ${classes}${action==='loot'?' riot-loot':action==='overthrow'?' riot-overthrow':''}${action==='purge'&&room.mandatoryPurge?' forced-purge':''}" data-action="${action}" data-tooltip="${esc(hint)}" ${disabled?'disabled':''}><img src="${art[action==='overthrow'?'purge':action]}" alt="" class="action-portrait ${role?'portrait-'+role:'action-general-art'}"><b>${esc(i18n.action(action,lang))}</b></button>`;
+   return `<button type="button" class="action ${classes}${action==='loot'?' riot-loot':action==='overthrow'?' riot-overthrow':''}${action==='purge'&&room.mandatoryPurge?' forced-purge':''}" data-action="${action}" data-tooltip="${esc(hint)}" ${disabled?'disabled':''}><img src="${art[action]}" alt="" class="action-portrait ${role?'portrait-'+role:'action-general-art'}"><b>${esc(i18n.action(action,lang))}</b></button>`;
   }).join('');
  }
- function challenge({room,you,lang='en'}){
-  const copy=feedback.challengeCopy(room,you,lang);
-  return `<p class="decision-question">${esc(word('challengeClaim',lang))}</p><p class="challenge-claim-summary">${esc(copy.summary)}</p><div class="row decision-buttons"><button type="button" class="small" data-challenge>${esc(word('challengeChoice',lang))}</button><button type="button" class="small" data-pass>${esc(word('passChoice',lang))}</button></div>`;
+ function counterButtons(room,you,lang){
+  return (room.pending?.options||[]).map(id=>{const role=room.roles[id],held=(you?.influences||[]).includes(id),label=word('claimCounter',lang,{role:i18n.role(id,lang),counter:lang==='jp'?role.counterJp:role.counter});return `<button type="button" class="small counter-choice${held?' held':''}" data-counter="${id}">${esc(label)}${id==='swordsman'?`<span class="counter-cost"> · ${esc(word('actionCoinCost',lang,{count:5}))}</span>`:''}</button>`;}).join('');
  }
- function counter({room,lang='en'}){
-  return `<p class="decision-question">${esc(word('counterQuestion',lang))}</p><div class="row decision-buttons">${(room.pending?.options||[]).map(id=>{const role=room.roles[id];return `<button type="button" class="small" data-counter="${id}">${esc(lang==='jp'?role.counterJp:role.counter)} — ${esc(i18n.role(id,lang))}${id==='swordsman'?' ('+esc(word('actionCoinCost',lang,{count:5}))+')':''}</button>`;}).join('')}<button type="button" class="small" data-decline>${esc(word('allowAction',lang))}</button></div>`;
+ function challenge({room,you,lang='en'}){
+  const q=room.pending,combined=q?.kind==='claim'&&q.targetId===you?.id&&(q.options||[]).length>0;
+  const copy=feedback.challengeCopy(room,you,lang);
+  return `<p class="decision-question">${esc(word(combined?'targetResponseQuestion':'challengeClaim',lang))}</p><p class="challenge-claim-summary">${esc(copy.summary)}</p><div class="row decision-buttons"><button type="button" class="small" data-challenge>${esc(word('challengeChoice',lang))}</button>${combined?`${counterButtons(room,you,lang)}<button type="button" class="small" data-decline>${esc(word('allowAction',lang))}</button>`:`<button type="button" class="small" data-pass>${esc(word('passChoice',lang))}</button>`}</div>`;
+ }
+ function counter({room,you,lang='en'}){
+  return `<p class="decision-question">${esc(word('counterQuestion',lang))}</p><div class="row decision-buttons">${counterButtons(room,you,lang)}<button type="button" class="small" data-decline>${esc(word('allowAction',lang))}</button></div>`;
  }
  function information({you,lang='en'}){
   const count=you.informationChoice?.unknownIndices?.length||0;
@@ -56,6 +92,6 @@
   const own=debts.some(q=>q.loserId===you?.id);
   return `<p class="challenge-penalty-note" role="status">${esc(word(own?'challengeLossChoose':'challengeLossWaiting',lang,{players:debts.map(q=>room.players.find(p=>p.id===q.loserId)?.name||'').join(', ')}))}</p>`;
  }
- const api={actions,roleHint,challenge,counter,information,summon,deck,challengeLoss};
+ const api={actions,roleHint,challenge,counter,information,summon,deck,board,matchInfo,outcome,latestOutcome,challengeLoss};
  if(node)module.exports=api;if(root)root.URAMAKU_PANELS=api;
 })(typeof window!=='undefined'?window:null);

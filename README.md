@@ -1,6 +1,6 @@
 # URAMAKU
 
-Multiplayer hidden-role card game with English and Japanese localization, a guided tutorial, optional visible factions, and Treasury Mode.
+Multiplayer hidden-role card game with English and Japanese localization, a guided tutorial, optional visible factions, and Riot Mode.
 
 ## Run locally
 
@@ -11,7 +11,7 @@ npm ci
 npm start
 ```
 
-Open http://localhost:3000. Create a room, browse public lobbies, or join a four-character code from another browser or tab. Mark every player ready, then start the match. The host can change faction, Treasury and challenge-timer settings in the lobby. The timer starts at 15 seconds and can be set to 5–60 seconds or disabled.
+Open http://localhost:3000. Create a room, browse public lobbies, or join a four-character code from another browser or tab. Mark every player ready, then start the match. The host can change faction, Riot Mode, room capacity and challenge-timer settings in the lobby. Treasury’s fixed supply can be 5, 6 or 7 coins per starting player (default 6), including each player’s initial 1 coin. The timer starts at 15 seconds and can be set to 10–60 seconds or disabled.
 
 The server now saves rooms and reconnect credentials in SQLite at `data/uramaku.sqlite` by default. Restarting it restores the saved hands, deck, turn and pending decision. Keep the `data/` directory when updating the application. A browser tab's private token restores its original seat; language and sound preferences stay in browser storage. Recovery after closing the tab is not guaranteed. No database installation is needed with Node 26.
 
@@ -79,13 +79,13 @@ Home now has a compact wordmark, Public beta badge, visible AI artwork disclosur
 
 ## Public multiplayer preparation
 
-This build includes Stage A correctness fixes, Stage B durable game state/reconnection, Stage C public room discovery, and Stage D disconnected-player controls, cleanup and abuse limits. Rooms start Private. The owner can name a lobby and change its visibility; public lobbies with available seats appear under **Browse rooms** on Home. Private invitation codes and spectator entry still work. The lobby language toggle sits beside Leave room, and Treasury rules now have their own guide tab.
+This build includes Stage A correctness fixes, Stage B durable game state/reconnection, Stage C public room discovery, and Stage D disconnected-player controls, cleanup and abuse limits. Rooms start Private. The owner can name a lobby and change its visibility; public lobbies with available seats appear under **Browse rooms** on Home. Private invitation codes and spectator entry still work. The lobby language toggle sits beside Leave room, and Riot rules have their own guide tab.
 
-The latest update also adds the approved 47-step tutorial, reveal-before-discard sequencing, Extort payment after a final-influence failed challenge, and card sequencing. The current update adds independent failed-challenge penalties, immediate Enforce settlement, exchange-before-replacement Gossip and private Summon decisions on the board. The tutorial/deck follow-up merges the two replacement lesson pairs, aligns EN/JP wording with the displayed state, and puts the private flip on top of the deck with choices in Current Turn. See [tutorial and deck polish](docs/tutorial-deck-polish.md), [challenge timing and board Summon](docs/challenge-timing-and-board-summon.md) and the earlier [tutorial and card sequencing](docs/tutorial-and-card-sequencing.md).
+Earlier updates added the approved tutorial, reveal-before-discard sequencing, Extort payment after a final-influence failed challenge, and card sequencing. The current update adds independent failed-challenge penalties, immediate Enforce settlement, exchange-before-replacement Gossip and private Summon decisions on the board. The tutorial/deck follow-up merges the two replacement lesson pairs, aligns EN/JP wording with the displayed state, and puts the private flip on top of the deck with choices in Current Turn. See [tutorial and deck polish](docs/tutorial-deck-polish.md), [challenge timing and board Summon](docs/challenge-timing-and-board-summon.md) and the earlier [tutorial and card sequencing](docs/tutorial-and-card-sequencing.md).
 
-For an existing installation, preserve `data/` while updating source files. Saved settings from 5–60 seconds stay unchanged; older settings below 5 become 5. New rooms default to 15 seconds. An already-running challenge keeps its saved deadline.
+Keep `data/` for ordinary persistence and metrics. Use a fresh room to test rule-changing releases: there is no version-specific recovery or migration for an in-progress match. New rooms default to a 15-second challenge timer and a Treasury supply of 6 coins per player.
 
-During a match, the owner can kick a disconnected guest through the existing forfeit flow. Waiting lobbies expire only after five minutes with no connected players or spectators. Completed rooms are removed when nobody is connected; active offline games remain saved. Disconnects do not transfer ownership.
+During a match, the owner can kick a connected or disconnected guest through the existing forfeit flow. Waiting lobbies expire only after five minutes with no connected players or spectators. Completed rooms are removed when nobody is connected; active offline games remain saved. Disconnects do not transfer ownership.
 
 Stage E adds a Dockerfile, persistent-volume/origin checks, local load measurements and optional SQLite backup/restore commands. The game is running on Railway Trial at https://uramakugame.com; the owner verified gameplay, public/private discovery, reconnection and restart persistence. The Railway-IP follow-up supports the edge's documented `X-Real-IP` through explicit `TRUST_RAILWAY_PROXY=1`; deploy this code before enabling the flag, with `TRUSTED_PROXY_HOPS=0`. See the [Railway deployment guide](docs/railway-deployment.md) for deployment and remaining live checks. Scheduled backups are intentionally skipped; spending alerts are deferred until Hobby. [Stage D lifecycle and limits](docs/hosting-stage-d.md), [Stage C](docs/hosting-stage-c.md), [Stage B](docs/hosting-stage-b.md) and [Stage A](docs/hosting-stage-a.md) remain as release history.
 
@@ -96,7 +96,7 @@ Stage E adds a Dockerfile, persistent-volume/origin checks, local load measureme
 - [Load tests and hosting cost scenarios](docs/load-test-report.md)
 - [Canonical names and identifiers](docs/nomenclature.md)
 - [Current gameplay rules](docs/game-rules.md)
-- [Treasury Mode](docs/treasury-mode.md)
+- [Riot Mode](docs/treasury-mode.md)
 - [CSS maintenance](docs/styling.md)
 - [Artwork and source provenance](docs/artwork.md)
 - [Review and reorganization notes](docs/review.md)
@@ -108,3 +108,17 @@ Stage E adds a Dockerfile, persistent-volume/origin checks, local load measureme
 ## Private engagement metrics
 
 Room creation, match starts/completions, four mode combinations and player participation are recorded as daily aggregates in SQLite. The optional password-protected EN/JP dashboard lives at `/admin/metrics`; set `METRICS_PASSWORD` in the Railway service to enable it. See [engagement-metrics](docs/engagement-metrics.md) for setup, exact definitions, privacy, migration and timing diagnostics.
+
+## Unified response update — local test build
+
+Targets of Intrigue, Assassinate and Extort can immediately challenge, allow, or counter. A target challenge forfeits their counter; a counter closes the original window and starts its own. Counter selection after expiry is untimed. Challenge-loss reveals precede new counter/concealment decisions and the extra Summon draw. The shared bilingual tutorial now has 43 lessons. See [the change and test guide](docs/unified-target-responses.md) and [LOCAL-TESTING.md](LOCAL-TESTING.md). Existing mid-action snapshots retain their old flow until the next action. This folder has not been deployed.
+
+## Turn presentation and wealth targets
+
+Riot wealth victory is **10 / 12 / 14 coins for 2 / 3 / 4+ starting players**. The shared presentation queue shows action effects first, a 520 ms turn-border handoff second, and the next player’s Income last. Action controls become available as Income starts; its animation is nonblocking; chat and leaving remain usable. See [turn presentation](docs/action-turn-presentation.md).
+
+## Information feedback and reactions
+
+Private knowledge uses an eye/glow effect after its authorized reveal; making a card public uses a broadcast/ripple effect and an owner notice. React beside Chat offers six short bilingual preset bubbles, with a four-second cooldown and no gameplay/SQLite changes. Both features share components with the tutorial. See [intel and reactions](docs/intel-and-reactions.md).
+
+The latest build caps matches at six players, with an owner-selected 2–6 lobby capacity (default 6). Six player cards share the existing board footprint with in-board match information and draw/discard piles. React is before Chat; active-match owner kicking is a cancelable, confirmed single-target selection, while lobby kicks remain direct. Riot Mode replaces the former mode name, with quiet Order/Chaos state cues and distinct Loot/Overthrow icons. See [local changes and playtest](docs/six-player-table-and-riot.md).

@@ -30,7 +30,7 @@ for(const [action,cue] of Object.entries(cues)){
  }
  const source=node('a',{left:10,top:20,width:100,height:100},{id:'source','data-player-id':'a'}),target=node('b',{left:210,top:120,width:100,height:100},{'data-player-id':'b'});
  source.appendChild(node('caption',{}, {id:'caption'}));
- const context={window:{URAMAKU_I18N:i18n,matchMedia:()=>({matches:true})},document:{createElement:tag=>node(tag,{}),body:{appendChild:el=>appended.push(el)}},setTimeout:fn=>timers.push(fn)};
+ const context={window:{URAMAKU_I18N:i18n,matchMedia:()=>({matches:true})},document:{createElement:tag=>node(tag,{}),body:{appendChild:el=>appended.push(el)}},clearTimeout(){},setTimeout:fn=>timers.push(fn)};
  vm.runInNewContext(fs.readFileSync(require.resolve('../../public/js/components/game-feedback'),'utf8'),context);const api=context.window.URAMAKU_FEEDBACK,container={querySelectorAll:()=>[source,target]};
  api.animate({attacks:[{from:'a',to:'b',action:'hireBlade'}]},{container});assert.equal(animations.length,0);assert.equal(appended.length,0,'Reduced motion creates no flight overlays');
  context.window.matchMedia=()=>({matches:false});

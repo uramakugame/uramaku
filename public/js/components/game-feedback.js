@@ -10,7 +10,7 @@
   if(action==='loot'){
    if(!room.riot)return text('actionLootRiot');
    if(room.pending?.kind==='summon')return text('lootDuringSummon');
-   if(room.challengeLosses?.length)return text('actionDecisionPending');
+   if(room.challengeLosses?.length||room.pending?.kind==='lose')return text('actionDecisionPending');
   }
   if(room.turnPlayerId===you.id&&room.mandatoryPurge&&action!=='purge')return text('actionPurgeRequired');
   if(action==='tax'&&room.riot)return text('actionEmptyTreasury');
@@ -24,15 +24,9 @@
   const text=(key,params)=>word(key,lang,params);
   if(room?.status!=='playing')return text('actionMatchInactive');
   if(!you?.alive)return text('actionSpectating');
-  if(action==='loot'){
-   if(!room.riot)return text('actionLootRiot');
-   if(room.pending?.kind==='summon')return text('lootDuringSummon');
-   if(room.challengeLosses?.length)return text('actionDecisionPending');
-  }else{
-   if(room.pending||room.challengeLosses?.length)return text('actionDecisionPending');
-   if(room.turnPlayerId!==you.id)return text('actionNotYourTurn');
-   if(room.mandatoryPurge&&action!=='purge')return text('actionPurgeRequired');
-  }
+  if(room.pending||room.challengeLosses?.length)return text('actionDecisionPending');
+  if(room.turnPlayerId!==you.id)return text('actionNotYourTurn');
+  if(room.mandatoryPurge&&action!=='purge')return text('actionPurgeRequired');
   return requirementReason(room,you,action,lang);
  }
  function challengeCopy(room,you,lang='en'){
@@ -66,8 +60,10 @@
   return (room?.players||[]).flatMap((p,seat)=>Array.from({length:p.influenceCount},(_,slot)=>({id:p.id,kind:'deal',slot,faction:room.revealFactions?p.influenceFactions?.[slot]:null,delay:seat*75+slot*120})));
  }
  function changes(before,after,oldYou,you,replacementChoice=null){
-  const result={sounds:[],coins:[],transfers:[],targets:[],cards:[],attacks:[],flips:[],motions:[]};
+  const result={sounds:[],coins:[],transfers:[],targets:[],cards:[],attacks:[],flips:[],motions:[],intel:[]};
   if(!before||before.code!==after?.code)return result;
+  const intel=root?.URAMAKU_INTEL||(typeof require==='function'?require('./intel-effects'):null);
+  result.intel=intel?.events(before,after,oldYou,you)||[];
   if(after.status==='finished'&&before.status!=='finished'){
    const own=(after.players||[]).find(p=>p.id===you?.id);
    if(own){const won=own.alive&&own.name===after.winner&&(after.winType==='economy'?own.coins>=after.economyWinThreshold:after.players.filter(p=>p.alive).length===1);result.sounds.push(won?'victory':'defeat');}
@@ -93,7 +89,7 @@
   for(const entry of entries){
    let m,from,to,amount;
    if((m=entry.match(/^(.+?) takes (\d+) coins? from (.+?) through Extort\.$/))){from=unique(m[3]);to=unique(m[1]);amount=Number(m[2]);}
-   else if((m=entry.match(/^(.+?) loots 1 coin from (.+?) during Riot\.$/))){from=unique(m[2]);to=unique(m[1]);amount=1;}
+   else if((m=entry.match(/^(.+?) loots 1 coin from (.+?) during Chaos\.$/))){from=unique(m[2]);to=unique(m[1]);amount=1;}
    else if((m=entry.match(/^(.+?) pays (\d+) coins? to (.+?) (?:to keep|to conceal|and chooses)/))){from=unique(m[1]);to=unique(m[3]);amount=Number(m[2]);}
    else if((m=entry.match(/^(.+?) uses Enforce against (.+?)’s Extort\. \2 pays 2 coins to \1\.$/))){from=unique(m[2]);to=unique(m[1]);amount=2;}
    if(from&&to&&amount>0)result.transfers.push({from,to,amount});
@@ -103,7 +99,7 @@
    if((m=entry.match(/^(.+?) claims (Assassin|Swordsman) and declares (Assassinate|Hire Blade) against (.+?)\.$/))){
     attack({from:unique(m[1]),to:unique(m[4]),action:m[3]==='Assassinate'?'assassinate':'hireBlade'});
    }
-   if((m=entry.match(/^(.+?) uses (Purge|Overthrow) against (.+?)(?: during Riot \(5 coins\))?\.$/))){const target=unique(m[3]);if(target){result.targets.push(target);attack({from:unique(m[1]),to:target,action:m[2]==='Purge'?'purge':'overthrow'});}}
+   if((m=entry.match(/^(.+?) uses (Purge|Overthrow) against (.+?)(?: during Chaos \(5 coins\))?\.$/))){const target=unique(m[3]);if(target){result.targets.push(target);attack({from:unique(m[1]),to:target,action:m[2]==='Purge'?'purge':'overthrow'});}}
   }
   const q=after.pending,old=before.pending;
   const newClaim=q?.targetId&&['claim','counterClaim'].includes(q.kind)&&(!old||old.kind!==q.kind||old.challengeDeadline!==q.challengeDeadline||old.claimantId!==q.claimantId||old.targetId!==q.targetId||old.action!==q.action||before.turnNumber!==after.turnNumber);
@@ -170,6 +166,9 @@
    if(card.type==='draw'){const faction=after.roles?.[you?.summonDrawnRole]?.faction;result.motions.push({id:card.id,kind:'draw',faction:after.revealFactions&&faction?(faction.includes('Order')?'order':'underworld'):null});}
    if(card.type==='discard'&&oldYou?.summonDrawnRole)result.motions.push({id:card.id,kind:'discard',fromRole:oldYou.summonDrawnRole});
   }
+  if(entries.some(line=>/discards the card drawn with Summon\.$/.test(line))&&!result.motions.some(m=>m.kind==='discard'))result.pileDiscard=true;
+  if(after.pending?.kind==='summon'&&before.pending?.kind!=='summon'&&after.pending.claimantId!==you?.id)result.pileDraw=true;
+  if(entries.includes('The discard pile was shuffled to form a new deck.'))result.reshuffle=true;
   return result;
  }
  function visibleRoles(room,you,id){
@@ -179,6 +178,55 @@
   return Object.assign(known,you?.privateInvestigations?.[id]||{});
  }
  function uniqueName(room,id){return room.players.find(p=>p.id===id)?.name;}
+ // A completed turn has two public coin events: its action, then the next
+ // player's Income. Render the action balance before presenting that Income.
+ function timeline(before,after,oldYou,you){
+  if(!before||before.code!==after?.code||before.status!=='playing'||after.turnNumber!==before.turnNumber+1)return [{room:after,you}];
+  const incoming=after.players?.find(p=>p.id===after.turnPlayerId);if(!incoming)return [{room:after,you}];
+  const entries=newLogEntries(before,after);let income=null;
+  for(let index=entries.length-1;index>=0;index--){
+   const match=entries[index].match(/^(.+?) receives (\d+) Income \(now (\d+)\)\.$/);
+   if(match&&match[1]===incoming.name&&Number(match[3])===incoming.coins){income={amount:Number(match[2]),entry:entries[index]};break;}
+   if(entries[index]===`${incoming.name} receives no Income because the treasury is empty.`){income={amount:0,entry:entries[index]};break;}
+  }
+  if(!income)return [{room:after,you}];
+  const copy=value=>value?JSON.parse(JSON.stringify(value)):value;
+  const actionRoom=copy(after),actionYou=copy(you),incomingPlayer=actionRoom.players.find(p=>p.id===incoming.id);
+  incomingPlayer.coins-=income.amount;if(actionYou?.id===incoming.id)actionYou.coins-=income.amount;
+  if(actionRoom.treasuryMode){actionRoom.treasuryCoins+=income.amount;actionRoom.riot=actionRoom.treasuryCoins===0;actionRoom.purgeCost=actionRoom.riot?5:7;}
+  const index=actionRoom.log.lastIndexOf(income.entry);if(index>=0)actionRoom.log=actionRoom.log.slice(0,index);
+  Object.assign(actionRoom,{turnPlayerId:before.turnPlayerId,nextTurnPlayerId:incoming.id,turnNumber:before.turnNumber,status:'playing',winner:null,winType:null,pending:null,mandatoryPurge:false,presentationPhase:'action'});
+  const turnRoom={...actionRoom,turnPlayerId:incoming.id,turnNumber:after.turnNumber,presentationPhase:'turn'};
+  return [{room:actionRoom,you:actionYou},{room:turnRoom,you:actionYou,turn:{from:before.turnPlayerId,to:incoming.id}}, {room:{...after,presentationPhase:'income',presentationIncome:income.amount},you}];
+ }
+ function present({container,before,after,oldYou,you,replacementChoice=null,lang='en',render,complete,current=()=>true}){
+  const flow=root.URAMAKU_PRESENTATION,reduced=root?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const frames=reduced?[{room:after,you}]:timeline(before,after,oldYou,you);
+  let index=0,previous=before,previousYou=oldYou;
+  function advance(){
+   if(!current())return;
+   const frame=frames[index++];if(!frame){root.URAMAKU_RIOT_STATE?.announce(container,{before,after,lang});complete();return;}
+   const effects=changes(previous,frame.room,previousYou,frame.you,replacementChoice),entries=previous?.code===frame.room.code?newLogEntries(previous,frame.room):[];
+   const previewRect=effects.motions?.some(m=>m.kind==='discard')?root.URAMAKU_CARD_MOTION?.previewRect(container):null;
+   render(frame.room,frame.you);
+   if(frame.turn)animateTurn(frame.turn,{container});
+   animate(effects,{container,lang,previewRect,nonBlockingCoins:frame.room.presentationPhase==='income'});playSounds(effects,entries,{container});
+   previous=frame.room;previousYou=frame.you;
+   if(reduced)advance();else flow.settled(container,advance);
+  }
+  advance();
+ }
+ function animateTurn({from,to},{container}){
+  const players=Array.from(container.querySelectorAll('.player[data-player-id]')),next=players.find(el=>el.dataset.playerId===to),old=players.find(el=>el.dataset.playerId===from);
+  const flow=root.URAMAKU_PRESENTATION;
+  for(const [element,arriving] of [[old,false],[next,true]]){
+   if(!element?.animate)continue;
+   const release=flow.hold(container,()=>finish());let finished=false,timer;
+   const ring=element.ownerDocument.createElement('span');ring.className='turn-handoff-ring';ring.setAttribute('aria-hidden','true');element.appendChild(ring);
+   const finish=()=>{if(finished)return;finished=true;clearTimeout(timer);ring.remove();release();};
+   try{const animation=ring.animate(arriving?[{opacity:0,transform:'scale(1.06)'},{opacity:1,transform:'scale(1.025)',offset:.45},{opacity:.65,transform:'scale(1)'}]:[{opacity:.8,transform:'scale(1)'},{opacity:0,transform:'scale(.98)'}],{duration:520,easing:'ease-out',fill:'forwards'});animation?.finished?.then(finish,finish);timer=setTimeout(finish,620);}catch{finish();}
+  }
+ }
  function decorateActions(container,{room,you,lang='en',tutorial=false}={}){
   if(!container?.querySelectorAll)return;
   for(const button of container.querySelectorAll('.game-actions-panel .action[data-action]')){
@@ -202,14 +250,14 @@
    }
   }
  }
- function animate(effects,{container=document,lang='en',previewRect=null}={}){
-  if(root?.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ function animate(effects,{container=document,lang='en',previewRect=null,nonBlockingCoins=false}={}){
+  if(root?.matchMedia?.('(prefers-reduced-motion: reduce)').matches){if(effects.intel?.length)root?.URAMAKU_INTEL?.animate(effects.intel,{container,lang});return;}
   const flow=root?.URAMAKU_PRESENTATION;
   const deals=(effects.motions||[]).filter(m=>m.kind==='deal');
   const dealt=deals.length?flow?.beginDeal(container,{count:deals.length,lang}):null;
   const players=()=>Array.from(container.querySelectorAll('.player[data-player-id]'));
   const find=id=>players().find(el=>el.dataset.playerId===id);
-  const pulse=(el,frames,duration)=>{if(el?.animate)el.animate(frames,{duration,easing:'ease-out'});};
+  const pulse=(el,frames,duration)=>{if(!el?.animate)return;const release=flow?.hold(container,()=>complete());let closed=false,timer;const complete=()=>{if(closed)return;closed=true;clearTimeout(timer);release?.();};try{const animation=el.animate(frames,{duration,easing:'ease-out'});animation?.finished?.then(complete,complete);timer=setTimeout(complete,duration+100);}catch{complete();}};
   for(const action of effects.attacks||[]){
    const source=find(action.from),target=find(action.to);
    if(!source||!target)continue;
@@ -237,34 +285,36 @@
    Object.assign(copy.style,{width:a.width+'px',height:a.height+'px',minWidth:'0',maxWidth:'none',margin:'0'});
    board.appendChild(copy);layout.appendChild(board);flight.appendChild(layout);document.body.appendChild(flight);
    const arrival=`translate(${dx}px,${dy}px)`;
-   const finishAttack=flow?.hold(container);
-   const flightAnimation=flight.animate?.([{transform:'translate(0,0) scale(1)',opacity:.92},{transform:arrival+' scale(.94)',opacity:action.action==='assassinate'?.7:.92,offset:.75},{transform:arrival+' scale(.9)',opacity:0}],{duration:style.duration,easing:'ease-in-out',fill:'forwards'});
-   const removeFlight=()=>{flight.remove();finishAttack?.();};flightAnimation?.finished?.then(removeFlight,removeFlight);setTimeout(removeFlight,style.duration+100);
+   const finishAttack=flow?.hold(container,()=>removeFlight());
+   const removeFlight=()=>{flight.remove();finishAttack?.();};
+   try{const flightAnimation=flight.animate?.([{transform:'translate(0,0) scale(1)',opacity:.92},{transform:arrival+' scale(.94)',opacity:action.action==='assassinate'?.7:.92,offset:.75},{transform:arrival+' scale(.9)',opacity:0}],{duration:style.duration,easing:'ease-in-out',fill:'forwards'});flightAnimation?.finished?.then(removeFlight,removeFlight);setTimeout(removeFlight,style.duration+100);}catch{removeFlight();}
    pulse(target,[{boxShadow:`0 0 0 3px ${style.color}`},{boxShadow:'0 0 0 0 transparent'}],style.duration);
    const trail=document.createElement('span');trail.className='attack-trail attack-'+action.action;trail.setAttribute('aria-hidden','true');
    trail.style.left=x+'px';trail.style.top=y+'px';trail.style.width=length+'px';trail.style.transform=`rotate(${Math.atan2(dy,dx)}rad)`;trail.style.color=style.color;document.body.appendChild(trail);
-   const animation=trail.animate?.([{opacity:0},{opacity:.8,offset:.2},{opacity:0}],{duration:style.duration,easing:'ease-out',fill:'forwards'});
-   const remove=()=>trail.remove();animation?.finished?.then(remove,remove);setTimeout(remove,style.duration+100);
+   const releaseTrail=flow?.hold(container,()=>remove()),remove=()=>{trail.remove();releaseTrail?.();};
+   try{const animation=trail.animate?.([{opacity:0},{opacity:.8,offset:.2},{opacity:0}],{duration:style.duration,easing:'ease-out',fill:'forwards'});animation?.finished?.then(remove,remove);setTimeout(remove,style.duration+100);}catch{remove();}
   }
   for(const id of effects.targets||[])if(!effects.attacks?.some(attack=>attack.to===id))pulse(find(id),[{boxShadow:'0 0 0 3px #bf663c'},{boxShadow:'0 0 0 0 transparent'}],650);
   const moving=new Set(),lossMotions=new Set();
   const motion=root?.URAMAKU_CARD_MOTION||(typeof require==='function'?require('./card-motion'):null);
+  for(const [enabled,kind] of [[effects.pileDraw,'draw'],[effects.pileDiscard,'discard']])if(enabled){const done=flow?.hold(container);if(!motion?.pileMotion(container,{kind,onComplete:done}))done?.();}
+  if(effects.reshuffle)for(const el of container.querySelectorAll('[data-card-pile]'))pulse(el,[{opacity:.5,transform:'translateY(3px)'},{opacity:1,transform:'translateY(0)'}],280);
   for(const item of effects.motions||[]){
-   if(item.kind==='discard'){motion?.discardPreview({rect:previewRect,fromRole:item.fromRole,lang});continue;}
+   if(item.kind==='discard'){const complete=flow?.hold(container);if(!motion?.discardPreview({rect:previewRect,fromRole:item.fromRole,lang,container,onComplete:complete}))complete?.();continue;}
    if(item.kind==='draw'&&flow?.whenSummonReady&&container.querySelector('#summonTray')?.hidden){
     const preview=container.querySelector('#summonTray .summon-drawn-card');if(preview)moving.add(preview);
-    flow.whenSummonReady(container,tray=>{const el=tray.querySelector('.summon-drawn-card'),complete=flow.hold(container);if(!el||!motion?.animate(el,{...item,lang,onComplete:complete}))complete();});continue;
+    flow.whenSummonReady(container,tray=>{const el=tray.querySelector('.summon-drawn-card'),complete=flow.hold(container);if(!el||!motion?.animate(el,{...item,lang,pileContainer:container,onComplete:complete}))complete();});continue;
    }
    const el=item.kind==='draw'?container.querySelector('#summonTray .summon-drawn-card'):item.kind==='loss'?find(item.id)?.querySelector(`.eliminated-role-card[data-reveal-index="${item.revealIndex}"]`):find(item.id)?.querySelector(`.room-role-card[data-influence-slot="${item.slot}"]`);
    const complete=item.kind==='deal'?dealt:flow?.hold(container);
-   if(el&&motion?.animate(el,{...item,lang,delay:item.kind==='loss'?flow?.revealDelay(container,item.id)||0:item.delay,reveal:!el.classList.contains('hidden-role-card'),onComplete:()=>{complete?.();}})){moving.add(el);if(item.kind==='loss')lossMotions.add(item.id);}else complete?.();
+   if(el&&motion?.animate(el,{...item,lang,pileContainer:container,delay:item.kind==='loss'?flow?.revealDelay(container,item.id)||0:item.delay,reveal:!el.classList.contains('hidden-role-card'),onComplete:()=>{complete?.();}})){moving.add(el);if(item.kind==='loss')lossMotions.add(item.id);}else complete?.();
   }
   const flipped=new Set(),lossFlips=new Map();
   const flipCard=root?.URAMAKU_CARD_FLIP||(typeof require==='function'?require('./card-flip'):null);
   for(const flip of effects.flips||[]){
    const el=flip.kind==='draw'?container.querySelector('#summonTray .summon-drawn-card'):flip.kind==='loss'?find(flip.id)?.querySelector(`.eliminated-role-card[data-reveal-index="${flip.revealIndex}"]`):find(flip.id)?.querySelector(`.room-role-card[data-influence-slot="${flip.slot}"]`);
    if(el&&!moving.has(el)){
-    const complete=flip.kind==='loss'?flow?.hold(container):null;
+    const complete=flow?.hold(container);
     if(flipCard?.animate(el,{fromRole:flip.fromRole,faction:flip.faction,lang,delay:flip.kind==='loss'?flow?.revealDelay(container,flip.id)||0:0,onComplete:complete})){flipped.add(el);if(flip.kind==='loss')lossFlips.set(flip.id,el);}else complete?.();
    }
   }
@@ -275,20 +325,20 @@
    if(type!=='discard'&&!flipped.has(el)&&!moving.has(el))pulse(el,[{opacity:.45,transform:'translateY(-5px)'},{opacity:1,transform:'translateY(0)'}],300);
    if(type==='loss'&&el){const r=el.getBoundingClientRect();float(word(type==='loss'?'feedbackLost':'feedbackDiscarded',lang),r.left+r.width/2,r.top+r.height/2,28,-30,'feedback-card',400,flow?.revealDelay(container,id)||0);}
   }
-  function float(text,x,y,dx,dy,kind,duration,delay=0){
+  function float(text,x,y,dx,dy,kind,duration,delay=0,blocking=true){
    const token=document.createElement('span');token.className='feedback-token '+kind;token.textContent=text;token.setAttribute('aria-hidden','true');
    // A delayed cleanup must never expose the unfaded underlying element.
    token.style.opacity='0';token.style.left=x+'px';token.style.top=y+'px';document.body.appendChild(token);
-   const animation=token.animate?.([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`,opacity:0}],{duration,delay,easing:'ease-out',fill:'forwards'});
-   const remove=()=>token.remove();
-   animation?.finished?.then(remove,remove);
-   setTimeout(remove,delay+duration+100); // Fallback for unavailable/interrupted animation APIs.
+   const release=flow?.hold(container,()=>remove(),{blocking});let closed=false,timer;
+   const remove=()=>{if(closed)return;closed=true;clearTimeout(timer);token.remove();release?.();};
+   try{const animation=token.animate?.([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`,opacity:0}],{duration,delay,easing:'ease-out',fill:'forwards'});animation?.finished?.then(remove,remove);timer=setTimeout(remove,delay+duration+100);}catch{remove();}
   }
-  for(const change of effects.coins||[]){const el=find(change.id)?.querySelector('.player-coins');if(!el)continue;const r=el.getBoundingClientRect();float((change.delta>0?'+':'')+change.delta,r.left+r.width/2,r.top,0,-24,change.delta>0?'coin-gain':'coin-loss',1475);}
+  for(const change of effects.coins||[]){const el=find(change.id),coin=el?.querySelector('.player-coins');if(!coin)continue;const r=el.getBoundingClientRect(),coinTop=coin.getBoundingClientRect().top;float((change.delta>0?'+':'')+change.delta,r.left+r.width/2,coinTop,0,-24,change.delta>0?'coin-gain':'coin-loss',1475,0,!nonBlockingCoins);}
   for(const transfer of effects.transfers||[]){
    const a=find(transfer.from)?.querySelector('.player-coins')?.getBoundingClientRect(),b=find(transfer.to)?.querySelector('.player-coins')?.getBoundingClientRect();
    if(a&&b)float(transfer.amount===1?word('oneCoin',lang):word('actionCoinCost',lang,{count:transfer.amount}),a.left+a.width/2,a.top,b.left+b.width/2-a.left-a.width/2,b.top-a.top,'coin-transfer',1175);
   }
+  if(effects.intel?.length&&root?.URAMAKU_INTEL){const reveal=()=>root.URAMAKU_INTEL.animate(effects.intel,{container,lang});if(flow)flow.whenIdle(container,reveal);else reveal();}
  }
  function playSounds(effects,entries=[],{container}={}){
   const reduced=root?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -299,7 +349,7 @@
   if(entries.length&&!cardMotion&&!cues.some(cue=>cue.startsWith('attack')||['victory','defeat','draw','replace','discard'].includes(cue)))cues.push(root?.UramakuAudio?.gameEvent(entries.at(-1)));
   [...new Set(cues)].filter(Boolean).filter(cue=>cue!=='turn'||!container||!root?.URAMAKU_PRESENTATION?.deferTurn(container)).slice(0,3).forEach((cue,index)=>{const play=()=>root?.UramakuAudio?.play(cue,{delay:index*.22});if(container&&['victory','defeat'].includes(cue)&&root?.URAMAKU_PRESENTATION)root.URAMAKU_PRESENTATION.whenIdle(container,play);else play();});
  }
- const api={costs,requirementReason,unavailableReason,challengeCopy,decisionKey,newLogEntries,openingDeal,changes,visibleRoles,decorateActions,animate,playSounds};
+ const api={costs,requirementReason,unavailableReason,challengeCopy,decisionKey,newLogEntries,openingDeal,changes,timeline,present,visibleRoles,decorateActions,animate,playSounds};
  if(root)root.URAMAKU_FEEDBACK=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:null);

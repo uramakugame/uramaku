@@ -7,11 +7,12 @@ const ROLE_KEYS = Object.keys(ROLES);
 const ROLE_ACTIONS = Object.fromEntries(Object.values(ROLES).map(role => [role.actionId, role.id]));
 const TARGETED_ACTIONS = new Set(['intrigue','assassinate','hireBlade','extort','purge','overthrow','loot']);
 const COUNTER_ROLES = {intrigue:['lord','courtesan'],assassinate:['swordsman','assassin'],extort:['kingpin','magistrate']};
+const MAX_PLAYERS = 6;
 const HIRE_GUARD_COST = 5;
 const ENFORCE_PAYMENT = 2;
 const CHALLENGE_WINDOW_MS = 15000;
 function challengeTiming(room){
-  const seconds=Number.isInteger(room.challengeDurationSeconds)&&room.challengeDurationSeconds>=5&&room.challengeDurationSeconds<=60?room.challengeDurationSeconds:CHALLENGE_WINDOW_MS/1000;
+  const seconds=Number.isInteger(room.challengeDurationSeconds)?Math.min(60,Math.max(10,room.challengeDurationSeconds)):CHALLENGE_WINDOW_MS/1000;
   const duration=room.challengeTimerEnabled===false?null:seconds*1000;
   return {challengeDurationMs:duration,challengeDeadline:duration===null?null:Date.now()+duration};
 }
@@ -22,36 +23,58 @@ function configureChallengeTimer(room,id,settings={}){
   if(!settings||typeof settings!=='object'||Array.isArray(settings))return{ok:false,error:'Invalid challenge timer settings.'};
   const {enabled,seconds}=settings;
   if(enabled!==undefined&&typeof enabled!=='boolean')return{ok:false,error:'Invalid challenge timer settings.'};
-  if(seconds!==undefined&&(!Number.isInteger(seconds)||seconds<5||seconds>60))return{ok:false,error:'Challenge duration must be a whole number from 5 to 60 seconds.'};
+  if(seconds!==undefined&&(!Number.isInteger(seconds)||seconds<10||seconds>60))return{ok:false,error:'Challenge duration must be a whole number from 10 to 60 seconds.'};
   if(enabled!==undefined)room.challengeTimerEnabled=enabled;
   if(seconds!==undefined)room.challengeDurationSeconds=seconds;
   return{ok:true};
 }
+function configureTreasuryMode(room,id,settings={}){
+  if(!room||!room.players.some(p=>p.id===id))return{ok:false,error:'Only players can change room settings.'};
+  if(room.status!=='lobby')return{ok:false,error:'Game settings are locked once the match starts.'};
+  if(room.hostId!==id)return{ok:false,error:'Only the room owner can change game settings.'};
+  if(!settings||typeof settings!=='object'||Array.isArray(settings))return{ok:false,error:'Invalid Riot Mode settings.'};
+  const {enabled,coinsPerPlayer}=settings;
+  if((enabled===undefined&&coinsPerPlayer===undefined)||(enabled!==undefined&&typeof enabled!=='boolean'))return{ok:false,error:'Invalid Riot Mode settings.'};
+  if(coinsPerPlayer!==undefined&&![5,6,7].includes(coinsPerPlayer))return{ok:false,error:'Treasury coin supply must be 5, 6 or 7 coins per player.'};
+  if(enabled!==undefined)room.treasuryMode=enabled;
+  if(coinsPerPlayer!==undefined)room.treasuryCoinsPerPlayer=coinsPerPlayer;
+  return{ok:true};
+}
+function configureMaxPlayers(room,id,maxPlayers){
+  if(!room||!room.players.some(p=>p.id===id))return{ok:false,error:'Only players can change room settings.'};
+  if(room.status!=='lobby')return{ok:false,error:'Game settings are locked once the match starts.'};
+  if(room.hostId!==id)return{ok:false,error:'Only the room owner can change game settings.'};
+  if(!Number.isInteger(maxPlayers)||maxPlayers<2||maxPlayers>MAX_PLAYERS)return{ok:false,error:'Room capacity must be a whole number from 2 to 6.'};
+  if(maxPlayers<room.players.length)return{ok:false,error:'Room capacity cannot be lower than the number of joined players.'};
+  room.maxPlayers=maxPlayers;return{ok:true};
+}
 const clone = x => JSON.parse(JSON.stringify(x));
 function shuffle(a) { for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 // Room setup and the reusable card deck
-function createGame(code, host) { return { code, name:`${host.name}'s room`,visibility:'private',hostId: host.id, status:'lobby', challengeTimerEnabled:true,challengeDurationSeconds:15,revealFactions:false, treasuryMode:false, treasuryCoins:null, totalCoins:null, economyWinThreshold:null, mandatoryPurge:false, turnNumber:0, cardMoveNumber:0, cardMoves:[], players:[host], spectators:[], chat:[], deck:[], discard:[], revealedCards:[], sharedInvestigations:[], turn:0, pending:null, challengeLosses:[], log:[`${host.name} created the room.`], winner:null }; }
+function createGame(code, host) { return { code, name:`${host.name}'s room`,visibility:'private',maxPlayers:MAX_PLAYERS,hostId: host.id, status:'lobby', challengeTimerEnabled:true,challengeDurationSeconds:15,revealFactions:false, treasuryMode:false, treasuryCoinsPerPlayer:6,treasuryCoins:null, totalCoins:null, economyWinThreshold:null, mandatoryPurge:false, turnNumber:0, stateTransitionNumber:0,stateTransitions:[], cardMoveNumber:0, cardMoves:[], players:[host], spectators:[], chat:[], deck:[], discard:[], revealedCards:[], sharedInvestigations:[], turn:0, pending:null, challengeLosses:[], log:[`${host.name} created the room.`], winner:null }; }
 function draw(room) {
   if (!room.deck.length) { if (!room.discard.length) return null; room.deck = shuffle(room.discard.splice(0)); room.log.push('The discard pile was shuffled to form a new deck.'); }
   return room.deck.pop();
 }
 function startGame(room) {
+  if(room.players.length<2||room.players.length>Math.min(MAX_PLAYERS,room.maxPlayers??MAX_PLAYERS))throw new Error('Room capacity exceeded.');
   // Shuffle the seating order once; the resulting order stays fixed for the match.
   room.players = shuffle(room.players.slice());
   room.deck = shuffle(ROLE_KEYS.flatMap(k => [k,k,k]));
   room.discard = []; room.revealedCards = []; room.sharedInvestigations = [];
-  room.totalCoins=room.treasuryMode ? 7*room.players.length : null;
-  room.treasuryCoins=room.treasuryMode ? 6*room.players.length : null;
-  room.economyWinThreshold=room.treasuryMode ? Math.min(14,room.players.length+9) : null;
-  room.mandatoryPurge=false;room.turnNumber=0;room.cardMoveNumber=0;room.cardMoves=[];
+  room.treasuryCoinsPerPlayer ??= 6;
+  room.totalCoins=room.treasuryMode ? room.treasuryCoinsPerPlayer*room.players.length : null;
+  room.treasuryCoins=room.treasuryMode ? (room.treasuryCoinsPerPlayer-1)*room.players.length : null;
+  room.economyWinThreshold=room.treasuryMode ? (room.players.length===2?10:room.players.length===3?12:14) : null;
+  room.mandatoryPurge=false;room.turnNumber=0;room.stateTransitionNumber=0;room.stateTransitions=[];room.cardMoveNumber=0;room.cardMoves=[];
   room.players.forEach(p => { p.influences=[draw(room),draw(room)]; p.coins=1; p.alive=true; p.ready=true; p.connected=true; p.intrigueVisibility=[0,0]; p.lastInvestigation=null; p.privateInvestigations={}; });
   room.status='playing'; room.turn=0; room.pending=null;room.challengeLosses=[];room.finishAfterChallengesId=null;room.pendingWealthWinnerId=null;
   room.log.push('The game has begun. Everyone starts with 1 coin.'); beginTurn(room);
 }
 function alive(room) { return room.players.filter(p=>p.alive); }
 function current(room) { const a=alive(room); return a.length ? a[room.turn % a.length] : null; }
-// Treasury Mode is a closed economy; the other mode continues to mint coins.
-// Coin transfers, Treasury Mode and passive Income
+// Riot Mode is a closed economy; the other mode continues to mint coins.
+// Coin transfers, Riot Mode and passive Income
 function isTreasury(room) { return room.treasuryMode===true; }
 function isRiot(room) { return isTreasury(room) && room.treasuryCoins===0; }
 function purgeCost(room) { return isRiot(room) ? 5 : 7; }
@@ -60,8 +83,13 @@ function changeTreasury(room,delta){
   const before=room.treasuryCoins;
   if(!Number.isInteger(delta)||before+delta<0)throw new Error('Invalid treasury transfer');
   room.treasuryCoins+=delta;
-  if(before>0&&room.treasuryCoins===0)room.log.push('Riot breaks out! The treasury is empty. Loot replaces Earn and Overthrow replaces Purge (5 coins).');
-  if(before===0&&room.treasuryCoins>0)room.log.push('Riot ends as coins return to the treasury.');
+  if((before===0)!==(room.treasuryCoins===0)){
+    const state=room.treasuryCoins===0?'chaos':'order';
+    room.stateTransitionNumber=(room.stateTransitionNumber||0)+1;
+    (room.stateTransitions||=[]).push({id:room.stateTransitionNumber,state,treasuryCoins:room.treasuryCoins});
+    room.stateTransitions=room.stateTransitions.slice(-20);
+    room.log.push(state==='chaos'?'The treasury is empty. Order has collapsed.':'Order has been restored.');
+  }
 }
 function wealthVictory(room,p){
   if(!isTreasury(room)||room.status!=='playing'||!p?.alive||p.coins<room.economyWinThreshold)return false;
@@ -110,17 +138,29 @@ function treasuryInvariant(room){
 function player(room,id) { return room.players.find(p=>p.id===id); }
 function nextTurn(room) { const a=alive(room); if(a.length<2)return null; const idx=a.findIndex(p=>p.id===current(room)?.id); return a[(idx+1)%a.length]||null; }
 // Public snapshots and player-private information
+// Present a treasury crossing immediately after its explanatory coin/action
+// line. This formats public history only; payments and resolution stay in order.
+function publicLog(room){
+  const lines=room.log.slice(-32);
+  for(let i=0;i<lines.length-1;i++){
+    if(!['The treasury is empty. Order has collapsed.','Order has been restored.'].includes(lines[i]))continue;
+    if(/receives \d+ Income|takes Earn |collects \d+ coins? through Tax|uses (?:Purge|Overthrow) against|claims .+? and declares|claims Swordsman \(Hire Guard\)|coins return to the treasury|remaining coins return to the treasury/.test(lines[i+1])){[lines[i],lines[i+1]]=[lines[i+1],lines[i]];i++;}
+  }
+  return lines.slice(-30);
+}
 function publicState(room) {
   const {drawnRole,...pending}=room.pending||{};
-  return { code:room.code,name:room.name||`${player(room,room.hostId)?.name||room.code}'s room`,visibility:room.visibility==='public'?'public':'private',revision:room.revision||0,status:room.status,revealFactions:room.revealFactions===true,treasuryMode:isTreasury(room),treasuryCoins:room.treasuryCoins,totalCoins:room.totalCoins,economyWinThreshold:room.economyWinThreshold,riot:isRiot(room),purgeCost:purgeCost(room),mandatoryPurge:room.mandatoryPurge===true,turnNumber:room.turnNumber||0,winType:room.winType||null,hostId:room.hostId,turnPlayerId:current(room)?.id||null,nextTurnPlayerId:nextTurn(room)?.id||null,
-    challengeTimerEnabled:room.challengeTimerEnabled!==false,challengeDurationSeconds:room.challengeDurationSeconds??15,
+  return { code:room.code,name:room.name||`${player(room,room.hostId)?.name||room.code}'s room`,visibility:room.visibility==='public'?'public':'private',revision:room.revision||0,status:room.status,maxPlayers:room.maxPlayers??MAX_PLAYERS,revealFactions:room.revealFactions===true,treasuryMode:isTreasury(room),treasuryCoins:room.treasuryCoins,totalCoins:room.totalCoins,economyWinThreshold:room.economyWinThreshold,riot:isRiot(room),purgeCost:purgeCost(room),mandatoryPurge:room.mandatoryPurge===true,turnNumber:room.turnNumber||0,winType:room.winType||null,hostId:room.hostId,turnPlayerId:current(room)?.id||null,nextTurnPlayerId:nextTurn(room)?.id||null,
+    challengeTimerEnabled:room.challengeTimerEnabled!==false,challengeDurationSeconds:room.challengeDurationSeconds??15,treasuryCoinsPerPlayer:room.treasuryCoinsPerPlayer??6,
     players:room.players.map(p=>({id:p.id,name:p.name,coins:p.coins,alive:p.alive,ready:p.ready,connected:p.connected!==false,influenceCount:p.influences.length,...(room.status!=='lobby'&&room.revealFactions===true?{influenceFactions:p.influences.map(r=>ROLES[r]?.faction.startsWith('秩序')?'order':'underworld')}: {})})),
     spectators:(room.spectators||[]).map(p=>({id:p.id,name:p.name,connected:p.connected!==false})), chat:clone(room.chat||[]),
     challengeLosses:(room.challengeLosses||[]).map(q=>({kind:'lose',loserId:q.loserId,reason:q.reason,lossCount:q.lossCount||1,decisionId:q.decisionId})),
-    pending:room.pending?{...pending,...(pending.kind==='informationShare'?{roles:undefined,indices:undefined}:{}),...(pending.kind==='information'?{unknownIndices:undefined}:{}),claimantName:player(room,pending.claimantId)?.name,targetName:player(room,pending.targetId)?.name}:null,
+    pending:room.pending?{...pending,...(pending.kind==='claim'?{options:counterOptions(pending.action,player(room,pending.targetId))}:{}),...(pending.kind==='informationShare'?{roles:undefined,indices:undefined}:{}),...(pending.kind==='information'?{unknownIndices:undefined}:{}),claimantName:player(room,pending.claimantId)?.name,targetName:player(room,pending.targetId)?.name}:null,
     cardMoveNumber:room.cardMoveNumber||0,cardMoves:clone(room.cardMoves||[]),
+    stateTransitionNumber:room.stateTransitionNumber||0,stateTransitions:clone(room.stateTransitions||[]),
+    discardPile:{count:room.discard.length},
     drawPile:{count:room.deck.length,topFaction:room.revealFactions===true&&room.deck.length?(ROLES[room.deck.at(-1)]?.faction.startsWith('秩序')?'order':'underworld'):null,reshufflePending:room.deck.length===0&&room.discard.length>0},
-    log:room.log.slice(-30),revealedCards:clone(room.revealedCards||[]),sharedInvestigations:clone(room.sharedInvestigations||[]),winner:room.winner,roles:Object.fromEntries(Object.entries(ROLES).map(([k,v])=>[k,{name:v.name,jp:v.jp,faction:v.faction,action:v.action,actionJp:v.actionJp,effect:v.effect,effectJp:v.effectJp,counter:v.counter,counterJp:v.counterJp,counterEffect:v.counterEffect,counterEffectJp:v.counterEffectJp}])) };
+    log:publicLog(room),revealedCards:clone(room.revealedCards||[]),sharedInvestigations:clone(room.sharedInvestigations||[]),winner:room.winner,roles:Object.fromEntries(Object.entries(ROLES).map(([k,v])=>[k,{name:v.name,jp:v.jp,faction:v.faction,action:v.action,actionJp:v.actionJp,effect:v.effect,effectJp:v.effectJp,counter:v.counter,counterJp:v.counterJp,counterEffect:v.counterEffect,counterEffectJp:v.counterEffectJp}])) };
 }
 function privateState(room,id) {
   const p=player(room,id);
@@ -129,6 +169,7 @@ function privateState(room,id) {
   return {
     id:p.id,commandSequence:p.commandSequence||0,influences:clone(p.influences),intrigueVisibility:clone(p.intrigueVisibility||p.influences.map(()=>0)),
     coins:p.coins,alive:p.alive,investigated:p.lastInvestigation?clone(p.lastInvestigation):null,
+    intelKnownBy:p.influences.map((role,slot)=>room.players.filter(other=>other.id!==id&&other.privateInvestigations?.[id]?.[slot]===role).map(other=>other.id)),
     privateInvestigations:clone(p.privateInvestigations||{}),intrigueEligibleTargets:intrigueEligibleTargets(room,id),
     informationChoice:pending?.kind==='information'&&pending.targetId===id?{claimantName:player(room,pending.claimantId)?.name,stage:pending.stage,availableCoins:p.coins,influenceCount:p.influences.length,unknownIndices:clone(pending.unknownIndices||[])}:null,
     investigationShare:pending?.kind==='informationShare'&&pending.claimantId===id?{targetName:pending.targetName,roles:clone(pending.roles)}:null,
@@ -195,53 +236,47 @@ function noteCardExchange(room,playerId,slot,reason,shownRole){
 }
 function activeTurn(room,id) { return room.status==='playing' && current(room)?.id===id && !room.pending && !room.challengeLosses?.length; }
 function performLoot(room,p,target) {
-  if(!isRiot(room))return{ok:false,error:'Loot is only available during Riot.'};
-  if(room.pending?.kind==='summon')return{ok:false,error:'Loot is unavailable while Summon is resolving.'};
-  if(room.challengeLosses?.length)return{ok:false,error:'Loot is unavailable while challenge penalties are resolving.'};
+  if(!isRiot(room))return{ok:false,error:'Loot is only available during Chaos.'};
   if(target.coins<1)return{ok:false,error:'Loot requires a target with at least 1 coin.'};
-  const usesTurnAction=activeTurn(room,p.id);
   transferCoins(room,target,p,1);
-  room.log.push(`${p.name} loots 1 coin from ${target.name} during Riot.`);
+  room.log.push(`${p.name} loots 1 coin from ${target.name} during Chaos.`);
   if(room.status==='finished')finishWealthAnnouncement(room);
-  else if(usesTurnAction)finishTurn(room,p.id);
-  else if(room.pending?.kind==='counterOffer'){
-    room.pending.options=counterOptions(room.pending.action,player(room,room.pending.targetId));
-  }
+  else finishTurn(room,p.id);
   return{ok:true};
 }
 // Action declarations and challenge windows
 function performAction(room,id,action,targetId) {
   const p=player(room,id);
-  if(!p?.alive||room.status!=='playing'||(action!=='loot'&&!activeTurn(room,id)))return{ok:false,error:'It is not your turn or another decision is pending.'};
+  if(!p?.alive||room.status!=='playing'||!activeTurn(room,id))return{ok:false,error:'It is not your turn or another decision is pending.'};
   const needsTarget=TARGETED_ACTIONS.has(action);
   const target=needsTarget?player(room,targetId):null;
   if(needsTarget&&(!target?.alive||target.id===id))return{ok:false,error:'Choose an opponent who has not been eliminated.'};
   if(action==='loot')return performLoot(room,p,target);
   if(room.mandatoryPurge&&action!=='purge')return{ok:false,error:'You have 10 or more coins and must use Purge this turn.'};
   if(action==='extort' && target.coins<1)return{ok:false,error:'Extort requires a target with at least 1 coin.'};
-  if(action==='tax'&&isRiot(room))return{ok:false,error:'Tax is unavailable during Riot because the treasury is empty.'};
+  if(action==='tax'&&isRiot(room))return{ok:false,error:'Tax is unavailable during Chaos because the treasury is empty.'};
   if(action==='intrigue'){
     const options=intrigueEligibleTargets(room,id);
     if(!options.length)return{ok:false,error:'Intrigue unavailable: no opponents have influences unknown to you.'};
     if(!options.includes(targetId))return{ok:false,error:'Intrigue unavailable: this player has no influences left for you to discover.'};
   }
   if (action==='earn') {
-    if(isRiot(room))return{ok:false,error:'Earn becomes Loot during Riot.'};
+    if(isRiot(room))return{ok:false,error:'Earn becomes Loot during Chaos.'};
     const amount=treasuryWithdrawal(room,p,1);
     room.log.push(`${p.name} takes Earn (稼ぎ) and gains ${amount} coin${amount===1?'':'s'}.`);
     finishTurn(room,id);return{ok:true};
   }
   // Riot actions are distinct choices, not discounted versions of standard ones.
   // Keep their server IDs separate so stale/malicious clients cannot submit
-  // Purge in Riot or Overthrow outside Riot.
+  // Purge in Riot or Overthrow outside Chaos.
   if (action==='purge' || action==='overthrow') {
     const riot=isRiot(room), name=riot?'Overthrow':'Purge';
-    if(riot && action!=='overthrow')return{ok:false,error:'Purge is replaced by Overthrow during Riot.'};
-    if(!riot && action!=='purge')return{ok:false,error:'Overthrow is only available during Riot.'};
+    if(riot && action!=='overthrow')return{ok:false,error:'Purge is replaced by Overthrow during Chaos.'};
+    if(!riot && action!=='purge')return{ok:false,error:'Overthrow is only available during Chaos.'};
     const cost=riot?5:7;
     if(p.coins<cost)return{ok:false,error:`${name} costs ${cost} coins.`};
     payToTreasury(room,p,cost);
-    room.log.push(`${p.name} uses ${name} against ${target.name}${riot?' during Riot (5 coins)':''}.`);
+    room.log.push(`${p.name} uses ${name} against ${target.name}${riot?' during Chaos (5 coins)':''}.`);
     requestLoss(room,{kind:'lose',claimantId:id,targetId,loserId:targetId,reason:name,after:'finish'});return{ok:true};
   }
   if(!Object.hasOwn(ROLE_ACTIONS,action))return{ok:false,error:'Unknown action.'};
@@ -250,7 +285,7 @@ function performAction(room,id,action,targetId) {
   if(action==='hireBlade'&&p.coins<5)return{ok:false,error:`${ROLES.swordsman.action} costs 5 coins.`};
   if(action==='assassinate')payToTreasury(room,p,3);
   if(action==='hireBlade')payToTreasury(room,p,5);
-  room.pending={kind:'claim',claimantId:id,targetId:target?.id||null,action,role,stage:'challenge',...challengeTiming(room)};
+  room.pending={kind:'claim',claimantId:id,targetId:target?.id||null,action,role,targetResponse:'undecided',stage:'challenge',...challengeTiming(room)};
   room.log.push(`${p.name} claims ${ROLES[role].name} and declares ${ROLES[role].action}${target?' against '+target.name:''}.`);
   return {ok:true};
 }
@@ -259,6 +294,8 @@ function challenge(room,id,now=Date.now()) {
   const q=room.pending; if(!q||!['claim','counterClaim'].includes(q.kind)||q.stage!=='challenge')return{ok:false,error:'There is no claim to challenge.'};
   const challenger=player(room,id); if(!challenger?.alive||id===q.claimantId)return{ok:false,error:'You cannot challenge your own claim.'};
   if((q.passedBy||[]).includes(id))return{ok:false,error:'You have already passed on this claim.'};
+  if(room.challengeLosses?.length)return{ok:false,error:'An influence loss must be revealed first.'};
+  if(q.kind==='claim'&&q.targetId===id)q.targetChallenged=true;
   const claimant=player(room,q.claimantId); const idx=claimant.influences.indexOf(q.role);
   q.wasCounter = q.kind==='counterClaim';
   if(idx===-1) {
@@ -319,12 +356,19 @@ function challenge(room,id,now=Date.now()) {
     settleEnforcePayment(room,player(room,q.targetId),claimant);q.effectResolved=true;
     delete room.settlingChallenge;
   }
-  // Automatic losses (and Intrigue's own target) retain loss-first resolution.
-  // Otherwise the action/counter and the failed challenger's choice are independent.
-  if(q.after==='continue'&&challenger.influences.length>(q.lossCount||1)&&!(!q.wasCounter&&q.action==='intrigue'&&q.targetId===id)){
+  // Only settled effects and unavoidable losses can accompany a manual penalty.
+  // New counter/concealment/Summon choices wait for the public loss reveal.
+  if(q.after==='continue'&&challenger.influences.length>(q.lossCount||1)&&parallelContinuation(room,q)){
     return continueAlongsidePenalty(room,q);
   }
   return requestLoss(room,q);
+}
+// Revealed losses precede new claims and discretionary information/draw choices.
+function parallelContinuation(room,q){
+  if(q.wasCounter)return true; // Blocks/payments/Gossip are final; attack losses are mandatory.
+  if(['tax','hireBlade'].includes(q.action))return true;
+  if(['extort','assassinate'].includes(q.action))return q.targetChallenged===true||q.targetResponse==='allow';
+  return false; // Summon, Intrigue and an undecided target wait for the reveal.
 }
 function continueAlongsidePenalty(room,q){
   const debt={kind:'lose',loserId:q.loserId,reason:q.reason,lossCount:q.lossCount||1,parallel:true};
@@ -384,8 +428,8 @@ function offerCounterOrResolve(room,q) {
   const target=player(room,q.targetId);
   // Counter abilities are claims too: offer every legal counter, even when the
   // target does not hold that role, so they may bluff and be challenged.
-  const options=counterOptions(q.action,target);
-  if(options.length) { room.pending={kind:'counterOffer',claimantId:q.claimantId,targetId:q.targetId,action:q.action,options}; room.log.push(`${target.name} may claim a counter ability.`); return; }
+  const options=(q.targetChallenged||q.targetResponse==='allow')?[]:counterOptions(q.action,target);
+  if(options.length) { room.pending={kind:'counterOffer',claimantId:q.claimantId,targetId:q.targetId,action:q.action,options,responseDecisionId:q.kind==='claim'?q.responseDecisionId:undefined}; room.log.push(`${target.name} may claim a counter ability.`); return; }
   resolveAction(room,q);
 }
 function exchangeGossip(room,original,target){
@@ -425,10 +469,23 @@ function resolveCounter(room,q) { const target=player(room,q.claimantId); const 
   }
 }
 function performDeferredAction(room,q) { resolveAction(room,{claimantId:q.claimantId,targetId:q.targetId,action:q.action}); return {ok:true}; }
+function declineCounter(room,id,now=Date.now()){
+  expireChallenge(room,now);
+  const q=room.pending,target=player(room,id);
+  if(room.status!=='playing'||!target?.alive||q?.targetId!==id)return{ok:false,error:'No counter is available to decline.'};
+  if(q.kind==='counterOffer'){room.pending=null;return performDeferredAction(room,q);}
+  if(q.kind!=='claim'||!COUNTER_ROLES[q.action]||q.targetResponse==='allow'||q.stage!=='challenge')return{ok:false,error:'No counter is available to decline.'};
+  q.targetResponse='allow';q.passedBy ||= [];if(!q.passedBy.includes(id))q.passedBy.push(id);
+  room.log.push(`${target.name} allows the action without a counter.`);
+  if(alive(room).filter(p=>p.id!==q.claimantId).every(p=>q.passedBy.includes(p.id)))resolveUnchallengedClaim(room,q);
+  return{ok:true};
+}
 function chooseCounterRole(room,id,role) {
+  expireChallenge(room);
   const q=room.pending;
   const target=player(room,id);
-  if(q?.kind!=='counterOffer'||q.targetId!==id||!counterOptions(q.action,target).includes(role))return{ok:false,error:'That counter is not available to you.'};
+  const combined=q?.kind==='claim'&&q.stage==='challenge'&&q.targetResponse!=='allow';
+  if(room.status!=='playing'||room.challengeLosses?.length||!q||(!combined&&q.kind!=='counterOffer')||q.targetId!==id||!counterOptions(q.action,target).includes(role))return{ok:false,error:'That counter is not available to you.'};
   if(role==='swordsman'){
     payToTreasury(room,target,HIRE_GUARD_COST);
     room.log.push(`${target.name} pays ${HIRE_GUARD_COST} coins to claim Hire Guard.`);
@@ -591,16 +648,12 @@ function chooseSummon(room,id,choice,cardIndex) {
   const p=player(room,id);
   if(room.status!=='playing'||q?.kind!=='summon'||q.claimantId!==id||!p?.alive)
     return{ok:false,error:'You do not have a Summon decision.'};
-  if(['preview','replace'].includes(q.stage)&&choice==='discard'){
+  if(q.stage==='preview'&&choice==='discard'){
     discardSummonDraw(room);
     room.log.push(`${p.name} discards the card drawn with Summon.`);
     return finishTurn(room,id);
   }
-  if(q.stage==='preview'&&choice==='keep'){
-    q.stage='replace';
-    return{ok:true};
-  }
-  if(['preview','replace'].includes(q.stage)&&choice==='replace'){
+  if(q.stage==='preview'&&choice==='replace'){
     if(!Number.isInteger(cardIndex)||cardIndex<0||cardIndex>=p.influences.length)
       return{ok:false,error:'Choose one of your own influence cards.'};
     room.discard.push(p.influences[cardIndex]);
@@ -616,7 +669,7 @@ function chooseSummon(room,id,choice,cardIndex) {
 // Intrigue concealment and private information sharing
 function chooseCounter(room,id,counter) {
   const q=room.pending;
-  if(q?.kind==='counterOffer') return chooseCounterRole(room,id,counter);
+  if(q?.kind==='counterOffer'||q?.kind==='claim') return chooseCounterRole(room,id,counter);
   if(!q||q.kind!=='information')return{ok:false,error:'No Intrigue response is available.'};
   const t=player(room,q.targetId);
   const investigator=player(room,q.claimantId);
@@ -679,7 +732,7 @@ function chooseIntrigueSharing(room,id,share,indices){
     markInfluenceVisibility(target,selectedIndices.map(i=>(q.indices?.[i]??i)),2);
     const slots=new Map((previous?.indices||[]).map((slot,i)=>[slot,previous.roles[i]]));
     selectedIndices.forEach((i,j)=>slots.set(q.indices?.[i]??i,selected[j]));
-    room.sharedInvestigations.push({playerId:q.targetId,playerName:q.targetName,roles:[...slots.values()],indices:[...slots.keys()],investigatorName:investigator?.name||'A player'});
+    room.sharedInvestigations.push({playerId:q.targetId,playerName:q.targetName,roles:[...slots.values()],indices:[...slots.keys()],investigatorId:investigator?.id,investigatorName:investigator?.name||'A player'});
     room.log.push(`${investigator?.name||'A player'} shares Intrigue information about ${q.targetName}: ${selected.map(r=>ROLES[r].name).join(', ')}.`);
   }else room.log.push(`${investigator?.name||'A player'} keeps Intrigue information about ${q.targetName} private.`);
   room.pending=null;finishTurn(room,id);return{ok:true};
@@ -702,7 +755,7 @@ function sharePrivateIntel(room,id,targetId,slot) {
   const slots=new Map((previous?.indices||[]).map((i,index)=>[i,previous.roles[index]]));
   slots.set(slot,target.influences[slot]);
   room.sharedInvestigations=room.sharedInvestigations.filter(x=>x.playerId!==targetId);
-  room.sharedInvestigations.push({playerId:targetId,playerName:target.name,indices:[...slots.keys()],roles:[...slots.values()],investigatorName:investigator.name});
+  room.sharedInvestigations.push({playerId:targetId,playerName:target.name,indices:[...slots.keys()],roles:[...slots.values()],investigatorId:investigator.id,investigatorName:investigator.name});
   room.log.push(`${investigator.name} shares Intrigue information about ${target.name}: ${ROLES[target.influences[slot]].name}.`);
   return{ok:true};
 }
@@ -812,7 +865,7 @@ function addChatMessage(room, id, message) {
   if(room.chat.length>100)room.chat.splice(0,room.chat.length-100);
   return{ok:true};
 }
-const api={lossDecision,beginTurn,configureChallengeTimer,expireChallenge,ROLES,createGame,publicState,privateState,startGame,treasuryInvariant,performAction,challenge,passChallenge,loseInfluence,chooseCounter,chooseSummon,revealIntrigue,chooseIntrigueSharing,sharePrivateIntel,finishTurn,requestEndTurn,performDeferredAction,addSpectator,addChatMessage,forfeitPlayer,removeLobbyPlayer};
+const api={MAX_PLAYERS,configureMaxPlayers,lossDecision,beginTurn,configureChallengeTimer,configureTreasuryMode,expireChallenge,ROLES,createGame,publicState,privateState,startGame,treasuryInvariant,performAction,challenge,passChallenge,loseInfluence,chooseCounter,declineCounter,chooseSummon,revealIntrigue,chooseIntrigueSharing,sharePrivateIntel,finishTurn,requestEndTurn,performDeferredAction,addSpectator,addChatMessage,forfeitPlayer,removeLobbyPlayer};
 
 if(typeof module==='object'&&module.exports)module.exports=api;
 if(root)root.URAMAKU_GAME=api;

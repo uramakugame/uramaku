@@ -1,8 +1,8 @@
 'use strict';
 const assert=require('node:assert/strict');const {install,entries}=require('../../public/js/components/public-rooms');const i18n=require('../../shared/i18n');
-const sample={code:'ABCD',name:'Evening <script>alert(1)</script>',mode:'treasuryFaction',playerCount:3,maxPlayers:8,status:'waiting'};
+const sample={code:'ABCD',name:'Evening <script>alert(1)</script>',mode:'treasuryFaction',playerCount:3,maxPlayers:6,status:'waiting'};
 for(const lang of ['en','jp']){
- const html=entries([sample],lang,i18n);assert(!html.includes('<script>'));assert(html.includes('&lt;script&gt;'));assert(html.includes(i18n.get('modeTreasuryFaction',lang)));assert(html.includes('3 / 8'));
+ const html=entries([sample],lang,i18n);assert(!html.includes('<script>'));assert(html.includes('&lt;script&gt;'));assert(html.includes(i18n.get('modeTreasuryFaction',lang)));assert(html.includes('3 / 6'));
 }
 function fixture(){
  const sent=[],handlers={},jobs=[];let restoredFocus=0,joined;

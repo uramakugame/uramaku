@@ -29,7 +29,8 @@ function create({socket,getView,report,uuid=()=>crypto.randomUUID(),schedule=set
       if(decisions.has(event)||event==='action'||event==='sharePrivateIntel')packet.expectedTurn=room.turnNumber||0;
       if(decisions.has(event)){
         const decision=event==='loseInfluence'&&!(room.pending?.kind==='lose'&&room.pending.loserId===you?.id)?(room.challengeLosses||[]).find(q=>q.loserId===you?.id):room.pending;
-        packet.expectedDecision=decision?.decisionId||null;
+        const response=['counter','declineCounter'].includes(event)&&['claim','counterOffer'].includes(decision.kind);
+        packet.expectedDecision=(response?decision.responseDecisionId||decision.decisionId:decision?.decisionId)||null;
       }
       queue.push({event,packet,attempts:0});pump();return true;
     },

@@ -47,6 +47,7 @@ for(const lang of ['en','jp']){
   window.matchMedia=()=>({matches:false});
   Element.prototype.animate=function(frames,options){const a={element:this,frames,options};animations.push(a);return{cancel(){},finished:{then(finish){a.finish=finish;}}};};
  });
+ for(const a of animations.filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();
  const arrivals=animations.filter(a=>a.element.classList.contains('card-arrival'));
  assert.equal(arrivals.length,8,'The four-player opening deals two cards per player');
  assert(arrivals.every(a=>a.element.querySelector('.card-back-image').getAttribute('src').endsWith('/standard.png')));
@@ -54,8 +55,8 @@ for(const lang of ['en','jp']){
  const turns=animations.filter(a=>a.element.classList.contains('card-flip-turner'));
  assert.equal(turns.length,2,'Only the learner’s own opening cards turn');
  for(const a of turns)a.finish();
- const completed=animations.length;h.click('#languageToggle');assert.equal(animations.length,completed,'Language switches do not redeal');
+ const completed=animations.length;h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.equal(animations.length,completed,'Language switches do not redeal');
  h.click('#continueLesson');assert.equal(animations.filter(a=>a.element.classList.contains('card-arrival')).length,8,'Beginning the first turn does not repeat the introduction deal');
- h.click('#restart');assert.equal(animations.slice(completed).filter(a=>a.element.classList.contains('card-arrival')).length,8,'Restart uses the shared opening deal');
+ h.click('#restart');for(const a of animations.slice(completed).filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();assert.equal(animations.slice(completed).filter(a=>a.element.classList.contains('card-arrival')).length,8,'Restart uses the shared opening deal');
 }
 console.log('Sequential card motion: discard down → face-down arrival → owner flip, correct faction backs, opening stagger, preview rejection, untouched second card, EN/JP, cancellation, render transfer and reduced motion passed.');

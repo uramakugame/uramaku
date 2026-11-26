@@ -100,7 +100,7 @@ const stateContext={
   pendingReplacementChoice:null,roomCode:next.code,state:clientRoom,me:{id:'same-socket-id',name:'Akira'},chatOpen:true,
   unreadChat:0,announcedWinnerRoom:null,
   document:{querySelector:sel=>sel==='.chat-messages'?messages:null},
-  window:{URAMAKU_FEEDBACK:{...require('../../public/js/components/game-feedback'),animate(){}}},
+  window:{URAMAKU_PRESENTATION:{enqueue(_container,{run}){run(()=>{},()=>true);}},URAMAKU_FEEDBACK:{...require('../../public/js/components/game-feedback'),animate(){},present({after,you,render,complete}){render(after,you);complete();}}},
   app:{},referenceLanguage:'en',
   UramakuAudio:{play(){},gameEvent(){return 'coin'}},syncMandatoryPurgeTargeting(){},
   render(){rendered++},showActionAnnouncement(){},showVictory(){},

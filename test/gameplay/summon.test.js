@@ -50,8 +50,8 @@ for (const treasuryMode of [false, true]) {
   assert.equal(Object.hasOwn(game.publicState(room).pending, 'drawnRole'), false);
   assert.equal(game.publicState(room).players[0].influenceCount, 2);
   assert(!room.log.some(line => line.includes('Assassin')));
-  assert(game.chooseSummon(room, 'claimant', 'keep').ok);
-  assert.equal(room.pending.stage, 'replace');
+
+  assert.equal(room.pending.stage, 'preview');
   assert.deepEqual(claimant.influences, ['magistrate', 'swordsman']);
   assert.equal(game.chooseSummon(room, 'opponent', 'replace', 0).ok, false);
   assert.equal(game.chooseSummon(room, 'claimant', 'replace', '0').ok, false);
@@ -85,8 +85,8 @@ for (const treasuryMode of [false, true]) {
   room.discard = ['courtesan'];
   openSummon(room);
   assert.equal(game.privateState(room, 'claimant').summonDrawnRole, 'courtesan');
-  assert(game.chooseSummon(room, 'claimant', 'keep').ok);
-  assert.equal(room.pending.stage, 'replace', 'A one-card hand still selects its replacement');
+
+  assert.equal(room.pending.stage, 'preview', 'A one-card hand still selects its replacement');
   assert(game.chooseSummon(room, 'claimant', 'replace', 0).ok);
   assert.deepEqual(claimant.influences, ['courtesan']);
   assert.deepEqual(room.discard, ['magistrate']);
@@ -127,19 +127,18 @@ for (const quitter of ['claimant', 'opponent']) {
   const { room } = fixture(undefined, true);
   assert(game.performAction(room, 'claimant', 'summon').ok);
   assert(game.expireChallenge(room, room.pending.challengeDeadline));
-  assert.equal(room.pending.stage, 'preview', 'Timeout draws immediately during Riot');
-  for (const stage of ['preview', 'replace']) {
-    if (stage === 'replace') assert(game.chooseSummon(room, 'claimant', 'keep').ok);
+  assert.equal(room.pending.stage, 'preview', 'Timeout draws immediately during Chaos');
+  for (const stage of ['preview']) {
     for (const [id, target] of [['claimant', 'opponent'], ['opponent', 'claimant']]) {
       const snapshot = JSON.stringify(room);
       const result = game.performAction(room, id, 'loot', target);
       assert.equal(result.ok, false);
-      assert.match(result.error, /Summon is resolving/);
+      assert.match(result.error, /another decision is pending/);
       assert.equal(JSON.stringify(room), snapshot, 'Rejected Loot cannot move coins or interrupt the private draw');
     }
   }
   assert(game.chooseSummon(room, 'claimant', 'replace', 0).ok);
-  assert(game.performAction(room, 'claimant', 'loot', 'opponent').ok, 'Loot resumes after Summon resolves');
+  assert.equal(game.performAction(room, 'claimant', 'loot', 'opponent').ok,false,'The completed Summon has already used this player’s turn');assert(game.performAction(room, 'opponent', 'loot', 'claimant').ok, 'The next player can choose Loot as their turn action');
   assert(game.treasuryInvariant(room));
 }
 
@@ -172,7 +171,7 @@ for (const quitter of ['claimant', 'opponent']) {
   context.me = game.privateState(room, 'claimant');
   context.referenceLanguage = 'jp';
   assert.match(modal(), /くノ一を引きました/);
-  assert(game.chooseSummon(room, 'claimant', 'keep').ok);
+
   context.state = game.publicState(room);
   assert.match(modal(), /data-summon-controls/);
   const pending = vm.runInContext('renderPending(true)', context);
@@ -182,5 +181,4 @@ for (const quitter of ['claimant', 'opponent']) {
   const selection = cards.revealed({ role: 'swordsman', name: '用心棒', select: { type: 'replace', index: 1, label: context.t('replaceInfluence') } });
   assert.match(selection, /data-summon-replace="1"/);
 }
-{const {room}=fixture();openSummon(room);assert(game.chooseSummon(room,'claimant','keep').ok);assert(game.chooseSummon(room,'claimant','discard').ok,'A restored legacy keep-stage can still discard through the new tray');assert.equal(room.pending,null);assert.deepEqual(room.discard,['assassin']);}
 console.log('Automatic Summon draw, privacy, keep/discard, player-card replacement, Riot Loot guards and EN/JP board tray passed.');

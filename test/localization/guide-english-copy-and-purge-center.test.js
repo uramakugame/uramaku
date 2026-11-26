@@ -34,7 +34,7 @@ try{
  const rich=i18n.roleEffect('magistrate','counter','en',{boldRoles:true});
  assert.equal(rich,wanted.magistrate[1],'Printed text is preserved when role names change');
 }finally{i18n.STRINGS.roles.kingpin.en=oldName;}
-assert(app.includes('${mandatoryPurgeExplainer()}<div class="players">${players}</div>'),'Notice must be inside player board');
+assert(app.includes('${mandatoryPurgeExplainer()}${window.URAMAKU_PANELS.board('),'Notice must be inside player board');
 assert(!app.includes('${mandatoryPurgeExplainer()}${content}'),'Notice must not float on overall app shell');
 assert(styles.includes('.game-layout .game-players-panel .forced-purge-explainer{'));
 assert(styles.includes('left:50%;right:auto;'));

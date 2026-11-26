@@ -322,7 +322,8 @@
 .game-shell .game-layout .game-actions-panel .action .action-role-label{font-size:clamp(13px,5.6cqw,19px)!important}
 .game-shell .game-layout .game-actions-panel .action b{font-size:clamp(12px,5cqw,17px)!important}
 .game-shell .game-layout .game-actions-panel .action.neutral b{grid-row:2!important;align-self:start!important}
-.game-shell .game-layout .game-actions-panel .action.held{
+.game-shell .game-layout .game-actions-panel .action.held,
+.game-shell .decision-buttons .counter-choice.held{
   border:2px solid #d8a354!important;
   box-shadow:inset 0 0 0 1px rgba(245,208,136,.35),0 0 0 1px rgba(216,163,84,.22)!important;
 }

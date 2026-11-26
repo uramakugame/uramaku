@@ -9,7 +9,7 @@ Implemented November 21, 2026. Builds on the durable Stage B server. This adds p
 3. From Home in another tab/device on the same running server, choose Browse rooms. Search by name or code, then Join and choose a nickname using the existing entry dialog.
 4. Switching back to Private hides the lobby without changing its code, seats, settings or connection state. Private code invitations and the existing spectator option remain available.
 
-The room list shows name/code, Classic/Faction/Treasury/Treasury + Faction, player count out of eight, waiting status and Join. Initially it includes only waiting public rooms with an available seat and a connected owner. Offline reserved seats remain occupied. A restored public lobby reappears when its owner reconnects. There is no matchmaking or automatic joining.
+The room list shows name/code, Classic/Faction/Riot/Faction + Riot, player count out of eight, waiting status and Join. Initially it includes only waiting public rooms with an available seat and a connected owner. Offline reserved seats remain occupied. A restored public lobby reappears when its owner reconnects. There is no matchmaking or automatic joining.
 
 Names and visibility persist in the existing SQLite snapshot. Search returns a strict public field allowlist and never hands, deck order, private investigations or reconnect credentials. Queries are bounded and paginated and do not write to the database. Final membership still checks capacity transactionally, so two prepared joins cannot both take the final seat.
 
@@ -20,7 +20,7 @@ The browser uses coalesced live updates and debounced search, ignores out-of-ord
 - The lobby EN ⇄ JP toggle now appears immediately to the left of Leave room. Its former roster position is removed; the match layout is unchanged.
 - Challenge duration accepts whole seconds from 5 through 60, defaulting to 15 in new rooms. The on/off setting remains. Server validation, engine defaults, input attributes, countdown fallback and English/Japanese help all match.
 - Existing valid saved durations remain as configured. Legacy durations below 5 are normalized to 5; missing/invalid settings use the new default. An active pending challenge retains its original deadline/duration.
-- Actions, How to Play and Treasury Mode are separate guide tabs. Existing Treasury/Riot explanations are moved verbatim to Treasury Mode in both languages; action descriptions and portraits are unchanged.
+- Actions, How to Play and Riot Mode are separate guide tabs. Existing Treasury/Riot explanations are moved verbatim to Riot Mode in both languages; action descriptions and portraits are unchanged.
 
 ## Updating and testing
 

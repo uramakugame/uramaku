@@ -7,7 +7,7 @@ const root=path.join(__dirname,'../..');
 const app=fs.readFileSync(path.join(root,'public/js/app.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'public/css/game.css'),'utf8');
 // Intrigue has a single canonical action name across all stages.
-const flowSource=app.slice(app.indexOf('function renderActionFlow(){'),app.indexOf('function renderBoardEconomy(){'));
+const flowSource=app.slice(app.indexOf('function renderActionFlow(){'),app.indexOf('// Lobby settings remain separate'));
 const ctx={state:null,me:null,referenceLanguage:'en',i18n:require('../../shared/i18n'),esc:x=>String(x)};
 vm.createContext(ctx);vm.runInContext(flowSource,ctx);
 const players=[{id:'one',name:'Akira',alive:true},{id:'two',name:'Sora',alive:true}];

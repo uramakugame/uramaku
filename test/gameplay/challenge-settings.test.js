@@ -7,9 +7,9 @@ function fixture(){const room=game.createGame('TIME',player('a'));room.players.p
 try{
  const defaults=fixture();assert.equal(defaults.challengeTimerEnabled,true);assert.equal(defaults.challengeDurationSeconds,15);
  const original=JSON.stringify(defaults);
- for(const settings of [{seconds:1},{seconds:4},{seconds:0},{seconds:61},{seconds:1.5},{seconds:'6'},{enabled:'false'},null]){assert.equal(game.configureChallengeTimer(defaults,'a',settings).ok,false);assert.equal(JSON.stringify(defaults),original);}
+ for(const settings of [{seconds:1},{seconds:4},{seconds:5},{seconds:9},{seconds:10.5},{seconds:0},{seconds:61},{seconds:1.5},{seconds:'6'},{enabled:'false'},null]){assert.equal(game.configureChallengeTimer(defaults,'a',settings).ok,false);assert.equal(JSON.stringify(defaults),original);}
  assert.equal(game.configureChallengeTimer(defaults,'b',{seconds:12}).ok,false);assert.equal(game.configureChallengeTimer(defaults,'watcher',{seconds:12}).ok,false);
- for(const seconds of [5,6,12,60]){
+ for(const seconds of [10,12,15,60]){
   const room=fixture();assert(game.configureChallengeTimer(room,'a',{seconds}).ok);room.status='playing';
   assert.equal(game.configureChallengeTimer(room,'a',{enabled:false}).ok,false,'Match settings are locked after start');
   assert(game.performAction(room,'a','assassinate','b').ok);assert.equal(room.pending.challengeDeadline,now+seconds*1000);assert.equal(room.pending.challengeDurationMs,seconds*1000);
@@ -47,5 +47,5 @@ try{
  const app=fs.readFileSync(path.resolve(__dirname,'../../public/js/app.js'),'utf8'),clock=app.slice(app.indexOf('function updateChallengeCountdown(){'),app.indexOf('// Current Turn status'));
  const browser={state:{status:'playing',pending:{kind:'claim',stage:'challenge',challengeDeadline:null}},challengeCountdownTimer:null,clearTimeout(){},setTimeout(){throw Error('Untimed countdown scheduled')},document:{querySelector(){throw Error('Untimed countdown rendered')}},UramakuAudio:{play(){throw Error('Untimed warning sounded')}}};vm.createContext(browser);vm.runInContext(clock,browser);browser.updateChallengeCountdown();
  assert.match(i18n.get('challengeTimerHelp','jp'),/オフ/);
- console.log('Host-only lobby timer settings, validation, 5–60s action/counter deadlines, untimed claims, early passes, stale timers and countdown guards passed.');
+ console.log('Host-only lobby timer settings, validation, 10–60s action/counter deadlines, untimed claims, early passes, stale timers and countdown guards passed.');
 }finally{Date.now=realNow}

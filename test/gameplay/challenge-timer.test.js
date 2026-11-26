@@ -146,8 +146,7 @@ try {
   refreshed.send('action',{action:'loot',targetId:'c'});
   assert.equal(JSON.stringify(resolving),beforeLoot,'Socket requests cannot bypass the Summon Loot guard');
   assert.equal(refreshed.events.at(-1).event,'notice');
-  assert.equal(refreshed.events.at(-1).payload.message,'Loot is unavailable while Summon is resolving.');
-  c.send('summonChoice',{choice:'keep'});
+  assert.equal(refreshed.events.at(-1).payload.message,'It is not your turn or another decision is pending.');
   const beforeReplacement=JSON.stringify(resolving);
   c.send('action',{action:'loot',targetId:'b'});
   assert.equal(JSON.stringify(resolving),beforeReplacement);

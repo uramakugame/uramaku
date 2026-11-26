@@ -27,9 +27,9 @@ for(const lang of ['en','jp']){
    default:throw Error(expected.type);
   }
  }
- assert(guard<100);assert.equal(h.state().room.status,'finished');assert.equal(h.state().room.winner,'You');assert.equal(h.state().you.coins,0);
+ assert(guard<100);assert.equal(h.state().room.status,'finished');assert.equal(h.state().room.winner,'You');assert.equal(h.state().you.coins,2);
  assert.equal(h.document.documentElement.lang,lang==='jp'?'ja':'en');assert(!h.app.innerHTML.includes('undefined'));
- h.click('#backStep');assert.equal(h.value('tutorial.step.id'),'final-assassinate');assert.equal(h.state().you.coins,3);h.click('#restart');assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);
+ h.click('#backStep');assert.equal(h.value('tutorial.step.id'),'sora-final-extort');assert.equal(h.state().you.coins,2);h.click('#restart');assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);
 }
 const html=fs.readFileSync(require.resolve('../../public/tutorial.html'),'utf8');assert(html.includes('/shared/game.js'));assert(html.includes('/shared/tutorial.js'));assert(html.includes('/js/components/game-panels.js'));
 console.log('Actual sidebar, target/player-card, influence-loss, counter, board Summon and replacement clicks complete the tutorial in EN/JP; back/restart passed.');

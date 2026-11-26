@@ -1,0 +1,21 @@
+/* Information state and preset conversation, shared by room and tutorial. */
+.room-role-card{position:relative}
+.intel-effect{position:absolute;inset:0;z-index:12;pointer-events:none;border:2px solid currentColor;border-radius:inherit;box-shadow:inset 0 0 14px currentColor;overflow:hidden}
+.intel-private{color:#817198}
+.intel-public{color:#ad5641;box-shadow:inset 0 0 20px #ad564155}
+.intel-icon{position:absolute;right:4px;top:4px;display:grid;place-items:center;width:25px;height:25px;border:1px solid currentColor;border-radius:50%;background:#f3e5d0f2;box-shadow:0 1px 5px #27181144}
+.intel-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.intel-ripple{position:absolute;inset:8px;border:1px solid currentColor;border-radius:50%;opacity:0}
+.intel-public .intel-ripple{animation:intel-broadcast 1s ease-out both}
+@keyframes intel-broadcast{0%{transform:scale(.45);opacity:0}20%{opacity:.8}100%{transform:scale(1.7);opacity:0}}
+.intel-owner-notice{position:absolute;top:6px;left:8px;right:8px;z-index:25;padding:7px 9px;background:#f4e4ccf5;border:1px solid #ad5641;border-radius:3px;box-shadow:0 3px 12px #39231933;color:#723d2f;font-size:12px;line-height:1.4;text-align:center;pointer-events:none}
+.reaction-tools{position:relative;display:inline-flex;align-items:center}
+.reaction-menu{position:absolute;right:0;top:calc(100% + 7px);z-index:5300;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:min(290px,calc(100vw - 32px));padding:9px;background:#f1e3cb;border:1px solid #a88350;border-radius:5px;box-shadow:0 7px 20px #24150c55}
+.reaction-menu[hidden]{display:none!important}
+.reaction-menu button{white-space:normal;min-height:34px}
+.player-reaction-bubble{position:fixed;z-index:4800;box-sizing:border-box;padding:8px 12px;background:#f2e4cc;color:#39271d;border:1px solid #9e7847;border-radius:13px 9px 12px 4px;box-shadow:0 4px 12px #24170e44;text-align:center;font:600 clamp(12px,1vw,15px)/1.3 'Noto Serif JP',Georgia,serif;pointer-events:none;overflow-wrap:anywhere}
+.player-reaction-bubble::after{content:'';position:absolute;left:calc(50% - 6px);bottom:-7px;width:12px;height:12px;background:#f2e4cc;border-right:1px solid #9e7847;border-bottom:1px solid #9e7847;transform:rotate(45deg)}
+.player-reaction-bubble.bubble-below::after{bottom:auto;top:-7px;border:0;border-left:1px solid #9e7847;border-top:1px solid #9e7847}
+.player-reaction-bubble[hidden]{display:none}
+@media(max-width:600px){.reaction-menu{grid-template-columns:1fr;width:min(210px,calc(100vw - 32px))}.intel-owner-notice{font-size:10px;padding:5px}}
+@media(prefers-reduced-motion:reduce){.intel-public .intel-ripple{animation:none}.intel-effect{box-shadow:none}}

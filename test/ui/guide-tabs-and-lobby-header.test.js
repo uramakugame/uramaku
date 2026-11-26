@@ -21,7 +21,7 @@ const header=lobby.slice(lobby.indexOf('class="lobby-intro"'),lobby.indexOf('cla
 assert(header.includes('class="lobby-intro-tools"'));assert(header.indexOf('${languageToggleMarkup()}')<header.indexOf('id="exitRoom"'),'Language control is immediately before Leave room');
 const tools=lobby.slice(lobby.indexOf('class="lobby-roster-tools"'),lobby.indexOf('class="lobby-roster"'));
 assert(!tools.includes('languageToggleMarkup'),'The old roster language control is removed');
-assert(lobby.includes('min="5" max="60"'));assert(lobby.includes('state.challengeDurationSeconds??15'));
+assert(lobby.includes('min="10" max="60"'));assert(lobby.includes('state.challengeDurationSeconds??15'));
 const css=fs.readFileSync(require.resolve('../../public/css/game.css'),'utf8');assert(css.includes('.lobby-intro-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}'));
 for(const lang of ['en','jp'])assert(i18n.get('challengeDurationHint',lang).includes('15'));
-console.log('Three guide tabs in EN/JP, Treasury-only content, retained action assets, lobby language/Leave order and 5–60s/15s controls passed.');
+console.log('Three guide tabs in EN/JP, Treasury-only content, retained action assets, lobby language/Leave order and 10–60s/15s controls passed.');

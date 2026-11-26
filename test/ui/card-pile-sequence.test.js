@@ -1,0 +1,21 @@
+'use strict';
+const assert=require('node:assert/strict'),cards=require('../../public/js/components/role-cards'),panels=require('../../public/js/components/game-panels'),{harness}=require('../tutorial/browser-harness');
+for(const lang of ['en','jp']){
+ const h=harness(lang),motions=[],timers=[];h.window.URAMAKU_PRESENTATION.cancel(h.app);h.window.matchMedia=()=>({matches:false});
+ Object.getPrototypeOf(h.app).animate=function(frames,options){const a={el:this,frames,options};motions.push(a);return{cancel(){},finished:{then(finish){a.finish=finish;}}};};h.context.setTimeout=(fn,ms)=>{const t={fn,ms};timers.push(t);return t;};h.context.clearTimeout=t=>{if(t)t.canceled=true;};
+ const room={players:[{id:'a',alive:true}],drawPile:{count:6},discardPile:{count:2}};
+ const markup=()=>'<div class="game-shell"><div class="game-layout">'+panels.board({room,lang,players:'<div class="player" data-player-id="a"><div class="player-roles">'+cards.revealed({role:'lord',name:'Lord',slot:0})+cards.revealed({role:'assassin',name:'Assassin',slot:1})+'</div></div>'})+'</div></div>';
+ h.app.innerHTML=markup();const api=h.window.URAMAKU_CARD_MOTION;let completed=0;const card=h.app.querySelector('[data-influence-slot="0"]');
+ assert(api.animate(card,{kind:'replace',fromRole:'magistrate',lang,pileContainer:h.app,onComplete:()=>completed++}));
+ assert(motions.at(-1).el.classList.contains('card-discard'));assert.match(motions.at(-1).frames.at(-1).transform,/translateY\(\d+px\)/);motions.at(-1).finish();
+ assert(motions.at(-1).el.closest('[data-card-pile="discard"]'));assert(motions.at(-1).el.querySelector('.card-back-image').getAttribute('src').endsWith('/standard.png'));assert.match(motions.at(-1).frames[0].transform,/translateY\(-\d+px\)/);assert.equal(completed,0);motions.at(-1).finish();
+ assert(motions.at(-1).el.closest('[data-card-pile="draw"]'));assert.equal(motions.at(-1).frames[0].transform,'translateY(0px)');assert.match(motions.at(-1).frames.at(-1).transform,/translateY\(-\d+px\)/);motions.at(-1).finish();
+ assert(motions.at(-1).el.classList.contains('card-arrival'));assert.match(motions.at(-1).frames[0].transform,/translateY\(-\d+px\)/);motions.at(-1).finish();assert(motions.at(-1).el.classList.contains('card-flip-turner'));motions.at(-1).finish();assert.equal(completed,1);
+ assert(!h.app.querySelector('[data-influence-slot="1"]').classList.contains('card-flipping'));assert(!h.app.querySelector('.card-pile-motion'));
+ // The deck lift's stagger is retained; rerenders move the same decorative layer.
+ api.animate(card,{kind:'deal',delay:120,pileContainer:h.app,lang});const lift=motions.at(-1);assert.equal(lift.options.delay,120);const saved=api.capture(h.app);h.app.innerHTML=markup();const count=motions.length;api.restore(h.app,saved);assert.equal(motions.length,count);assert(h.app.querySelector('[data-card-pile="draw"] .card-pile-motion'));lift.finish();assert.equal(motions.at(-1).options.delay,0);motions.at(-1).finish();motions.at(-1).finish();
+ const rect={left:20,top:20,width:74,height:130};let discarded=0;assert(api.discardPreview({rect,fromRole:'lord',lang,container:h.app,onComplete:()=>discarded++}));assert(motions.at(-1).el.classList.contains('card-discard-float'));motions.at(-1).finish();assert.equal(discarded,0);assert(motions.at(-1).el.closest('[data-card-pile="discard"]'));motions.at(-1).finish();assert.equal(discarded,1);
+ // Eliminated influence reveal/loss stays on its player, never enters the pile.
+ const lost=h.app.querySelector('[data-influence-slot="0"]'),start=motions.length;api.animate(lost,{kind:'loss',fromRole:'lord',pileContainer:h.app,lang});motions.at(-1).finish();assert(!motions.slice(start).some(m=>m.el.classList.contains('card-pile-motion')));
+}
+console.log('Deck lifts locally → existing player arrival/flip; outgoing discard → local pile landing; correct face-down backs, exact order, stagger, rerender continuity, unaffected second card and excluded eliminations passed in EN/JP.');

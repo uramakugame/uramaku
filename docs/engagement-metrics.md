@@ -19,7 +19,7 @@ Failed authentication is limited to 10 attempts per network per minute with boun
 | --- | --- |
 | Rooms created | Successful room creation, including lobbies that never start. |
 | Matches started | A committed transition from waiting lobby to playing. Mode and starting player count are captured here, after lobby settings are finalized. |
-| Mode breakdown | Classic, Faction, Treasury, Faction + Treasury; mutually exclusive. |
+| Mode breakdown | Classic, Faction, Treasury, Faction + Riot; mutually exclusive. |
 | Matches completed | A tracked match reaches the engine's finished status. Elimination and wealth victories count, including endings caused by forfeits or owner kicks. |
 | Completion rate | Of matches **started in the selected date range**, the proportion finished so far. An ongoing game is not automatically classified as abandoned. |
 | Player seat joins | New player seats successfully enter a room. Refresh, back-navigation and reconnecting to the same seat do not add joins. Repeat visits/new seats or tabs may count again. This is **not unique people**. |

@@ -7,10 +7,12 @@ const created=a.send('createRoom',{nickname:'Akira'});assert(created.code);
 const room=h.rooms.get(created.code);
 b.send('joinRoom',{code:created.code,nickname:'Sora'});
 // Every registered packet boundary rejects malformed input without state changes.
+let reactionCase=0;
 for(const event of Object.keys(a.handlers).filter(x=>x!=='disconnect')){
   for(const bad of [null,[],123,'payload']){
     const before=JSON.stringify(room);
-    let answer;assert.doesNotThrow(()=>a.handlers[event](bad,result=>answer=result),event);
+    const client=event==='reaction'?h.client('reaction-invalid-'+reactionCase++):a;
+    let answer;assert.doesNotThrow(()=>client.handlers[event](bad,result=>answer=result),event);
     assert.equal(answer.error,'Invalid request.',event);
     assert.equal(JSON.stringify(room),before,event+' must not mutate the room');
   }

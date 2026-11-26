@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const harness=require('../helpers/server-harness');
-const {upgradeRoom,listRooms}=require('../../server/room-directory');
+const {listRooms}=require('../../server/room-directory');
 const g=require('../../server/game');
 const h=harness({RATE_PACKETS_PER_SEC:'1000',RATE_IP_PACKETS_PER_SEC:'2000'}),host=h.client('host'),guest=h.client('guest'),viewer=h.client('viewer'),browser=h.client('browser');
 const created=host.send('createRoom',{nickname:'Hasu'}),code=created.code,room=h.rooms.get(code);
@@ -13,7 +13,7 @@ for(const client of [guest,viewer])assert(client.send('setRoomDetails',{visibili
 assert.equal(JSON.stringify(room),original,'Unauthorized settings cannot change the snapshot');
 assert(host.send('setRoomDetails',{name:'Evening Duel',visibility:'public'}).ok);
 assert.equal(room.code,code);assert.deepEqual(room.players.map(p=>p.id),identity);assert.equal(host.closed,undefined);assert.equal(guest.closed,undefined);
-let dto=listing().rooms[0];assert(dto);assert.equal(dto.name,'Evening Duel');assert.equal(dto.playerCount,2);assert.equal(dto.maxPlayers,8);assert.equal(dto.status,'waiting');
+let dto=listing().rooms[0];assert(dto);assert.equal(dto.name,'Evening Duel');assert.equal(dto.playerCount,2);assert.equal(dto.maxPlayers,6);assert.equal(dto.status,'waiting');
 assert.deepEqual(Object.keys(dto).sort(),['code','name','mode','playerCount','maxPlayers','status'].sort());
 assert(!JSON.stringify(dto).includes(created.resumeToken));assert(!JSON.stringify(dto).includes(room.seatTokens.get('host')));
 assert.equal(listing('dUeL').rooms[0].code,code);assert.equal(listing(code.toLowerCase()).rooms[0].code,code);assert.equal(listing('missing').rooms.length,0);
@@ -27,13 +27,13 @@ host.send('setRoomDetails',{visibility:'private'});assert.equal(listing(code).ro
 assert(h.client('invited').send('joinRoom',{code,nickname:'Invited'}).code,'Code invitations still work for private rooms');
 host.send('setRoomDetails',{visibility:'public'});
 // Spectators do not consume seats; disconnected reserved players do.
-const guests=[];for(let n=0;n<4;n++){const c=h.client('guest-'+n);c.send('joinRoom',{code,nickname:'Guest '+n});guests.push(c);}
-assert.equal(room.players.length,7);assert.equal(listing().rooms[0].playerCount,7);
+const guests=[];for(let n=0;n<2;n++){const c=h.client('guest-'+n);c.send('joinRoom',{code,nickname:'Guest '+n});guests.push(c);}
+assert.equal(room.players.length,5);assert.equal(listing().rooms[0].playerCount,5);
 const a=h.client('last-a'),b=h.client('last-b');
 const p=a.send('prepareEntry',{kind:'join',code,nickname:'Last A'}),q=b.send('prepareEntry',{kind:'join',code,nickname:'Last B'});
 assert(a.send('confirmEntry',{code,token:p.resumeToken,intentId:p.intentId}).ok);
 assert(b.send('confirmEntry',{code,token:q.resumeToken,intentId:q.intentId}).error,'Only one request may fill the final seat');
-assert.equal(room.players.length,8);assert.equal(listing().rooms.length,0);assert.equal(b.data.playerId,undefined);
+assert.equal(room.players.length,6);assert.equal(listing().rooms.length,0);assert.equal(b.data.playerId,undefined);
 a.disconnect();assert.equal(listing().rooms.length,0,'A reserved offline seat is still occupied');
 assert(host.send('kickPlayer',{targetId:room.players.at(-1).id}).ok);assert.equal(listing().rooms.length,1);
 host.disconnect();assert.equal(listing().rooms.length,0,'An owner-offline lobby is hidden without changing its visibility');assert.equal(room.visibility,'public');
@@ -49,6 +49,4 @@ assert(start.send('setRoomDetails',{visibility:'private'}).error);assert.equal(J
 const synthetic=new Map();for(let n=0;n<45;n++){const r=g.createGame(String(n).padStart(4,'0'),{id:'h'+n,name:'Host',connected:true});r.visibility='public';synthetic.set(r.code,r);}
 assert.equal(listRooms(synthetic).rooms.length,20);assert.equal(listRooms(synthetic,{offset:20}).rooms.length,20);assert.equal(listRooms(synthetic,{offset:40}).rooms.length,5);
 assert.equal(listRooms(synthetic,{offset:999}).offset,40);
-const legacy=g.createGame('OLD1',{id:'old',name:'Old'});delete legacy.name;delete legacy.visibility;legacy.challengeDurationSeconds=2;legacy.pending={kind:'claim',stage:'challenge',challengeDeadline:123456,challengeDurationMs:2000};
-assert(upgradeRoom(legacy));assert.equal(legacy.visibility,'private');assert.equal(legacy.challengeDurationSeconds,5);assert.equal(legacy.pending.challengeDeadline,123456);assert.equal(upgradeRoom(legacy),false);
-console.log('Public/private discovery, safe DTOs/search, modes, owner authorization, code invitations, reserved seats, final-seat race, read-only queries and legacy normalization passed.');
+console.log('Public/private discovery, safe DTOs/search, modes, owner authorization, code invitations, reserved seats, final-seat race, read-only queries passed.');

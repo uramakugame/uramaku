@@ -3,9 +3,9 @@ const assert=require('node:assert/strict');
 const g=require('../../server/game');
 const choose=a=>a[Math.floor(Math.random()*a.length)];
 const modes=[false,true];let completed=0,started=0,economic=0,riots=0;
-for(const mode of modes)for(let seats=2;seats<=8;seats++)for(let game=0;game<20;game++){
+for(const mode of modes)for(let seats=2;seats<=6;seats++)for(let game=0;game<28;game++){
   const participants=Array.from({length:seats},(_,i)=>({id:`p${i}`,name:`Player ${i+1}`,coins:0,ready:true,alive:true,influences:[]}));
-  const room=g.createGame('SIM',participants[0]);room.players=participants;room.treasuryMode=mode;g.startGame(room);started++;
+  const room=g.createGame('SIM',participants[0]);room.players=participants;room.treasuryMode=mode;if(mode)room.treasuryCoinsPerPlayer=[5,6,7][game%3];g.startGame(room);started++;
   for(let step=0;room.status==='playing'&&step<300;step++){
     assert(g.treasuryInvariant(room),`Invariant failed in ${mode} ${seats} game ${game} turn ${step}`);
     const pendingDraw=room.pending?.kind==='summon'&&room.pending.drawnRole?1:0;
@@ -25,11 +25,13 @@ for(const mode of modes)for(let seats=2;seats<=8;seats++)for(let game=0;game<20;
         const options=room.players.filter(p=>p.alive&&p.id!==q.claimantId&&!(q.passedBy||[]).includes(p.id));
         if(!options.length)throw Error('No eligible claim responses');
         const p=choose(options);
-        const r=Math.random()<0.23?g.challenge(room,p.id):g.passChallenge(room,p.id);
+        const counterChoices=q.kind==='claim'&&q.targetId===p.id?g.publicState(room).pending.options:[];
+        const roll=Math.random();
+        const r=counterChoices?.length&&roll<.3?g.chooseCounter(room,p.id,choose(counterChoices)):counterChoices?.length&&roll<.5?g.declineCounter(room,p.id):(counterChoices?.length?roll<.65:roll<.23)?g.challenge(room,p.id):g.passChallenge(room,p.id);
         if(!r.ok)throw Error('Invalid challenge action: '+r.error);
       }else if(q.kind==='counterOffer'){
         if(Math.random()<0.35){const role=choose(q.options);const r=g.chooseCounter(room,q.targetId,role);if(!r.ok)throw Error(r.error);}
-        else{room.pending=null;const r=g.performDeferredAction(room,q);if(!r.ok)throw Error(r.error);}
+        else{const r=g.declineCounter(room,q.targetId);if(!r.ok)throw Error(r.error);}
       }else if(q.kind==='information'){
         let r;
         if(q.stage==='selectHidden'){
@@ -44,7 +46,7 @@ for(const mode of modes)for(let seats=2;seats<=8;seats++)for(let game=0;game<20;
         if(!r.ok)throw Error('Invalid concealment: '+r.error);
       }else if(q.kind==='summon'){
         const p=room.players.find(p=>p.id===q.claimantId);
-        const choices={preview:['keep','discard'],replace:['replace']};
+        const choices={preview:['replace','discard']};
         assert(g.chooseSummon(room,p.id,choose(choices[q.stage]),choose(p.influences.map((_,index)=>index))).ok);
       }else if(q.kind==='lose'){
         const loser=room.players.find(p=>p.id===q.loserId);
@@ -78,4 +80,4 @@ for(const mode of modes)for(let seats=2;seats<=8;seats++)for(let game=0;game<20;
   assert(g.treasuryInvariant(room),'Closed supply must remain conserved at end of game');
   if(room.status==='finished'){completed++;if(room.winType==='economy')economic++;}
 }
-console.log(`Property test: ${started} random matches, ${completed} finished, ${economic} wealth wins, ${riots} Riot ticks; no economy invariant violations.`);
+console.log(`Property test: ${started} random matches, ${completed} finished, ${economic} wealth wins, ${riots} Chaos ticks; no economy invariant violations.`);

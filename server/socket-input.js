@@ -8,6 +8,7 @@ const boolean=value=>typeof value==='boolean';
 const slot=value=>Number.isInteger(value)&&value>=0&&value<=1;
 const optional=check=>value=>value===undefined||check(value);
 const code=value=>typeof value==='string'&&/^[a-z0-9]{4}$/i.test(value.trim());
+const reactions=require('../shared/reactions');
 const shapes={
   createRoom:{nickname:name}, joinRoom:{code,nickname:name}, joinSpectator:{code,nickname:name},
   prepareEntry:{kind:value=>['create','join','spectator'].includes(value),code:optional(code),nickname:name},
@@ -18,13 +19,15 @@ const shapes={
   setRoomDetails:{name:optional(text(40)),visibility:optional(value=>['public','private'].includes(value))},
   leaveRoom:{}, kickPlayer:{targetId:id},
   chatMessage:{message:text(300)},
-  setRevealFactions:{enabled:boolean}, setTreasuryMode:{enabled:boolean},
-  setChallengeTimer:{enabled:optional(boolean),seconds:optional(value=>Number.isInteger(value)&&value>=5&&value<=60)},
+  reaction:{reaction:reactions.valid},
+  setRevealFactions:{enabled:boolean}, setTreasuryMode:{enabled:optional(boolean),coinsPerPlayer:optional(value=>[5,6,7].includes(value))},
+  setChallengeTimer:{enabled:optional(boolean),seconds:optional(value=>Number.isInteger(value)&&value>=10&&value<=60)},
+  setMaxPlayers:{maxPlayers:value=>Number.isInteger(value)&&value>=2&&value<=6},
   ready:{ready:boolean}, startGame:{},
   action:{action:word,targetId:optional(id)},
   passChallenge:{}, challenge:{}, loseInfluence:{cardIndex:slot}, declineCounter:{},
   counter:{counter:word},
-  summonChoice:{choice:value=>['discard','keep','replace'].includes(value),cardIndex:optional(slot)},
+  summonChoice:{choice:value=>['discard','replace'].includes(value),cardIndex:optional(slot)},
   intrigueReveal:{cardIndex:slot},
   intrigueSharing:{share:boolean,indices:optional(value=>Array.isArray(value)&&value.length<=2&&value.every(slot))},
   sharePrivateIntel:{targetId:id,slot}, endTurn:{}

@@ -7,6 +7,7 @@ function fingerprint(event,data){return createHash('sha256').update(JSON.stringi
 function stamp(next,previous){
   const q=next.pending,p=previous?.pending;
   if(q&&(!q.decisionId||q.kind!==p?.kind||q.stage!==p?.stage))q.decisionId=randomUUID();
+  if(q&&['claim','counterOffer'].includes(q.kind)&&!q.responseDecisionId)q.responseDecisionId=q.decisionId;
   for(const debt of next.challengeLosses||[])if(!debt.decisionId)debt.decisionId=randomUUID();
   next.revision=(previous?.revision||0)+1;
 }
@@ -26,7 +27,9 @@ class RoomTransitions{
       if(seq<=(member.commandSequence||0))return{ok:false,error:'This request is no longer valid.'};
     }
     const decision=event==='loseInfluence'?require('./game').lossDecision(room,seat):room.pending;
-    if(data?.expectedDecision!==undefined&&data.expectedDecision!==(decision?.decisionId||null))return{ok:false,error:'This decision is no longer available.'};
+    const response=['counter','declineCounter'].includes(event)&&['claim','counterOffer'].includes(decision.kind);
+    const decisionId=response?(decision.responseDecisionId||decision.decisionId):decision?.decisionId;
+    if(data?.expectedDecision!==undefined&&data.expectedDecision!==(decisionId||null))return{ok:false,error:'This decision is no longer available.'};
     if(data?.expectedTurn!==undefined&&data.expectedTurn!==room.turnNumber)return{ok:false,error:'This request is no longer valid.'};
     const next=cloneRoom(room);
     if(command)[...next.players,...(next.spectators||[])].find(p=>p.id===seat).commandSequence=seq;

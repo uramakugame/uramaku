@@ -10,7 +10,7 @@ const {onInput}=require('./socket-input');
 const {RoomStore}=require('./room-store');
 const {RoomTransitions}=require('./room-transitions');
 const game=require('./game');
-const {upgradeRoom,availableRooms,listRooms}=require('./room-directory');
+const {availableRooms,listRooms}=require('./room-directory');
 const {needsUpdate,shouldRemove}=require('./room-lifecycle');
 const {AbuseGuard,settings}=require('./abuse-guard');
 const config=settings(process.env),abuse=new AbuseGuard(config);
@@ -33,7 +33,6 @@ let directorySignature='',directoryTimer=null,cleanupTimer=null;
 for(const room of store.loadAll()){
   for(const p of [...room.players,...(room.spectators||[])])p.connected=false;
   rooms.set(room.code,room);
-  transitions.run(room.code,null,'upgradeRoom',{},next=>{upgradeRoom(next);return {ok:true};});
 }
 require('./metrics-dashboard').installDashboard(app,{env:process.env,store,rooms,abuse,runtime:metricRuntime});
 app.use(express.static(path.join(__dirname,'..','public')));
@@ -125,7 +124,7 @@ function validateJoin(room,name,spectator=false){
   if(!room)return {ok:false,error:'Room not found.'};
   if(!spectator&&room.status!=='lobby')return {ok:false,error:'This game has already started. Join as a spectator instead.'};
   if(spectator&&(room.spectators||[]).length>=config.maxSpectators)return {ok:false,error:'This room has reached its spectator limit.'};
-  if(!spectator&&room.players.length>=8)return {ok:false,error:'This room is full (8 players maximum).'};
+  if(!spectator&&room.players.length>=Math.min(game.MAX_PLAYERS,room.maxPlayers??game.MAX_PLAYERS))return {ok:false,error:'This room is full.'};
   if([...room.players,...(room.spectators||[])].some(p=>p.name.toLowerCase()===name.trim().toLowerCase()))return {ok:false,error:'That nickname is already in use.'};
   return {ok:true};
 }
@@ -262,25 +261,38 @@ io.on('connection',socket=>{
       else{
         if(room.hostId!==id)return {ok:false,error:'Only the host can remove players.'};
         const target=room.players.find(p=>p.id===data.targetId);
-        if(room.status!=='playing'||!target||target.id===id)return {ok:false,error:'This player cannot be removed.'};
-        if(target.connected!==false)return {ok:false,error:'Only disconnected players can be removed during a match.'};
+        if(room.status!=='playing'||!target||target.id===id||!target.alive||!target.influences.length)return {ok:false,error:'This player cannot be removed.'};
+        target.connected=false;
         r=target.alive?game.forfeitPlayer(room,target.id):{ok:true};
       }
       if(r.ok)room.seatTokens.delete(data.targetId);return r.ok?{ok:true}:r;
     },cb);
     if(!result?.ok)return;
     const guest=socketsByPlayer.get(data.targetId);
-    if(guest){guest.data.playerId=null;guest.data.room=null;guest.emit('kicked',{message:'The host removed you from the lobby.'});}socketsByPlayer.delete(data.targetId);
+    if(guest){guest.data.playerId=null;guest.data.room=null;guest.emit('kicked',{message:'The host removed you from the room.'});}socketsByPlayer.delete(data.targetId);
   });
   on('chatMessage',(data,cb)=>run(socket,'chatMessage',data,(room,id)=>game.addChatMessage(room,id,data.message),cb));
+  // Reactions are transient social events, with no game-state or database write.
+  on('reaction',(data,cb)=>{
+    const code=socket.data.room,id=socket.data.playerId,room=rooms.get(code);
+    if(!room||socketsByPlayer.get(id)!==socket||!room.players.some(p=>p.id===id)||!['playing','finished'].includes(room.status))return reply(socket,cb,{ok:false,error:'Only players in a match can react.'});
+    const now=Date.now(),event={roomCode:code,playerId:id,reaction:data.reaction,expiresAt:now+require('../shared/reactions').duration};
+    reply(socket,cb,{ok:true});
+    for(const person of [...room.players,...room.spectators]){
+      const recipient=socketsByPlayer.get(person.id);
+      if(recipient?.data.room===code)recipient.emit('reaction',event);
+    }
+  });
   on('setRevealFactions',(data,cb)=>run(socket,'setRevealFactions',data,(room,id)=>{const valid=ownerSettings(room,id);if(valid.ok)room.revealFactions=data.enabled;return valid;},cb));
-  on('setTreasuryMode',(data,cb)=>run(socket,'setTreasuryMode',data,(room,id)=>{const valid=ownerSettings(room,id);if(valid.ok)room.treasuryMode=data.enabled;return valid;},cb));
+  on('setTreasuryMode',(data,cb)=>run(socket,'setTreasuryMode',data,(room,id)=>game.configureTreasuryMode(room,id,data),cb));
+  on('setMaxPlayers',(data,cb)=>run(socket,'setMaxPlayers',data,(room,id)=>game.configureMaxPlayers(room,id,data.maxPlayers),cb));
   on('setChallengeTimer',(data,cb)=>run(socket,'setChallengeTimer',data,(room,id)=>game.configureChallengeTimer(room,id,data),cb));
   on('ready',(data,cb)=>run(socket,'ready',data,(room,id)=>{const p=room.players.find(p=>p.id===id);if(!p||room.status!=='lobby')return {ok:false,error:'Only lobby players can change readiness.'};p.ready=data.ready;return {ok:true};},cb));
   on('startGame',(data,cb)=>run(socket,'startGame',data,(room,id)=>{
     if(room.hostId!==id)return {ok:false,error:'Only the host can start the game.'};
     if(room.status!=='lobby')return {ok:false,error:'This match has already started.'};
     if(room.players.length<2)return {ok:false,error:'At least 2 players are required.'};
+    if(room.players.length>Math.min(game.MAX_PLAYERS,room.maxPlayers??game.MAX_PLAYERS))return {ok:false,error:'Room capacity exceeded.'};
     if(room.players.some(p=>p.connected===false))return {ok:false,error:'Everyone must be connected to start.'};
     if(room.players.some(p=>!p.ready))return {ok:false,error:'Everyone must be ready.'};
     game.startGame(room);return {ok:true};
@@ -289,7 +301,7 @@ io.on('connection',socket=>{
     action:(r,id,d)=>game.performAction(r,id,d.action,d.targetId),
     passChallenge:(r,id,d,now)=>game.passChallenge(r,id,now),challenge:(r,id,d,now)=>game.challenge(r,id,now),
     loseInfluence:(r,id,d)=>game.loseInfluence(r,id,d.cardIndex),
-    declineCounter:(r,id)=>{const q=r.pending;if(q?.kind!=='counterOffer'||q.targetId!==id)return {ok:false,error:'No counter is available to decline.'};r.pending=null;return game.performDeferredAction(r,q);},
+    declineCounter:(r,id,d,now)=>game.declineCounter(r,id,now),
     counter:(r,id,d)=>game.chooseCounter(r,id,d.counter),summonChoice:(r,id,d)=>game.chooseSummon(r,id,d.choice,d.cardIndex),
     intrigueReveal:(r,id,d)=>game.revealIntrigue(r,id,d.cardIndex),intrigueSharing:(r,id,d)=>game.chooseIntrigueSharing(r,id,d.share,d.indices),
     sharePrivateIntel:(r,id,d)=>game.sharePrivateIntel(r,id,d.targetId,d.slot),endTurn:(r,id)=>game.requestEndTurn(r,id)
