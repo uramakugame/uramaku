@@ -6,7 +6,7 @@ Focus on following turns before adding more visual effects. Play one Standard ma
 
 Complete the tutorial in English and Japanese. Follow the sidebar for Tax, Extort, Summon, Earn and Assassinate; choose targets and affected influences directly on the board. Check that an incorrect choice stays on the lesson with a hint. Use Back before and after Summon and paid counters, then replay: payments, draws and information must be restored exactly once. Restart should show four players with 1 coin and two hidden influences each.
 
-Check the fixed order You → Mei → Akira → Sora until eliminations. Akira and Mei demonstrate Earn before you use it in the closing race. Sora's Intimidate blocks your Extort, and your failed challenge loses Kingpin. The first Gossip privately exchanges your hand with Mei; the late bluff Gossip exchanges your remaining Assassin with Sora's Courtesan and Lord. Akira should not see the Swordsman before attacking and challenging Hire Guard. The counter costs 5 immediately, his failed challenge costs both influences, and your proved Swordsman is exchanged.
+Check the fixed order You → Mei → Akira → Sora until eliminations. Akira and Mei demonstrate Earn before you use it in the closing race. Pass Sora’s genuine Enforce in lesson 27, then choose Kingpin to lose because you cannot pay 2 coins. Do not confuse this with a failed-challenge penalty. The first Gossip privately exchanges your hand with Mei; the late bluff Gossip exchanges your remaining Assassin with Sora's Courtesan and Magistrate. Akira should not see the Swordsman before attacking and challenging Hire Guard. The counter costs 5 immediately, his failed challenge costs both influences, and your proved Swordsman is exchanged. After your late Assassinate, pass Sora’s known Magistrate Summon and verify that the replacement is hidden. Earn to 2 coins, then challenge Sora’s Extort: Lord is revealed, Extort is canceled and you win with both coins.
 
 ## Following the action
 
@@ -20,17 +20,17 @@ Exercise an action claim, everyone passing early, the default fifteen-second tim
 - Discard the Summon draw; the held influences should remain still. Repeat with one influence remaining.
 - Successfully prove a role claim and replace it, including drawing the same role. The effect should stay on that influence.
 - Use Intrigue concealment and influence-loss selection directly on the board. Other browser views must not see a private hand or Summon draw.
-- In Treasury Mode, confirm Loot stays disabled throughout the Summon preview and replacement selection.
+- In Riot Mode, confirm Loot stays disabled throughout the Summon preview and replacement selection.
 
 ## Coins and feedback
 
 Test the first Earn after reloading, later Earn actions, Hire Blade and Assassinate payments, Extort, Intrigue concealment and Enforce. Verify the correct amounts and recipients, that effects run once, and that a faded badge never flashes back. Coin gain/loss badges now last 1.475 seconds; transfer badges last 1.175 seconds.
 
-Try master mute, gameplay volume, chat volume and the deadline-warning switch. Check persistence after reload and confirm the turn cue is audible even when Income or other log entries arrive in the same update. Keep another participant's browser open to check which sounds and information are local.
+Try master mute, gameplay volume and the deadline-warning switch. Check persistence after reload and confirm the turn cue is audible even when Income or other log entries arrive in the same update. Keep another participant's browser open to check which sounds and information are local.
 
 ## Treasury transitions
 
-Empty the treasury and confirm Riot activates, Earn becomes Loot and Purge becomes Overthrow. Return coins to the treasury and confirm the normal actions return. Check wealth victory at 11, 12, 13 and 14 coins for 2, 3, 4 and 5+ starting players. Elimination should not change the original wealth goal.
+Empty the treasury and confirm Riot activates, Earn becomes Loot and Purge becomes Overthrow. Return coins to the treasury and confirm the normal actions return. Check wealth victory at 10, 12 and 14 coins for 2, 3 and 4+ starting players. Elimination should not change the original wealth goal.
 
 ## Recovery and layout
 
@@ -44,11 +44,11 @@ Record mode, player count, language, action/counter sequence, actual versus expe
 
 As host, change the challenge duration, turn the timer off and back on, then start. Guests should see the same settings but cannot edit them. Action claims and counter claims should both use the chosen duration. An untimed claim must not expire or beep; all eligible players passing should still advance it immediately.
 
-Use Purge, Overthrow during Riot, Hire Blade and Assassinate. Verify each has its own sound and the initiating player moves toward the selected target. Challenge or counter a claimed attack and check that the initial motion does not imply a successful hit. Repeated chat/state updates and reconnects should not replay old attacks. Check gameplay mute and reduced-motion settings.
+Use Purge, Overthrow during Chaos, Hire Blade and Assassinate. Verify each has its own sound and the initiating player moves toward the selected target. Challenge or counter a claimed attack and check that the initial motion does not imply a successful hit. Repeated chat/state updates and reconnects should not replay old attacks. Check gameplay mute and reduced-motion settings.
 
 ## Enforce at 2 coins and shared tooltips
 
-Try Extort against Magistrate with 0, 1 and 2 coins. A resolved Enforce takes the full 2 coins when affordable, otherwise one influence with no partial payment. Challenge a genuine Enforce with 0 or 1 coin: both influences should disappear automatically, the counter claimant receives no payment, and turns advance once. With 2 coins, payment happens immediately while the challenge influence is selected. Repeat with a last-influence challenger: they are eliminated but the Magistrate still receives 2, before any Treasury refund. Have a third player challenge to verify that the losses remain assigned to the correct players. Repeat in Treasury Mode, including elimination refunds and exact wealth victories.
+Try Extort against Magistrate with 0, 1 and 2 coins. A resolved Enforce takes the full 2 coins when affordable, otherwise one influence with no partial payment. Challenge a genuine Enforce with 0 or 1 coin: both influences should disappear automatically, the counter claimant receives no payment, and turns advance once. With 2 coins, payment happens immediately while the challenge influence is selected. Repeat with a last-influence challenger: they are eliminated but the Magistrate still receives 2, before any Treasury refund. Have a third player challenge to verify that the losses remain assigned to the correct players. Repeat in Riot Mode, including elimination refunds and exact wealth victories.
 
 During the tutorial Extort, click the sidebar and check Sora is gold before hovering. Other opponents must remain unselectable, and the instruction should name Sora. Compare tooltips in both pages and both languages: headings, action/counter sections, colors, fonts and spacing should match. Enforce must say 2 coins, and the removed challenge warning should not appear.
 
@@ -102,18 +102,28 @@ Inspect resting backs, opening deals, flips, replacements and the deck image for
 - Set a name, switch to Public, search the list by name/code, and join using the existing nickname dialog. Test both English and Japanese.
 - Switch back to Private and confirm the list removes it while existing players remain connected and its code still works.
 - Restart the server and reconnect the owner; the saved public name/visibility should reappear without changing seats.
-- Confirm lobby EN ⇄ JP sits immediately left of Leave room. Check the 5–60 timer bounds and disabled timer. Existing valid saved durations should remain configured.
-- Open Actions | How to play and switch between Actions, How to Play and Treasury Mode. Treasury/Riot explanations should appear only in their own tab.
+- Confirm lobby EN ⇄ JP sits immediately left of Leave room. Check the 10–60 timer bounds and disabled timer. Existing valid saved durations should remain configured.
+- Open Actions | How to play and switch between Actions, How to Play and Riot Mode. Treasury/Riot explanations should appear only in their own tab.
 
 Cleanup and active-match disconnected-player kick controls are implemented in Stage D; verify an offline kick preserves any other player’s pending penalty.
 
 
 ## Parallel decisions and board Summon
 
-- Challenge a genuine Summon while holding two influences. See the proved Magistrate get replaced before the drawer's private top card flips in place on the deck. The drawer must be able to click a held influence or Discard draw while the challenger still chooses their loss. Complete each side first in separate tests: no next-turn Income until both finish.
+- Challenge a genuine Summon while holding two influences. See the proved Magistrate get replaced before the drawer's private top card flips in place on the deck. No private draw or Summon choice should appear until the challenger selects their lost influence. Then the public loss must flip before the private deck preview opens. Complete the Summon choice before next-turn Income.
 - Repeat using identical-role draws, a one-card Summon hand, EN/JP, reduced motion and a language switch during proof/arrival. The preview must not replay, cover the board or change Current Turn height. Instructions and Discard draw must remain in Current Turn, with no Deck heading or duplicate card design.
 - Refresh and restart the server with both decisions open, then with either one completed. Each saved card, choice, balance, pending ID and original turn anchor should be restored.
 - Challenge true Tax, Intimidate, Authority or False Trail: see the payout/block immediately, then choose the loss. Final-opponent automatic Tax victory keeps its previous behavior.
 - Challenge Extort and try both allowing it and claiming a counter before choosing the owed loss. Defenses remain available; accepted coin transfers happen once. With a third-party challenge, have the target respond independently. Repeat a counter challenge while an earlier penalty is still open.
 - For Intrigue, challenge as the target and verify your influence loss happens first; challenge as a third player and verify the actual target may respond while you select your loss.
 - Test an owner kick/forfeit during each lane; other players' required choices survive. A departing voter must not leave a fully passed counter waiting forever with the timer disabled.
+
+## Unified target response update
+
+Use [unified-target-responses.md](unified-target-responses.md) for the current combined menus, immediate counter windows, loss-first decisions and local regression checklist. Previously saved mid-action snapshots retain their previous continuation.
+
+## Action effects and turn handoff
+
+Use Extort against the player whose turn is next. The target should visibly lose 2 coins, then receive 1 Income after the turn-border animation. Check the claimant receives 2, and there is no combined −1 badge. Repeat with Tax, Enforce, Intrigue concealment, attacks, blocks and Summon replacements. The departing turn stays indicated until action effects finish; then the incoming border pulses, Income appears, and actions unlock.
+
+Chat and Leave remain usable. During a replacement, change languages and verify the sequence does not restart. Leave during a transfer and verify no old floating tokens or queued turn can return. Reduced motion should immediately show the confirmed state without a decorative delay. Normal challenge deadlines continue on the server. See [turn presentation](action-turn-presentation.md).

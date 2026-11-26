@@ -58,63 +58,15 @@ assert.equal(akira.data.room,next.code);
 assert.equal(akira.data.playerId,'same-socket-id','Same socket ID must be reused in this regression');
 const akiraStateCount=akira.received.filter(x=>x.event==='state').length;
 const soraStateCount=sora.received.filter(x=>x.event==='state').length;
-sora.send('chatMessage',{message:'The old match was fun.'});
-assert.equal(finished.chat.at(-1).message,'The old match was fun.','Old room chat still works after the match');
-assert.equal(akira.received.filter(x=>x.event==='state').length,akiraStateCount,
-  'Chat in a finished old room must not push a departed player out of their new room');
-assert.equal(sora.received.filter(x=>x.event==='state').length,soraStateCount+1,
-  'Players still in the finished room must receive chat updates');
-assert.equal(akira.data.room,next.code);
-assert.equal(akira.received.at(-1).payload.room.code,next.code);
-assert.equal(akira.send('chatMessage',{message:'Message from new lobby'}).ok,true);
-assert.equal(akira.received.at(-1).payload.room.code,next.code,'New lobby must still receive its own chat');
-
-const appSource=fs.readFileSync(path.join(__dirname,'../../public/js/app.js'),'utf8');
-// Sending via Enter or the Send button must retain the same focused input;
-// replacing app.innerHTML was previously dropping the cursor.
-const sendChat=appSource.slice(appSource.indexOf('function sendChat(){'),appSource.indexOf('function hasRole('));
-let focusCount=0;
-const input={value:' Hello again ',focus(){focusCount++;this.focused=true;}};
-const sent=[];
-const composeContext={chatDraft:' Hello again ',
-  $:selector=>selector==='#chatInput'?input:null,
-  send:(event,payload)=>sent.push({event,payload}),
-  render(){throw Error('Chat send must not replace the input element');}
-};
-vm.runInNewContext(sendChat+'\nsendChat()',composeContext);
-assert.equal(sent.length,1);
-assert.equal(sent[0].event,'chatMessage');
-assert.equal(sent[0].payload.message,'Hello again');
-assert.equal(input.value,'');assert.equal(composeContext.chatDraft,'');assert.equal(focusCount,1);
-assert.equal(input.focused,true);
-
-// Reject even a delayed/stale old-room state at the browser boundary. This
-// guard is defense-in-depth alongside the server room-membership check.
-const stateHandler=appSource.slice(appSource.indexOf("socket.on('state',d=>{"),appSource.indexOf("socket.on('notice'"));
-const handlers={};
-const clientRoom={code:next.code,status:'lobby',chat:[],log:[]};
-const messages={innerHTML:'',scrollTop:0,scrollHeight:1};
-let rendered=0;
-const stateContext={
-  socket:{on:(type,handler)=>handlers[type]=handler},
-  pendingReplacementChoice:null,roomCode:next.code,state:clientRoom,me:{id:'same-socket-id',name:'Akira'},chatOpen:true,
-  unreadChat:0,announcedWinnerRoom:null,
-  document:{querySelector:sel=>sel==='.chat-messages'?messages:null},
-  window:{URAMAKU_FEEDBACK:{...require('../../public/js/components/game-feedback'),animate(){}}},
-  app:{},referenceLanguage:'en',
-  UramakuAudio:{play(){},gameEvent(){return 'coin'}},syncMandatoryPurgeTargeting(){},
-  render(){rendered++},showActionAnnouncement(){},showVictory(){},
-  esc:input=>String(input),t:()=> 'No messages yet.'
-};
-vm.createContext(stateContext);
-vm.runInContext(stateHandler,stateContext);
-handlers.state({room:{code:first.code,status:'finished',chat:[],log:[]},you:{}});
-assert.equal(stateContext.state,clientRoom,'Browser ignores mismatched room updates');
-assert.equal(rendered,0);
-handlers.state({room:{...clientRoom,chat:[{name:'Akira',message:'Hi again'}]},you:stateContext.me});
-assert.equal(rendered,0,'Chat-only updates leave the input mounted and focused');
-assert.match(messages.innerHTML,/Hi again/);
-console.log('Finished-room chat isolation, new-room updates, stale-state guard and continuous chat focus passed.');
+vm.runInContext(`emitRoom('${first.code}')`,testContext);
+assert.equal(akira.received.filter(x=>x.event==='state').length,akiraStateCount,'Old-room broadcasts cannot displace a departed player');
+assert.equal(sora.received.filter(x=>x.event==='state').length,soraStateCount+1);
+assert.equal(akira.send('setRoomDetails',{name:'New room'}).ok,true);assert.equal(akira.received.at(-1).payload.room.code,next.code);
+assert.equal(akira.handlers.chatMessage,undefined);
+const browser=require('../helpers/browser-room-harness')();const newRoom=vm.runInContext(`rooms.get('${next.code}')`,testContext);
+browser.paint(realGame.publicState(newRoom),realGame.privateState(newRoom,'same-socket-id'));
+browser.handlers.state({room:realGame.publicState(finished),you:null});assert.equal(browser.value('state.code'),next.code,'Browser rejects old-room snapshots');
+console.log('Finished-room broadcast isolation, new-room updates, stale-state guard and absent chat endpoint passed.');
 
 // Repeated Start requests cannot reset an active or completed match.
 {

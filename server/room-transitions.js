@@ -7,6 +7,7 @@ function fingerprint(event,data){return createHash('sha256').update(JSON.stringi
 function stamp(next,previous){
   const q=next.pending,p=previous?.pending;
   if(q&&(!q.decisionId||q.kind!==p?.kind||q.stage!==p?.stage))q.decisionId=randomUUID();
+  if(q&&['claim','counterOffer'].includes(q.kind)&&!q.responseDecisionId)q.responseDecisionId=q.decisionId;
   for(const debt of next.challengeLosses||[])if(!debt.decisionId)debt.decisionId=randomUUID();
   next.revision=(previous?.revision||0)+1;
 }
@@ -25,12 +26,21 @@ class RoomTransitions{
       if(old)return old.fingerprint===hash?{...JSON.parse(old.result_json),duplicate:true}:{ok:false,error:'This request is no longer valid.'};
       if(seq<=(member.commandSequence||0))return{ok:false,error:'This request is no longer valid.'};
     }
+    if(data?.expectedMatch!==undefined&&data.expectedMatch!==(room.matchNumber||1))return{ok:false,error:'This request belongs to a previous match.'};
     const decision=event==='loseInfluence'?require('./game').lossDecision(room,seat):room.pending;
-    if(data?.expectedDecision!==undefined&&data.expectedDecision!==(decision?.decisionId||null))return{ok:false,error:'This decision is no longer available.'};
+    const response=['counter','declineCounter'].includes(event)&&['claim','counterOffer'].includes(decision.kind);
+    const decisionId=response?(decision.responseDecisionId||decision.decisionId):decision?.decisionId;
+    if(data?.expectedDecision!==undefined&&data.expectedDecision!==(decisionId||null))return{ok:false,error:'This decision is no longer available.'};
     if(data?.expectedTurn!==undefined&&data.expectedTurn!==room.turnNumber)return{ok:false,error:'This request is no longer valid.'};
     const next=cloneRoom(room);
     if(command)[...next.players,...(next.spectators||[])].find(p=>p.id===seat).commandSequence=seq;
     const result=operation(next)||{ok:true};if(!result.ok)return result;
+    // An owner who explicitly left an ongoing game has no credential. Promote
+    // a remaining player once that game finishes so rematch stays reachable.
+    if(next.status==='finished'&&next.seatTokens.size&&!next.seatTokens.has(next.hostId)){
+      const candidates=next.players.filter(p=>next.seatTokens.has(p.id));
+      next.hostId=candidates.find(p=>p.connected===true)?.id||candidates[0]?.id||null;
+    }
     updateLifecycle(next);
     // Genuine no-ops do not rewrite a room unless recording a command receipt.
     if(!options.remove&&!command&&encode(next)===encode(room)&&JSON.stringify([...next.seatTokens])===JSON.stringify([...room.seatTokens]))return result;

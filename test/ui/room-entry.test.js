@@ -17,7 +17,7 @@ function launch(mode, nickname,code){
  const backdrop={innerHTML:'',isConnected:true,querySelector(sel){return sel==='form'?form:null},addEventListener(event,cb){this[event]=cb},remove(){this.isConnected=false}};
  const document={getElementById(){return null},createElement(){return backdrop},body:{appendChild(n){elements.dialog=n}}};
  const context={window:{},document,localizeRoom(){},socket:{emit(event,data,cb){if(event==='confirmEntry')assert(elements.seat,'Credential must be saved before finalizing the seat');sent.push({event,data});cb({code:'ABCD',resumeToken:'test-token'})}},rememberSeat(res){elements.seat=res},show(){},navigator:{},setTimeout(){},clearTimeout(){},console};
- vm.createContext(context);vm.runInContext('let roomCode=null,chatOpen=true;'+dialogCode+`openEntryDialog('${mode}')`,context);
+ vm.createContext(context);vm.runInContext('let roomCode=null;'+dialogCode+`openEntryDialog('${mode}')`,context);
  return {sent,context,backdrop,form,nick,room,error,spectator,elements};
 }
 let a=launch('create',' Akira ');

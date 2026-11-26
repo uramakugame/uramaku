@@ -21,7 +21,7 @@ async function main(){
    r=>information(r),
    r=>{information(r);ok(g.chooseCounter(r,'b','keepOne'));},
    r=>{ok(g.performAction(r,'a','summon'));passes(r);},
-   r=>{ok(g.performAction(r,'a','summon'));passes(r);ok(g.chooseSummon(r,'a','keep'));},
+   r=>{ok(g.performAction(r,'a','summon'));passes(r);},
    r=>{r.players[0].influences=['courtesan','lord'];r.players[1].influences=['courtesan','magistrate'];ok(g.performAction(r,'a','intrigue','b'));passes(r);ok(g.chooseCounter(r,'b','courtesan'));ok(g.challenge(r,'c'));},
    r=>{r.players[0].influences=['assassin','lord'];ok(g.performAction(r,'a','assassinate','b'));ok(g.challenge(r,'c'));ok(g.forfeitPlayer(r,'b'));},
    r=>{r.pending={kind:'informationShare',claimantId:'a',targetId:'b',targetName:'b',roles:['lord','magistrate'],indices:[0,1]};},
@@ -103,10 +103,10 @@ async function main(){
   const pendingOwner=await server.connect();assert((await pendingOwner.timeout(3000).emitWithAck('resumeSession',{code:'PEND',token:preToken,intentId:intent.id})).ok);
   await until(()=>pendingOwner.state?.room.code==='PEND','unfinished entry recovery');assert.equal(pendingOwner.state.room.players.length,1);
   assert.equal((await fetch(server.url+'/data/rooms.sqlite')).status,404,'Database is outside the served files');
-  // A real timed challenge must expire through downtime exactly once.
+  // A saved current-rule challenge expires through downtime exactly once.
   await server.stop();server=null;
-  db=new RoomStore(filename);const r=fixture('TIME');r.challengeTimerEnabled=true;r.challengeDurationSeconds=5;ok(g.performAction(r,'a','tax'));const timeToken=newSeatToken(r,'a');new RoomTransitions(db,new Map()).create(r);db.close();db=null;
-  await wait(5100);server=await launch(filename);const timed=await server.connect();assert((await timed.timeout(3000).emitWithAck('resumeSession',{code:'TIME',token:timeToken})).ok);
+  db=new RoomStore(filename);const r=fixture('TIME');r.challengeTimerEnabled=true;r.challengeDurationSeconds=10;ok(g.performAction(r,'a','tax'));const timeToken=newSeatToken(r,'a');new RoomTransitions(db,new Map()).create(r);db.close();db=null;
+  await wait(10100);server=await launch(filename);const timed=await server.connect();assert((await timed.timeout(3000).emitWithAck('resumeSession',{code:'TIME',token:timeToken})).ok);
   await until(()=>timed.state?.room.code==='TIME','expired window restoration');assert.equal(timed.state.room.pending,null);assert.equal(timed.state.you.coins,7);assert.equal(timed.state.room.turnPlayerId,'b');
   await server.stop('SIGKILL');server=null;server=await launch(filename);const again=await server.connect();await again.timeout(3000).emitWithAck('resumeSession',{code:'TIME',token:timeToken});await until(()=>again.state?.you,'second restart');assert.equal(again.state.you.coins,7,'Expired Tax is not repeated');
   console.log('Real server crash/restart: 13 simultaneous rooms, every pending decision, exact deck/private state, lost ACKs, unfinished joins, spectators and elapsed challenge recovery passed.');

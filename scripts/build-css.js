@@ -11,8 +11,10 @@ const files = [
   '06-lobby-and-interactions.css',
   '07-treasury-and-riot.css',
   '08-responsive-room.css',
-  '09-floating-chat-and-polish.css',
-  '10-turn-feedback.css'
+  '09-board-polish.css',
+  '10-turn-feedback.css',
+  '11-intel-and-reactions.css',
+  '12-six-player-table.css'
 ];
 const root = path.join(__dirname, '..', 'public', 'css');
 const header = '/* GENERATED from public/css/source/*.css. Edit those files, then run npm run build:css. */\n';

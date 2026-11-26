@@ -38,8 +38,8 @@ for(const lang of ['en','jp']){
   const risk=panels.challenge({room:{...snapshot,pending:{kind:'claim',role,action,claimantId:'mei',targetId:'you'}},you,lang});
   assert(!risk.includes('challenge-risk'));assert(!risk.includes('both influences'));assert(!risk.includes('影響力を2枚とも'));
  }
- const counter=panels.counter({room:{...snapshot,pending:{kind:'counterOffer',options:['swordsman','assassin']}},lang});
- assert(counter.includes('data-counter="swordsman"'));assert(counter.includes('data-counter="assassin"'));assert(counter.includes('data-decline'));assert(counter.includes(i18n.get('actionCoinCost',lang,{count:5})));
+ const counter=panels.counter({room:{...snapshot,pending:{kind:'counterOffer',options:['swordsman','assassin']}},you,lang});
+ assert(counter.includes('data-counter="swordsman"'));assert(counter.includes('data-counter="assassin"'));assert(counter.includes('data-decline'));assert(!counter.includes('counter-cost'));assert(!counter.includes(i18n.get('actionCoinCost',lang,{count:5})),'Hire Guard button shows only its claim label');assert(counter.includes(i18n.get('claimCounter',lang,{role:i18n.role('swordsman',lang),counter:lang==='jp'?snapshot.roles.swordsman.counterJp:snapshot.roles.swordsman.counter})));
  const info=panels.information({you:{coins:1,informationChoice:{unknownIndices:[0,1]}},lang});
  assert(info.match(/data-counter="concealAll" disabled/));assert(info.includes('data-counter="keepOne"'));assert(info.includes('data-counter="revealAll"'));
  assert(!panels.information({you:{coins:1,informationChoice:{unknownIndices:[0]}},lang}).includes('concealAll'));
@@ -52,8 +52,7 @@ for(const lang of ['en','jp']){
   assert(preview.includes('data-summon-controls'));assert(!preview.includes('portrait-courtesan'),'Choices contain no duplicate preview');const deck=panels.deck({room:snapshot,you,lang});assert(deck.includes('id="summonTray"'));assert(deck.includes('portrait-courtesan'));assert(!deck.includes('data-summon-choice'));assert(!preview.includes('data-summon-choice="keep"'));assert(!preview.includes('<dialog'));assert(preview.includes('data-summon-choice="discard"'));
   assert.equal(panels.summon({room:snapshot,you:game.privateState(room,'mei'),lang}),'','Other players must not receive the drawn card');
  }
- assert(game.chooseSummon(room,'you','keep').ok);
- assert(panels.summon({room:game.publicState(room),you:game.privateState(room,'you')}).includes('data-summon-controls'),'Restored legacy replace stage uses the same controls');
+
 }
 assert.equal(game.createGame('DEFAULT',{id:'host',name:'Host'}).challengeDurationSeconds,15);
 assert(!Object.values(i18n.STRINGS).some(dict=>dict.challengeDoubleRisk));
@@ -61,7 +60,7 @@ assert.equal(game.ROLES.kingpin.effect,'Take 2 coins from a player.');
 // Re-rendering and language changes must leave the controller's actual room unchanged.
 const h=harness();
 while(h.value('tutorial.step.input.type')!=='end'){
- const before=h.state();h.click('#languageToggle');h.click('#languageToggle');assert.deepEqual(h.state(),before);
+ const before=h.state();h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.deepEqual(h.state(),before);
  h.value('handle(tutorial.step.input)');
 }
 console.log('Shared panels: bilingual availability, exact tooltips, requirement gating, Riot swaps, shortened warnings, counters, private Summon, 15s default and pure language changes passed.');

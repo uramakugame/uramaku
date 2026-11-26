@@ -6,6 +6,6 @@ A dismissible pop-out explains the rule and tells the player to choose an oppone
 
 A monotonic `turnNumber` lets the client show a fresh explanation once per compulsory turn, including when reconnecting. The selection itself requires one board-card click. The usual 7-coin, unchallengeable Purge rule applies.
 
-This is **Standard Mode only**. Treasury Mode has no mandatory Purge. The Hidden status labels on opponents' face-down cards are unchanged.
+This is **Standard Mode only**. Riot Mode has no mandatory Purge. The Hidden status labels on opponents' face-down cards are unchanged.
 
 Run `npm test` for the `mandatory-purge-auto-target.test.js` regression suite alongside all existing tests.

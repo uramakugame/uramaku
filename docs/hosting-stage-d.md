@@ -14,13 +14,13 @@ Disconnecting alone never forfeits a player, transfers ownership or pauses a cha
 
 | Room state | Policy |
 | --- | --- |
-| Waiting lobby with anyone connected | Keep, regardless of chat or inactivity |
+| Waiting lobby with anyone connected | Keep, regardless of inactivity |
 | Waiting lobby with no connected players or spectators | Delete after five continuous minutes; any member reconnecting resets the countdown |
 | Active match, including everyone disconnected | Retain indefinitely until explicit departure/forfeit completes it; challenge deadlines continue normally |
 | Completed match with anyone connected | Keep, including connected spectators |
 | Completed match with nobody connected | Delete on the final departure/disconnect; maintenance retries if storage is temporarily unavailable |
 
-An internal `emptyLobbySince` snapshot field tracks abandonment, independently of chat and the database's last-write time. On restart, an already empty lobby keeps its existing timestamp. A lobby which previously had connected users begins a fresh empty period when the server restores it with no live connections. Empty completed rooms are removed at startup; an active match is never deleted on startup because its users are offline.
+An internal `emptyLobbySince` snapshot field tracks abandonment, independently of the database's last-write time. On restart, an already empty lobby keeps its existing timestamp. A lobby which previously had connected users begins a fresh empty period when the server restores it with no live connections. Empty completed rooms are removed at startup; an active match is never deleted on startup because its users are offline.
 
 Removal commits room deletion, seat-credential revocation, command-receipt deletion and removal of prepared entries for that code together. Room codes can then be reused without an old token recovering the new room. Prepared entries expire after two minutes and are swept without needing another join request. Live/retained room credentials do not expire merely because of their age; explicit leave, kick or room deletion revokes them. Session storage still covers refresh/back navigation rather than guaranteed recovery after closing a tab.
 
@@ -41,13 +41,13 @@ All values are positive whole numbers, except `TRUSTED_PROXY_HOPS`, which also a
 | `RATE_CREATE_PER_10_MIN` | `30` | Create requests/preparations per resolved IP per ten minutes |
 | `RATE_ENTRY_PER_MIN` | `120` | Join, spectator, prepare, confirm and resume requests per resolved IP per minute |
 | `RATE_BROWSE_PER_MIN` | `240` | Room-list requests per resolved IP per minute |
-| `RATE_CHAT_PER_MIN` | `30` | Chat requests per seat per minute, with an IP aggregate of eight times this limit |
+| `RATE_REACTIONS_PER_MIN` | `30` | Aggregate reaction budget per resolved IP is eight times this value; each player also has a four-second cooldown |
 | `RATE_PACKETS_PER_SEC` | `30` | Total registered requests per socket per second, including invalid payloads |
 | `RATE_IP_PACKETS_PER_SEC` | `300` | Total registered requests per resolved IP per second |
 | `MAX_RATE_BUCKETS` | `10000` | Maximum in-memory request buckets; idle entries expire rather than grow indefinitely |
 | `TRUSTED_PROXY_HOPS` | `0` | Explicit fixed trusted proxy hop count, from 0 to 8 |
 
-Request quotas use token buckets: they allow an initial burst of the stated count and refill steadily over the period. Limits count attempts, including rejected requests and retries. Refreshing cannot reset the per-seat chat quota or IP entry/create quotas. Request counters are intentionally in memory and reset on a server restart; game state and room cleanup timestamps persist. No database write is needed for a rate rejection. Packet size is capped at 16 KiB; existing field lengths and authorization remain enforced.
+Request quotas use token buckets: they allow an initial burst of the stated count and refill steadily over the period. Limits count attempts, including rejected requests and retries. Refreshing cannot reset the per-seat reaction cooldown or IP entry/create quotas. Request counters are intentionally in memory and reset on a server restart; game state and room cleanup timestamps persist. No database write is needed for a rate rejection. Packet size is capped at 16 KiB; existing field lengths and authorization remain enforced.
 
 Room and spectator capacity are checked again when membership commits, not just when an entry is prepared. Lowering a cap never deletes existing active rooms, expels existing spectators or prevents token recovery. The existing global maximum of 2,048 pending entry records and 512 command receipts per room remains in place.
 

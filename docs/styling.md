@@ -12,7 +12,7 @@ Edit `public/css/source/` and run `npm run build:css` to generate `public/css/ga
 | 6 | `06-lobby-and-interactions.css` | Lobby, turn indicators, card selection and action presentation |
 | 7 | `07-treasury-and-riot.css` | Treasury status and Riot appearance |
 | 8 | `08-responsive-room.css` | Shared responsive layout |
-| 9 | `09-floating-chat-and-polish.css` | Floating chat, transparent panels, portrait shading and shared selection states |
+| 9 | `09-board-polish.css` | Transparent panels, portrait shading and shared selection states |
 
 | 10 | `10-turn-feedback.css` | Challenge progress, action costs and unavailable reasons, brief effects and sound controls |
 

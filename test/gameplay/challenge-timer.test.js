@@ -112,8 +112,8 @@ try {
   assert.equal(initial.at,now+15000);
   now+=2000;
   b.send('passChallenge');
-  a.send('chatMessage',{message:'Still waiting'});
-  assert.equal(timers.at(-1),initial,'Passing and chat do not reset the timer');
+  a.send('listRooms');
+  assert.equal(timers.at(-1),initial,'Passing and listing rooms do not reset the timer');
   const refreshed=client('refreshed');
   refreshed.send('resumeSession',{code,token:resumeToken});
   assert.equal(timers.at(-1),initial,'Refreshing does not reset the timer');
@@ -146,8 +146,7 @@ try {
   refreshed.send('action',{action:'loot',targetId:'c'});
   assert.equal(JSON.stringify(resolving),beforeLoot,'Socket requests cannot bypass the Summon Loot guard');
   assert.equal(refreshed.events.at(-1).event,'notice');
-  assert.equal(refreshed.events.at(-1).payload.message,'Loot is unavailable while Summon is resolving.');
-  c.send('summonChoice',{choice:'keep'});
+  assert.equal(refreshed.events.at(-1).payload.message,'It is not your turn or another decision is pending.');
   const beforeReplacement=JSON.stringify(resolving);
   c.send('action',{action:'loot',targetId:'b'});
   assert.equal(JSON.stringify(resolving),beforeReplacement);

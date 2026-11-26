@@ -1,6 +1,6 @@
-/* RESPONSIVE GAME ROOM: one sizing system for Actions, eight-seat board and Game Log.
+/* RESPONSIVE GAME ROOM: one sizing system for Actions, six-seat board and Game Log.
    The player board defines the content-driven height of grid row 2. Actions
-   stretch into that same row. The deck occupies the top-right cell; the log
+   stretch into that same row. The latest outcome occupies the top-right cell; the log
    stretches into the board row below it.
    No fixed 74px action rows or 700px board minimum on desktop. */
 @media (min-width:960px){
@@ -90,7 +90,7 @@
   .game-shell .game-layout>.game-sidebar{
     display:contents;
   }
-  .game-shell .game-layout>.game-sidebar>.game-deck-panel{
+  .game-shell .game-layout>.game-sidebar>.game-outcome-panel{
     grid-column:3;grid-row:1;min-width:0;min-height:0;align-self:stretch;
   }
   .game-shell .game-layout>.game-sidebar>.game-log-panel{

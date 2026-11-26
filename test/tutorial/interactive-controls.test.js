@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs');const {harness}=require('./browser-harness');
 for(const lang of ['en','jp']){
- const h=harness(lang);assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);assert(h.app.querySelector('.t-empty-room'));assert(!h.app.innerHTML.includes('undefined'));
+ const h=harness(lang);const initial=h.state();h.click('#languageToggle');assert.equal(h.document.documentElement.lang,lang==='en'?'ja':'en');h.click('#languageToggle');assert.deepEqual(h.state(),initial,'Language buttons preserve lesson and game state');assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);assert(h.app.querySelector('.t-empty-room'));assert(!h.app.innerHTML.includes('undefined'));
  assert.equal(h.app.querySelectorAll('.game-actions-panel [data-action]').length,8);
  assert.deepEqual(h.app.querySelectorAll('.player[data-player-id]').map(p=>p.dataset.playerId),['you','mei','akira','sora']);
  let guard=0;
@@ -27,9 +27,9 @@ for(const lang of ['en','jp']){
    default:throw Error(expected.type);
   }
  }
- assert(guard<100);assert.equal(h.state().room.status,'finished');assert.equal(h.state().room.winner,'You');assert.equal(h.state().you.coins,0);
+ assert(guard<100);assert.equal(h.state().room.status,'finished');assert.equal(h.state().room.winner,'You');assert.equal(h.state().you.coins,2);
  assert.equal(h.document.documentElement.lang,lang==='jp'?'ja':'en');assert(!h.app.innerHTML.includes('undefined'));
- h.click('#backStep');assert.equal(h.value('tutorial.step.id'),'final-assassinate');assert.equal(h.state().you.coins,3);h.click('#restart');assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);
+ h.click('#backStep');assert.equal(h.value('tutorial.step.id'),'sora-final-extort');assert.equal(h.state().you.coins,2);h.click('#restart');assert.deepEqual(h.state().room.players.map(p=>p.coins),[1,1,1,1]);
 }
 const html=fs.readFileSync(require.resolve('../../public/tutorial.html'),'utf8');assert(html.includes('/shared/game.js'));assert(html.includes('/shared/tutorial.js'));assert(html.includes('/js/components/game-panels.js'));
 console.log('Actual sidebar, target/player-card, influence-loss, counter, board Summon and replacement clicks complete the tutorial in EN/JP; back/restart passed.');

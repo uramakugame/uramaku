@@ -7,8 +7,6 @@ for(const lang of ['en','jp']){
  assert.equal(h.app.querySelectorAll('[data-summon-replace]').length,2);assert(h.app.querySelector('[data-summon-choice="discard"]'));
  const liveControls=panels.summon({room,you,lang});assert(liveControls.includes('data-summon-choice="discard" '));assert(!liveControls.includes('disabled'),'Regular matches can discard');assert(!liveControls.includes('portrait-'));const html=panels.deck({room,you:other,lang});assert(!html.includes('summonTray'));assert(!html.includes('portrait-swordsman'),'Other clients receive no private preview');
  h.click('[data-summon-replace="1"]');assert.deepEqual(h.state().you.influences,['magistrate','swordsman']);assert.equal(h.state().you.summonDrawnRole,null);assert(!h.app.querySelector('#summonTray'));assert.equal(h.state().room.drawPile.count,room.drawPile.count,'A board click never draws twice');
- // Rendered legacy replace-stage snapshots use exactly the same private tray.
- const copy=JSON.parse(JSON.stringify(before));copy.room.pending.stage='replace';assert(panels.deck({room:copy.room,you:copy.you,lang}).includes('summonTray'));
  const r=g.createGame('SAFE',{id:'a',name:'<Alice>'});const note=panels.challengeLoss({room:{...r,challengeLosses:[{loserId:'a'}]},you:{id:'b'},lang});assert(!note.includes('<Alice>'));assert(note.includes('&lt;Alice&gt;'));
 }
-console.log('Shared Summon deck tray in EN/JP, real single-click board replacement, no modal/Keep step, private rendering, saved-stage support and escaped debt notices passed.');
+console.log('Shared Summon deck tray in EN/JP, real single-click board replacement, no modal/Keep step, private rendering, escaped debt notices passed.');

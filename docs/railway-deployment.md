@@ -51,7 +51,7 @@ After generating the final domain, optionally set `ALLOWED_ORIGINS=https://YOUR-
 ## Private go-live smoke test
 
 - Use two browsers/devices over the HTTPS domain. Create a Private room, toggle Public without changing its code, find it by name/code, join and start. Confirm EN/JP, portrait/card-back assets, audio controls and mobile entry layout.
-- Test both WebSocket and polling connections. Confirm ready/start, chat, challenges/counters, Summon board decisions, influence loss, Treasury mode and normal completion.
+- Test both WebSocket and polling connections. Confirm ready/start, preset reactions, challenges/counters, Summon board decisions, influence loss, Riot Mode and normal completion.
 - Refresh and navigate away/back in the same tab: the original seat and private state must return. A token from another room must not recover that seat. A new tab has a separate identity; closing a tab is not guaranteed recovery.
 - Restart/redeploy during a timed claim: the original deadline continues. Repeat during Summon plus a challenger penalty, Intrigue concealment and counter resolution. Reconnect all clients and check private hands/intel are still private.
 - Disconnect a guest; owner Kick should forfeit their remaining influences and disappear afterward. Check empty lobby cleanup after five minutes; completed empty rooms should disappear; offline active games must survive.

@@ -29,7 +29,8 @@ async function runCase(roomCount,{duration=30,thinkMs=300,seed=20261124}={}){
   const own=bot.state?.you,room=bot.state?.room;
   if(durable&&own&&room){
    const loss=event==='loseInfluence'?(room.pending?.kind==='lose'&&room.pending.loserId===own.id?room.pending:room.challengeLosses?.find(q=>q.loserId===own.id)):room.pending;
-   data={...data,commandId:`load-${++serial}`,commandSequence:own.commandSequence+1,expectedRoom:room.code,expectedTurn:room.turnNumber,expectedDecision:loss?.decisionId||null};
+   const response=['counter','declineCounter'].includes(event)&&['claim','counterOffer'].includes(loss?.kind);
+   data={...data,commandId:`load-${++serial}`,commandSequence:own.commandSequence+1,expectedRoom:room.code,expectedTurn:room.turnNumber,expectedDecision:(response?loss.responseDecisionId:loss?.decisionId)||null};
   }
   const started=performance.now();let reply;
   try{reply=await bot.socket.timeout(30000).emitWithAck(event,data);}catch(error){stats.timeouts++;throw Error('ACK timeout: '+event);}
@@ -58,7 +59,7 @@ async function runCase(roomCount,{duration=30,thinkMs=300,seed=20261124}={}){
   await synchronize(crew);await send(crew[0],'startGame');await synchronize(crew);
  }
  async function loop(crew,index){
-  const roll=random(seed+index),pick=a=>a[Math.floor(roll()*a.length)];let reconnected=false,lastChat=Date.now(),step=0;
+  const roll=random(seed+index),pick=a=>a[Math.floor(roll()*a.length)];let reconnected=false,lastReaction=Date.now(),step=0;
   while(Date.now()<startAt+duration*1000){
    await synchronize(crew);
    let r=crew[0].state.room;
@@ -74,7 +75,7 @@ async function runCase(roomCount,{duration=30,thinkMs=300,seed=20261124}={}){
     if(JSON.stringify(bot.state.you.influences)!==JSON.stringify(hand))throw Error('Reconnect changed private hand');
     stats.reconnects++;reconnected=true;continue;
    }
-   if(Date.now()-lastChat>10000){await send(crew[0],'chatMessage',{message:'Benchmark chat'});lastChat=Date.now();continue;}
+   if(Date.now()-lastReaction>10000){await send(crew[0],'reaction',{reaction:require('../shared/reactions').ids[0]});lastReaction=Date.now();continue;}
    const botFor=id=>crew.find(b=>b.state.you.id===id),debt=r.challengeLosses?.length&&(!r.pending||roll()<.5)?r.challengeLosses[0]:null;
    let bot,event,data;
    const q=debt||r.pending;
@@ -83,6 +84,10 @@ async function runCase(roomCount,{duration=30,thinkMs=300,seed=20261124}={}){
     else if(['claim','counterClaim'].includes(q.kind)){
      const eligible=crew.filter(b=>b.state.you.alive&&b.state.you.id!==q.claimantId&&!(q.passedBy||[]).includes(b.state.you.id));
      if(!eligible.length)throw Error('No eligible claim responder');bot=pick(eligible);event=roll()<.15?'challenge':'passChallenge';data={};
+     if(q.kind==='claim'&&(q.options||[]).length&&q.targetId===bot.state.you.id){
+      const options=(q.options||[]).filter(role=>bot.state.you.influences.includes(role));
+      if(options.length&&roll()<.6){event='counter';data={counter:pick(options)};}else if(roll()<.5){event='declineCounter';data={};}
+     }
     }else if(q.kind==='counterOffer'){
      bot=botFor(q.targetId);const options=q.options.filter(role=>bot.state.you.influences.includes(role)&&(role!=='swordsman'||bot.state.you.coins>=5));
      event=options.length&&roll()<.7?'counter':'declineCounter';data=event==='counter'?{counter:pick(options)}:{};

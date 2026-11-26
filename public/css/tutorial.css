@@ -1,14 +1,12 @@
 /* Guided lesson only: room and action panels inherit the exact main game rules. */
-.t-shell .t-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 14px;color:#f1dfc4}
-.t-shell .t-header h1{margin:2px 0;font-size:24px;color:#f5e7ce}
-.t-eyebrow{font-size:11px;letter-spacing:.17em;color:#d7ad77;font-weight:700}
-.t-header-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:#d8bc96;font-size:12px}
+.t-lesson-head{justify-content:space-between;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.t-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin-left:auto;min-width:0;color:#6e5d4b;font-size:12px}
 .t-header-actions .t-exit{display:inline-block;text-decoration:none;border:1px solid #a58152;border-radius:4px;padding:8px 12px;background:#332722;color:#f6e7ce}
 .t-header-actions button:disabled{opacity:.4;cursor:not-allowed}
 /* The tutorial lesson occupies Current Turn's position in the shared room grid. */
 .t-shell .t-lesson{display:flex;flex-direction:column;min-width:0;min-height:240px;background:#f3e7d3;color:#241c1b;border:1px solid #b99a70;padding:18px 20px}
 .t-lesson h2{font-size:clamp(23px,2.2vw,30px);margin:12px 0}
-.t-lesson p{font-size:clamp(13px,1.1vw,16px);line-height:1.5;max-width:75ch}
+.t-lesson p{font-size:clamp(13px,1.1vw,16px);line-height:1.5;max-width:none}
 .t-progress{height:6px;background:#d8c7a9;margin:9px 0 0}
 .t-progress>div{height:100%;background:#a63536;transition:width .2s}
 .t-choices{display:flex;gap:9px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
@@ -28,5 +26,4 @@
 .t-shell .t-decision{margin:10px 0 0;max-height:none!important}
 .t-shell .t-decision .decision-buttons{display:flex;flex-wrap:wrap;gap:8px}
 .t-shell #tutorialFeedback[hidden]{display:none}
-.t-shell .t-header small{color:#e7d1af}
 .t-shell .t-lesson{max-height:none;overflow:visible}

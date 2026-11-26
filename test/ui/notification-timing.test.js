@@ -10,7 +10,7 @@ let stack=null;
 function element(){
  return {classList:{add(){}},setAttribute(){},children:[],get childElementCount(){return this.children.length},appendChild(child){this.children.push(child);child.parent=this},remove(){this.parent?.children.splice(this.parent.children.indexOf(this),1);if(this===stack)stack=null},isConnected:true};
 }
-const ctx={document:{getElementById(){return stack},createElement(){return element()},body:{appendChild(el){stack=el}}},performance:{now(){return 1000}},setTimeout(fn,delay){timers.push({fn,delay})}};
+const ctx={window:{},document:{getElementById(){return stack},createElement(){return element()},body:{appendChild(el){stack=el}}},performance:{now(){return 1000}},setTimeout(fn,delay){timers.push({fn,delay})}};
 vm.runInNewContext(constants+'\n'+method+'\nshowActionAnnouncement("first");showActionAnnouncement("second");',ctx);
 assert.equal(stack.children.length,2,'Events should appear immediately rather than queue');
 assert.equal(timers.length,4,'Each event should have a fade and removal timer');

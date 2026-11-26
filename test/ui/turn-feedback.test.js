@@ -40,9 +40,9 @@ function effects(before,after,choice=null){return feedback.changes(before?.[0],a
  assert.match(feedback.unavailableReason({...state,mandatoryPurge:true},you,'tax'),/must use Purge/);
  assert.match(feedback.unavailableReason({...state,riot:true},you,'tax'),/treasury is empty/);
  const riot={...state,riot:true,pending:{kind:'summon'}};
- assert.match(feedback.unavailableReason(riot,you,'loot'),/Summon/);
- assert.match(feedback.unavailableReason(riot,you,'loot','jp'),/召喚/);
- assert.equal(feedback.unavailableReason({...riot,pending:{kind:'claim'},turnPlayerId:'b'},you,'loot'),'','Off-turn Riot Loot retains its approved availability');
+ assert.equal(feedback.unavailableReason(riot,you,'loot'),require('../../shared/i18n').get('actionDecisionPending','en'));
+ assert.equal(feedback.unavailableReason(riot,you,'loot','jp'),require('../../shared/i18n').get('actionDecisionPending','jp'));
+ assert(feedback.unavailableReason({...riot,pending:{kind:'claim'},turnPlayerId:'b'},you,'loot'));assert.match(feedback.unavailableReason({...riot,pending:null,turnPlayerId:'b'},you,'loot'),/your turn/);assert.equal(feedback.unavailableReason({...riot,pending:null},you,'loot'),'');
  assert.match(feedback.unavailableReason(state,{...you,intrigueEligibleTargets:[]},'intrigue'),/unknown influences/);
 }
 {
@@ -51,7 +51,7 @@ function effects(before,after,choice=null){return feedback.changes(before?.[0],a
  assert.deepEqual(effects(before,preview).sounds,['draw']);
  assert.equal(game.publicState(room).pending.drawnRole,undefined);
  const observer=effects(view(room,'b'),view(room,'b'));assert.deepEqual(observer.cards,[]);
- game.chooseSummon(room,'a','keep');const keep=view(room,'a');game.chooseSummon(room,'a','replace',0);
+ const keep=view(room,'a');game.chooseSummon(room,'a','replace',0);
  const replaced=effects(keep,view(room,'a'),{code:room.code,playerId:'a',turnNumber:keep[0].turnNumber,slot:0});assert(replaced.sounds.includes('replace'));assert.deepEqual(replaced.cards,[{id:'a',type:'replace',slot:0}]);
 }
 {
@@ -110,7 +110,7 @@ console.log('Explicit counter claims, risk copy, availability, transition cues, 
  const box={left:10,top:10,width:100,height:50};
  const element=()=>({dataset:{},style:{},setAttribute(){},getBoundingClientRect:()=>box,animate:(frames,options)=>animations.push(options),remove(){this.removed=true}});
  const coins=element(),roles=element(),player={...element(),dataset:{playerId:'a'},querySelector:s=>s==='.player-coins'?coins:roles};
- const context={window:{URAMAKU_I18N:i18n,matchMedia:()=>({matches:true})},document:{createElement:element,body:{appendChild:el=>nodes.push(el)}},setTimeout:(fn,delay)=>timers.push({fn,delay})};
+ const context={window:{URAMAKU_I18N:i18n,matchMedia:()=>({matches:true})},document:{createElement:element,body:{appendChild:el=>nodes.push(el)}},clearTimeout(){},setTimeout:(fn,delay)=>timers.push({fn,delay})};
  vm.runInNewContext(script,context);const api=context.window.URAMAKU_FEEDBACK;
  const container={querySelectorAll:()=>[player],querySelector:()=>roles};
  const changes={targets:['a'],coins:[{id:'a',delta:1}],cards:[{id:'a',type:'discard'}]};
@@ -128,8 +128,8 @@ console.log('Shared disabled-control explanations, EN/JP costs, passive tutorial
  const nodes=[],completions=[],timers=[];
  const box={left:10,top:10,width:60,height:20};
  const node=()=>({style:{},setAttribute(){},remove(){this.removed=true},animate(frames,options){this.frames=frames;this.options=options;return {finished:{then:(finished,canceled)=>completions.push({finished,canceled})}}}});
- const coins={getBoundingClientRect:()=>box},player={dataset:{playerId:'a'},querySelector:()=>coins};
- const context={window:{URAMAKU_I18N:i18n,matchMedia:()=>({matches:false})},document:{createElement:node,body:{appendChild:el=>nodes.push(el)}},setTimeout:fn=>timers.push(fn)};
+ const coins={getBoundingClientRect:()=>box},player={dataset:{playerId:'a'},getBoundingClientRect:()=>box,querySelector:()=>coins};
+ const context={window:{URAMAKU_I18N:i18n,matchMedia:()=>({matches:false})},document:{createElement:node,body:{appendChild:el=>nodes.push(el)}},clearTimeout(){},setTimeout:fn=>timers.push(fn)};
  vm.runInNewContext(script,context);
  context.window.URAMAKU_FEEDBACK.animate({coins:[{id:'a',delta:1},{id:'a',delta:-5}]},{container:{querySelectorAll:()=>[player]}});
  assert.equal(nodes.length,2);
@@ -147,7 +147,7 @@ console.log('Coin animation completion/cancellation, delayed cleanup, requiremen
 // Summon can replace either influence with another copy of the same role.
 for(const slot of [0,1]){
  const room=fixture();room.players[0].influences=['magistrate','magistrate'];room.deck=['lord','kingpin','magistrate'];
- game.performAction(room,'a','summon');game.passChallenge(room,'b');game.passChallenge(room,'c');game.chooseSummon(room,'a','keep');
+ game.performAction(room,'a','summon');game.passChallenge(room,'b');game.passChallenge(room,'c');
  const before=view(room,'a');game.chooseSummon(room,'a','replace',slot);const after=view(room,'a');
  const choice={code:room.code,playerId:'a',turnNumber:before[0].turnNumber,slot};
  assert.deepEqual(effects(before,after,choice).cards,[{id:'a',type:'replace',slot}]);
@@ -158,7 +158,8 @@ for(const slot of [0,1]){
 {
  const room=fixture();room.players[0].influences=['lord','magistrate'];room.deck=['lord','kingpin','magistrate'];
  game.performAction(room,'a','summon');const before=view(room,'a');game.challenge(room,'b');
- assert.deepEqual(effects(before,view(room,'a')).cards,[{id:'a',type:'draw'},{id:'a',type:'replace',slot:1}]);
+ assert.deepEqual(effects(before,view(room,'a')).cards,[{id:'a',type:'replace',slot:1}]);
+ const loss=view(room,'a');game.loseInfluence(room,'b',0);assert.deepEqual(effects(loss,view(room,'a')).cards,[{id:'b',type:'loss'},{id:'a',type:'draw'}]);
  assert.deepEqual(effects(view(room,'c'),view(room,'c')).cards,[],'Opponent private influences never produce replacement effects');
 }
 // Tutorial survivors keep their original visible slot after another card is lost.
@@ -190,7 +191,7 @@ console.log('Single-slot effects, identical-role Summon draws, successful claim 
 {
  const app=fs.readFileSync(require.resolve('../../public/js/app.js'),'utf8');
  const send=app.slice(app.indexOf('function send(event,data={})'),app.indexOf('// Live room snapshots'));
- const sent=[],context={pendingReplacementChoice:null,state:{code:'ROOM',turnNumber:7,pending:{kind:'summon',stage:'replace',claimantId:'a'}},me:{id:'a'},socket:{emit:(event,data)=>sent.push({event,data})}};
+ const sent=[],context={pendingReplacementChoice:null,state:{code:'ROOM',turnNumber:7,pending:{kind:'summon',stage:'preview',claimantId:'a'}},me:{id:'a'},socket:{emit:(event,data)=>sent.push({event,data})}};
  context.window={URAMAKU_COMMAND_SESSION:{send:(event,data)=>sent.push({event,data})}};
  vm.createContext(context);vm.runInContext(send,context);context.send('summonChoice',{choice:'replace',cardIndex:1});
  assert.equal(context.pendingReplacementChoice.slot,1);assert.equal(context.pendingReplacementChoice.code,'ROOM');assert.equal(context.pendingReplacementChoice.turnNumber,7);

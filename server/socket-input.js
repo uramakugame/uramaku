@@ -8,6 +8,7 @@ const boolean=value=>typeof value==='boolean';
 const slot=value=>Number.isInteger(value)&&value>=0&&value<=1;
 const optional=check=>value=>value===undefined||check(value);
 const code=value=>typeof value==='string'&&/^[a-z0-9]{4}$/i.test(value.trim());
+const reactions=require('../shared/reactions');
 const shapes={
   createRoom:{nickname:name}, joinRoom:{code,nickname:name}, joinSpectator:{code,nickname:name},
   prepareEntry:{kind:value=>['create','join','spectator'].includes(value),code:optional(code),nickname:name},
@@ -17,14 +18,15 @@ const shapes={
   stopRoomBrowser:{},
   setRoomDetails:{name:optional(text(40)),visibility:optional(value=>['public','private'].includes(value))},
   leaveRoom:{}, kickPlayer:{targetId:id},
-  chatMessage:{message:text(300)},
-  setRevealFactions:{enabled:boolean}, setTreasuryMode:{enabled:boolean},
-  setChallengeTimer:{enabled:optional(boolean),seconds:optional(value=>Number.isInteger(value)&&value>=5&&value<=60)},
-  ready:{ready:boolean}, startGame:{},
+  reaction:{reaction:reactions.valid},
+  setRevealFactions:{enabled:boolean}, setTreasuryMode:{enabled:optional(boolean),coinsPerPlayer:optional(value=>[5,6,7].includes(value))},
+  setChallengeTimer:{enabled:optional(boolean),seconds:optional(value=>Number.isInteger(value)&&value>=10&&value<=60)},
+  setMaxPlayers:{maxPlayers:value=>Number.isInteger(value)&&value>=2&&value<=6},
+  ready:{ready:boolean}, startGame:{}, rematch:{},
   action:{action:word,targetId:optional(id)},
   passChallenge:{}, challenge:{}, loseInfluence:{cardIndex:slot}, declineCounter:{},
   counter:{counter:word},
-  summonChoice:{choice:value=>['discard','keep','replace'].includes(value),cardIndex:optional(slot)},
+  summonChoice:{choice:value=>['discard','replace'].includes(value),cardIndex:optional(slot)},
   intrigueReveal:{cardIndex:slot},
   intrigueSharing:{share:boolean,indices:optional(value=>Array.isArray(value)&&value.length<=2&&value.every(slot))},
   sharePrivateIntel:{targetId:id,slot}, endTurn:{}
@@ -33,6 +35,7 @@ const shapes={
 function validatePacket(event,data){
   const shape=shapes[event];
   if(!shape||!data||typeof data!=='object'||Array.isArray(data))return false;
+  if(data.expectedMatch!==undefined&&(!Number.isSafeInteger(data.expectedMatch)||data.expectedMatch<1))return false;
   if(data.commandId!==undefined&&(!id(data.commandId)||!Number.isSafeInteger(data.commandSequence)||data.commandSequence<1))return false;
   if(data.commandSequence!==undefined&&data.commandId===undefined)return false;
   if(data.expectedDecision!==undefined&&data.expectedDecision!==null&&!id(data.expectedDecision))return false;

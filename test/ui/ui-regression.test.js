@@ -75,7 +75,7 @@ assert.equal(require('../../server/game').ROLES.swordsman.actionJp,'刺客を雇
 assert.equal(require('../../server/game').ROLES.swordsman.counterJp,'護衛を雇う');
 assert.equal(require('../../server/game').ROLES.courtesan.action,'Intrigue');
 assert(tutorialCopy.includes("Akira challenged Hire Guard."));
-assert(tutorialCopy.includes('Sora accepted the claim and lost the final Lord.'));
+assert(tutorialCopy.includes('Sora’s replacement was Lord, so the Kingpin claim was a bluff.'));
 assert(!tutorialNext.includes('Purge Mei instead'));
 assert(tutorialNext.includes('URAMAKU_FEEDBACK.visibleRoles(room,you,p.id)'),'Only public or privately discovered information appears on opponents’ cards');
 assert(styleNext.includes('room-role-card.t-public-intel'));

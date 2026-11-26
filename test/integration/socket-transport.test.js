@@ -65,9 +65,9 @@ async function main(){
     assert.equal(resumed.state.room.players.length,4);
     const activeHost=next===host?resumed:host;
     const invalid=await activeHost.timeout(2000).emitWithAck('ready',{ready:'yes'});assert.equal(invalid.error,'Invalid request.');
-    activeHost.emit('chatMessage',{message:'Transport check'});await until(()=>resumed.state.room.chat.at(-1)?.message==='Transport check','chat');
+    assert.equal('chat' in resumed.state.room,false);await assert.rejects(activeHost.timeout(150).emitWithAck('chatMessage',{message:'Not supported'}),/timed out/);
     const health=await fetch(url+'/health').then(r=>r.json());assert.equal(health.ok,true);assert.equal(health.rooms,1);
-    console.log('Real polling/WebSocket clients: create/join, ready/start, Tax, challenge/loss, chat, malformed packets and authenticated reconnect passed.');
+    console.log('Real polling/WebSocket clients: create/join, ready/start, Tax, challenge/loss, chat rejection, malformed packets and authenticated reconnect passed.');
   } finally {
     for(const client of clients)client.disconnect();
     child.kill('SIGTERM');await until(()=>child.exitCode!==null||child.signalCode!==null,'child cleanup');

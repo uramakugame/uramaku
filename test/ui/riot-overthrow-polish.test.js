@@ -26,7 +26,7 @@ assert(!css.includes('.action-announcements{top:auto!important;bottom:'));
 
 // No held-role checkmarks. The gold border continues to identify held actions.
 assert(!css.includes('.action.held::after'));
-assert(css.includes('game-actions-panel .action.held{'));
+assert.match(css,/game-actions-panel \.action\.held,\s*\.game-shell \.decision-buttons \.counter-choice\.held\{\s*border:2px solid #d8a354!important/);
 
 // Riot is a true action swap. The board card has only the label, not the cost.
 const panels=require('../../public/js/components/game-panels');
@@ -37,14 +37,14 @@ assert(!riotActions.includes('data-action="purge"'));
 assert(!riotActions.includes('riot-cost'));
 assert(!app.includes('riot-cost'));
 assert(game.includes("if (action==='purge' || action==='overthrow')"));
-assert(game.includes("Purge is replaced by Overthrow during Riot."));
-assert(game.includes("Overthrow is only available during Riot."));
+assert(game.includes("Purge is replaced by Overthrow during Chaos."));
+assert(game.includes("Overthrow is only available during Chaos."));
 assert(require('../../shared/i18n').get('treasuryModeHtml','jp').includes('下剋上（げこくじょう）'));
 assert(require('../../shared/i18n').get('treasuryModeHtml','en').includes('Overthrow (下剋上 / Gekokujō)'));
 
 // Correct names appear in announcements; regular Purge remains normal mode.
 const source=app.slice(app.indexOf('function announcementForLog('),app.indexOf('function showActionAnnouncement('));
 const sandbox={};vm.runInNewContext(source,sandbox);
-assert.equal(sandbox.announcementForLog('Sora uses Overthrow against Akira during Riot (5 coins).'),'Sora uses Overthrow against Akira');
+assert.equal(sandbox.announcementForLog('Sora uses Overthrow against Akira during Chaos (5 coins).'),'Sora uses Overthrow against Akira');
 assert.equal(sandbox.announcementForLog('Sora uses Purge against Akira.'),'Sora uses Purge against Akira');
 console.log('Center announcements, private Intel control, action badges, and distinct Riot Overthrow regression checks passed.');

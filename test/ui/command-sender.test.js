@@ -7,9 +7,9 @@ const view={room:{code:'ABCD',turnNumber:3,pending:{decisionId:'choice-1'}},you:
 const sender=create({socket,getView:()=>view,report:m=>reports.push(m),uuid:()=>`id-${++counter}`,schedule:fn=>scheduled.push(fn)});
 assert.equal(sender.send('challenge'),false);sender.resume();
 assert(sender.send('challenge'));assert.equal(sent[0].packet.commandSequence,8);assert.equal(sent[0].packet.expectedDecision,'choice-1');assert.equal(sent[0].packet.expectedTurn,3);
-assert(sender.send('chatMessage',{message:'Hi'}));assert.equal(sent.length,1,'Commands remain ordered while awaiting an ACK');
+assert(sender.send('setRoomDetails',{name:'Room'}));assert.equal(sent.length,1,'Commands remain ordered while awaiting an ACK');
 sent[0].cb(Error('lost ACK'));scheduled.shift()();assert.equal(sent.length,2);assert.deepEqual(sent[1].packet,sent[0].packet,'Retry uses identical command ID and sequence');
-sent[1].cb(null,{ok:true,duplicate:true});assert.equal(sent.length,3);assert.equal(sent[2].packet.expectedTurn,undefined,'Chat is not tied to a game turn');
+sent[1].cb(null,{ok:true,duplicate:true});assert.equal(sent.length,3);assert.equal(sent[2].packet.expectedTurn,undefined,'Room settings are not tied to a game turn');
 sent[2].cb(null,{ok:true});sender.disconnect();assert.equal(sender.send('action',{action:'tax'}),false);
 sender.resume();sender.send('action',{action:'tax'});const stale=sent.at(-1);sender.reset();
 view.room.code='EFGH';view.you.commandSequence=0;sender.resume();sender.send('action',{action:'tax'});const fresh=sent.at(-1);
@@ -21,3 +21,9 @@ view.room={code:'DUAL',turnNumber:4,pending:{kind:'summon',decisionId:'summon-ch
 sender.send('loseInfluence',{cardIndex:1});assert.equal(sent.at(-1).packet.expectedDecision,'loss-choice');sent.at(-1).cb(null,{ok:true});
 view.you.id='claimant';sender.send('summonChoice',{choice:'replace',cardIndex:0});assert.equal(sent.at(-1).packet.expectedDecision,'summon-choice');sent.at(-1).cb(null,{ok:true});
 view.you.id='me';view.room.pending=null;sender.send('loseInfluence',{cardIndex:0});assert.equal(sent.at(-1).packet.expectedDecision,'loss-choice');sent.at(-1).cb(null,{ok:true});
+// The room stays the same across rematches, but the command context does not.
+view.room={code:'DUAL',matchNumber:2,turnNumber:1,pending:null};view.you={id:'me',commandSequence:20};
+sender.send('action',{action:'earn'});const priorGame=sent.at(-1);assert.equal(priorGame.packet.expectedMatch,2);
+sender.send('action',{action:'earn'});view.room.matchNumber=3;priorGame.cb(null,{ok:true});assert.equal(sent.at(-1),priorGame,'Queued requests from a previous match are discarded');
+sender.send('rematch');assert.equal(sent.at(-1).packet.expectedMatch,3);assert(sent.at(-1).packet.commandSequence>20);sent.at(-1).cb(null,{ok:true});
+console.log('Match-scoped commands retain seat sequences and cannot leak queued actions into a rematch.');

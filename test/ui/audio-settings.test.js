@@ -11,19 +11,19 @@ function fixture(saved={},muted=false){
 }
 for(const kind of ['turn','response','deadline','draw','replace','discard','victory','defeat','attackPurge','attackOverthrow','attackHireBlade','attackAssassinate']){const f=fixture();f.audio.play(kind);assert(f.tones.length>0,kind+' has a cue');}
 {
- const f=fixture({master:.5,gameplay:.5,chat:0});f.audio.play('chat');assert.equal(f.tones.length,0);f.audio.play('turn');assert.equal(f.tones.length,2);assert(f.gains.every(x=>x<=.0051),'Master and channel volume multiply');
+ const f=fixture({master:.5,gameplay:.5});f.audio.play('chat');assert.equal(f.tones.length,0);f.audio.play('turn');assert.equal(f.tones.length,2);assert(f.gains.every(x=>x<=.0051),'Master and channel volume multiply');
 }
 {
- const f=fixture({master:1,gameplay:0,chat:1});f.audio.play('response');assert.equal(f.tones.length,0);f.audio.play('chat');assert.equal(f.tones.length,2);
+ const f=fixture({master:1,gameplay:0});f.audio.play('response');assert.equal(f.tones.length,0);f.audio.play('turn');assert.equal(f.tones.length,0);
 }
 {
  const f=fixture({deadline:false});f.audio.play('deadline');assert.equal(f.tones.length,0);f.audio.play('turn',{delay:.3});assert.equal(f.tones[0].time,.3);
  const mute=fixture({},true);mute.audio.play('victory');assert.equal(mute.tones.length,0);
  const blocked=fixture();blocked.listeners.pointerdown();assert.equal(blocked.tones.length,0,'Unlocking audio alone must not produce sound');
 }
-assert.equal(fixture().audio.gameEvent('A loots 1 coin from B during Riot.'),'coin');
+assert.equal(fixture().audio.gameEvent('A loots 1 coin from B during Chaos.'),'coin');
 assert.equal(fixture().audio.gameEvent('A claims Assassin and declares Assassinate against B.'),'attackAssassinate','Declaring Assassinate must use its unique attack cue');
-console.log('Independent chat/gameplay volume, master/mute, deadline preference, cue coverage and delayed scheduling passed.');
+console.log('Gameplay volume, master/mute, deadline preference, cue coverage and delayed scheduling passed.');
 
 const signatures=['attackPurge','attackOverthrow','attackHireBlade','attackAssassinate'].map(kind=>{const f=fixture();f.audio.play(kind);return JSON.stringify(f.tones)});
 assert.equal(new Set(signatures).size,4,'Each elimination action needs a distinct sound pattern');
@@ -41,7 +41,7 @@ for(const kind of ['attackPurge','attackOverthrow','attackHireBlade','attackAssa
   createGain(){return{connect(){},gain:{setValueAtTime(){},exponentialRampToValueAtTime(value){gains.push(value);}}};}
   createOscillator(){const tone={frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){return{connect(){}}},start(){},stop(){}};tones.push(tone);return tone;}
  }
- const settings={master:.5,gameplay:.4,chat:1};
+ const settings={master:.5,gameplay:.4};
  const context={window:{AudioContext},localStorage:{getItem:key=>key==='uramakuMuted'?'0':JSON.stringify(settings)},document:{readyState:'loading',addEventListener(){}}};vm.runInNewContext(source,context);
  context.window.UramakuAudio.play('draw',{delay:.3});context.window.UramakuAudio.play('discard',{delay:.6});
  assert.equal(buffers.length,2);assert(buffers[0].length>buffers[1].length,'Draw is a longer slide, discard a shorter landing');assert(buffers.every(b=>b.channels===1&&b.samples.some(value=>value!==0)));

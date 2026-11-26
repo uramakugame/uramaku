@@ -17,11 +17,12 @@ for(const lang of ['en','jp']){
  assert(banner());assert.equal(banner().textContent,lang==='en'?'Match Start':'対戦開始');
  h.click('#continueLesson');
  assert(!h.app.querySelector('.player.active-player'),'No turn outline while cards are dealing');assert(h.app.querySelector('.player.dealing-turn'));assert(!h.sounds.includes('turn'),'First turn sound waits too');
+ for(const a of h.animations.filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();
  const arrivals=h.animations.filter(a=>a.element.classList.contains('card-arrival'));assert.equal(arrivals.length,8);for(const a of arrivals)a.finish();
  assert(!h.animations.some(a=>a.element.classList.contains('match-start-popup')),'Arrival is not completion: own cards still have to flip');
  const turns=h.animations.filter(a=>a.element.classList.contains('card-flip-turner'));assert.equal(turns.length,2);turns[0].finish();assert(!h.app.querySelector('.player.active-player'));turns[1].finish();
  const fade=h.animations.find(a=>a.element.classList.contains('match-start-popup'));assert(fade);assert(!h.app.querySelector('.player.active-player'),'Outline also waits for the popup fade');
- h.click('#languageToggle');assert.equal(banner().textContent,lang==='en'?'対戦開始':'Match Start');assert(!h.app.querySelector('.player.active-player'),'Rerender cannot bypass the opening queue');
+ h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.equal(banner().textContent,lang==='en'?'対戦開始':'Match Start');assert(!h.app.querySelector('.player.active-player'),'Rerender cannot bypass the opening queue');
  fade.finish();assert(!banner());assert.equal(h.app.querySelector('.player.active-player').dataset.playerId,'you');assert.equal(h.sounds.filter(s=>s==='turn').length,1);
  h.click('#restart');assert(banner());flow.sync(h.app,{code:null});assert(!banner(),'Leaving cancels the introduction');for(const a of h.animations.slice(-8))a.finish?.();assert(!banner(),'Old callbacks cannot revive a removed popup');
 }
@@ -39,7 +40,7 @@ for(const action of ['purge','overthrow']){
  assert(!h.animations.some(a=>a.element.classList.contains('card-discard')),'The discard drop must wait until the reveal has finished');
  const saved=h.window.URAMAKU_CARD_MOTION.capture(h.app),count=h.animations.length;h.app.innerHTML=board();h.window.URAMAKU_CARD_MOTION.restore(h.app,saved);assert.equal(h.animations.length,count);assert(h.app.querySelector('.eliminated-role-card .card-flip-layer'),'A state render preserves the delayed loss reveal');
  let completed=0;flow.whenIdle(h.app,()=>completed++);h.window.URAMAKU_FEEDBACK.playSounds({sounds:['victory']},[],{container:h.app});assert.equal(completed,0);assert(!h.sounds.includes('victory'));
- h.animations.find(a=>a.element.classList.contains('attack-flight')).finish();assert.equal(completed,0,'Victory cannot cover the loss card while it is still turning');flip.finish();assert.equal(completed,0,'The revealed card remains readable before the drop');h.timers.findLast(t=>t.ms===180&&!t.canceled).fn();const drop=h.animations.findLast(a=>a.element.classList.contains('card-discard'));assert(drop);assert.equal(completed,0);drop.finish();assert.equal(completed,1);assert(h.sounds.includes('victory'));assert(!h.app.querySelector('.card-flip-layer'));
+ h.animations.find(a=>a.element.classList.contains('attack-flight')).finish();assert.equal(completed,0,'Victory cannot cover the loss card while it is still turning');flip.finish();assert.equal(completed,0,'The revealed card remains readable before the drop');h.timers.findLast(t=>t.ms===180&&!t.canceled).fn();const drop=h.animations.findLast(a=>a.element.classList.contains('card-discard'));assert(drop);assert.equal(completed,0);drop.finish();for(const animation of h.animations.filter(a=>a.element.classList.contains('player')||a.element.classList.contains('feedback-token')||a.element.classList.contains('attack-trail')))animation.finish?.();assert.equal(completed,1);assert(h.sounds.includes('victory'));assert(!h.app.querySelector('.card-flip-layer'));
  h.time(1000);assert.equal(flow.revealDelay(h.app,'b'),0);
 }
 for(const [role,action] of [['swordsman','hireGuard'],['assassin','falseTrail']]){
@@ -53,6 +54,7 @@ console.log('Opening deal → popup fade → turn outline/cue; delayed Purge/Ove
 {
  const h=setup();h.click('#continueLesson');
  const prototype=Object.getPrototypeOf(h.app),animate=prototype.animate;prototype.animate=function(frames,options){if(this.classList.contains('card-flip-turner'))throw Error('animation unavailable');return animate.call(this,frames,options);};
+ for(const a of h.animations.filter(a=>a.element.classList.contains('card-pile-motion')))a.finish();
  const arrivals=h.animations.filter(a=>a.element.classList.contains('card-arrival'));
  for(const a of arrivals.slice(0,-1))a.finish();assert(!h.animations.some(a=>a.element.classList.contains('match-start-popup')),'Failed flips do not double-count completion');arrivals.at(-1).finish();assert(h.animations.some(a=>a.element.classList.contains('match-start-popup')));prototype.animate=animate;
 }

@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const {AbuseGuard,settings,address}=require('../../server/abuse-guard');
 const {onInput}=require('../../server/socket-input');
-let now=0;const config=settings({RATE_CREATE_PER_10_MIN:'2',RATE_ENTRY_PER_MIN:'3',RATE_CHAT_PER_MIN:'2',MAX_CONNECTIONS:'3',MAX_CONNECTIONS_PER_IP:'2'});
+let now=0;const config=settings({RATE_CREATE_PER_10_MIN:'2',RATE_ENTRY_PER_MIN:'3',RATE_REACTIONS_PER_MIN:'2',MAX_CONNECTIONS:'3',MAX_CONNECTIONS_PER_IP:'2'});
 const socket=(id,ip='127.0.0.1',forwarded)=>({id,data:{},handshake:{address:ip,headers:{'x-forwarded-for':forwarded}}});
 const guard=new AbuseGuard(config,()=>now),a=socket('a'),b=socket('b'),c=socket('c','127.0.0.2');
 assert.equal(config.lobbyTtl,300000);assert.equal(config.trustedProxyHops,0);
@@ -13,8 +13,9 @@ assert(guard.allow(a,'prepareEntry',{kind:'create'}));assert(guard.allow(a,'crea
 assert(!guard.allow(socket('forged','127.0.0.1','8.8.8.8'),'createRoom',{}),'A forged header cannot reset the origin quota');
 assert(guard.allow(c,'createRoom',{}),'Another IP has its own quota');
 now=300000;assert(guard.allow(a,'createRoom',{}),'Refill recovers without reconnect');
-a.data.playerId='seat-a';assert(guard.allow(a,'chatMessage',{}));assert(guard.allow(a,'chatMessage',{}));assert(!guard.allow(a,'chatMessage',{}));
-const refresh=socket('fresh','127.0.0.2');refresh.data.playerId='seat-a';assert(!guard.allow(refresh,'chatMessage',{}),'Chat quota survives a socket refresh');
+a.data.playerId='seat-a';assert(guard.allow(a,'reaction',{}));assert(!guard.allow(a,'reaction',{}));
+const refresh=socket('fresh','127.0.0.2');refresh.data.playerId='seat-a';assert(!guard.allow(refresh,'reaction',{}),'Reaction cooldown survives a socket refresh');
+now+=4000;assert(guard.allow(refresh,'reaction',{}));
 assert.equal(address(socket('proxy','127.0.0.1','198.51.100.9'),0),'127.0.0.1');
 assert.equal(address(socket('proxy','127.0.0.1','198.51.100.9'),1),'198.51.100.9');
 assert.equal(address(socket('proxy','127.0.0.1','203.0.113.1, 198.51.100.9'),1),'198.51.100.9');
@@ -30,4 +31,4 @@ const strict=new AbuseGuard({...config,packets:2},()=>now);
 onInput(s,'ready',()=>called++,(event,data)=>strict.allow(s,event,data));
 let answer;handlers.ready(null,r=>answer=r);assert.equal(answer.error,'Invalid request.');handlers.ready(null,r=>answer=r);handlers.ready({ready:true},r=>answer=r);
 assert.match(answer.error,/Too many requests/);assert.equal(called,0);
-console.log('Clocked request quotas, shared-IP limits, refill, reconnect chat identity, proxy spoof resistance, bounded state and malformed-packet budgets passed.');
+console.log('Clocked request quotas, shared-IP limits, refill, reconnect reaction identity, proxy spoof resistance, bounded state and malformed-packet budgets passed.');

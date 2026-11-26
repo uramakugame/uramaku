@@ -30,18 +30,16 @@ async function main(){
   last(h,'card-flip-turner').finish();assert.equal(idle,0);hold(h);assert(last(h,'card-discard'));assert.equal(last(h,'card-discard').options.duration,280);last(h,'card-discard').finish();assert.equal(idle,1);
   assert(h.app.querySelector('.eliminated-role-card'));assert(!h.app.querySelector('.eliminated-role-card .card-motion-layer'));assert(!h.app.querySelector('[data-player-id="b"] [data-influence-slot="0"]').classList.contains('card-flipping'));
  }
- // Summon opens beside the deck after the proof animation, while the
- // challenger still has a separate unanswered influence-loss choice.
+ // New Summon has no draw before the public loss; its preview waits for both
+ // the proof replacement and the loss reveal/discard presentation to finish.
  {
-  const h=setup(),flow=h.window.URAMAKU_PRESENTATION,motion=h.window.URAMAKU_CARD_MOTION,r=fixture();assert(g.performAction(r,'a','summon').ok);const declared=view(r);assert(g.challenge(r,'b').ok);const drawn=view(r);assert(g.lossDecision(r,'b'));assert.equal(drawn.you.summonDrawnRole,'assassin');h.app.innerHTML=board(drawn,true);
-  let tray=h.app.querySelector('#summonTray');flow.presentSummon(h.app,tray,{key:'summon-preview'});h.window.URAMAKU_FEEDBACK.animate(feedback.changes(declared.room,drawn.room,declared.you,drawn.you),{container:h.app});await Promise.resolve();assert(tray.hidden);assert(h.app.querySelector('[data-summon-controls]').hidden);
-  assert(!h.animations.some(a=>a.element.closest('#summonTray')),'Private arrival waits for proof replacement');
-  const pending=motion.capture(h.app),count=h.animations.length;h.app.innerHTML=board(drawn,true);motion.restore(h.app,pending);tray=h.app.querySelector('#summonTray');flow.presentSummon(h.app,tray,{key:'summon-preview'});assert.equal(h.animations.length,count);assert(tray.hidden);
-  last(h,'card-discard').finish();last(h,'card-arrival').finish();last(h,'card-flip-turner').finish();assert(!tray.hidden,'Proof is complete: no need to wait for challenger selection');assert(!h.app.querySelector('[data-summon-controls]').hidden);assert(!h.app.querySelector('[data-summon-controls]').hasAttribute('inert'));assert(!tray.hasAttribute('inert'),'Rebound tray controls are enabled');assert(g.lossDecision(r,'b'));
-  assert(last(h,'card-flip-turner').element.closest('#summonTray'),'Draw turns the top card in place');const openCards=motion.capture(h.app),openCount=h.animations.length;h.app.innerHTML=board(drawn,true);const nextTray=h.app.querySelector('#summonTray');flow.presentSummon(h.app,nextTray,{key:'summon-preview'});motion.restore(h.app,openCards);assert(!nextTray.hidden);assert(!h.app.querySelector('[data-summon-controls]').hidden);assert.equal(h.animations.length,openCount);
-  last(h,'card-flip-turner').finish();assert(!nextTray.querySelector('.card-flip-layer'));
-  const beforeLoss=view(r);assert(g.loseInfluence(r,'b',0).ok);const afterLoss=view(r);assert.equal(r.pending.kind,'summon');h.app.innerHTML=board(afterLoss,true);flow.presentSummon(h.app,h.app.querySelector('#summonTray'),{key:'summon-preview'});h.window.URAMAKU_FEEDBACK.animate(feedback.changes(beforeLoss.room,afterLoss.room,beforeLoss.you,afterLoss.you),{container:h.app});assert.equal(h.animations.filter(a=>a.element.classList.contains('card-arrival')).length,1,'Paying the separate penalty does not replay the private draw');
-  assert.equal(g.publicState(r).pending.drawnRole,undefined);
+  const h=setup(),flow=h.window.URAMAKU_PRESENTATION,motion=h.window.URAMAKU_CARD_MOTION,r=fixture();assert(g.performAction(r,'a','summon').ok);const declared=view(r);assert(g.challenge(r,'b').ok);const proof=view(r);assert.equal(proof.you.summonDrawnRole,null);assert.equal(proof.room.pending.kind,'lose');h.app.innerHTML=board(proof,true);assert(!h.app.querySelector('#summonTray'));
+  h.window.URAMAKU_FEEDBACK.animate(feedback.changes(declared.room,proof.room,declared.you,proof.you),{container:h.app});
+  const saved=motion.capture(h.app);assert(g.loseInfluence(r,'b',0).ok);const drawn=view(r);assert.equal(drawn.you.summonDrawnRole,'assassin');h.app.innerHTML=board(drawn,true);motion.restore(h.app,saved);
+  const tray=h.app.querySelector('#summonTray');flow.presentSummon(h.app,tray,{key:'loss-first'});h.window.URAMAKU_FEEDBACK.animate(feedback.changes(proof.room,drawn.room,proof.you,drawn.you),{container:h.app});await Promise.resolve();assert(tray.hidden);
+  const lossFlip=h.animations.findLast(a=>a.element.classList.contains('card-flip-turner')&&a.element.closest('[data-player-id="b"]'));assert(lossFlip);
+  last(h,'card-discard').finish();last(h,'card-pile-motion').finish();last(h,'card-pile-motion').finish();last(h,'card-arrival').finish();last(h,'card-flip-turner').finish();assert(tray.hidden,'Loss is still being revealed');
+  lossFlip.finish();hold(h);last(h,'card-discard').finish();assert(!tray.hidden,'Preview appears after proof and public loss finish');assert(!h.app.querySelector('[data-summon-controls]').hidden);assert.equal(g.publicState(r).pending.drawnRole,undefined);
  }
  {
   const h=setup(),motion=h.window.URAMAKU_CARD_MOTION;h.app.innerHTML=cards.hidden({slot:0});const el=h.app.querySelector('[data-influence-slot="0"]'),proto=Object.getPrototypeOf(el),animate=proto.animate;
@@ -54,6 +52,6 @@ async function main(){
   const finish=flow.hold(h.app);flow.presentSummon(h.app,tray);await Promise.resolve();flow.sync(h.app,{code:'OTHER'});finish();assert(tray.hidden);
   h.window.matchMedia=()=>({matches:true});flow.presentSummon(h.app,tray);assert(!tray.hidden,'Reduced motion needs no artificial wait');
  }
- console.log('Public proof/loss flip → readable hold → discard, untouched surviving card, persistent eliminated face, parallel Summon tray ordering, rerender transfer, cancellation, privacy and reduced motion passed.');
+ console.log('Public proof/loss flip → readable hold → discard, untouched surviving card, persistent eliminated face, loss-first Summon tray ordering, rerender transfer, cancellation, privacy and reduced motion passed.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

@@ -7,7 +7,7 @@ const old = fs.readFileSync(path.join(__dirname,'../../public/css/source/04-comp
 assert(layout.includes('grid-template-columns:repeat(4,minmax(0,1fr))!important'));
 assert(layout.includes('grid-template-rows:repeat(2,minmax('), 'Board must reserve two player rows even in small games');
 assert(layout.includes('grid-template-rows:repeat(8,minmax(32px,1fr))!important'),'Actions should scale to board height');
-assert(layout.includes('.game-sidebar>.game-deck-panel{\n    grid-column:3;grid-row:1'),'Deck must occupy the Current Turn row');
+assert(layout.includes('.game-sidebar>.game-outcome-panel{\n    grid-column:3;grid-row:1'),'Latest outcome must occupy the Current Turn row');
 assert(layout.includes('grid-column:3;grid-row:2;align-self:stretch'),'Game Log must align to the player board row');
 assert(layout.includes('min-width:0!important'),'Board must be allowed to shrink without 700px scroll floor');
 assert(!old.includes('min-height:clamp(480px'),'Board height must not be pinned to old desktop floor');

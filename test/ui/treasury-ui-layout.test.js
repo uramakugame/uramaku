@@ -1,45 +1,26 @@
-const assert=require('node:assert/strict');
-const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');
-const app=fs.readFileSync(path.join(__dirname,'../../public/js/app.js'),'utf8');
-const css=fs.readFileSync(path.join(__dirname,'../../public/css/game.css'),'utf8');
-const tutorial=fs.readFileSync(path.join(__dirname,'../../public/js/tutorial.js'),'utf8');
-// Treasury is only in the player board header, not in the Current Turn status.
-assert(app.includes('class="game-board-header ${state.treasuryMode?\'has-treasury\':\'\'}"'));
-assert(app.includes('${renderBoardEconomy()}<div class="row game-board-controls">'));
-assert(!app.includes('economyStatus'),'Treasury must not be displayed in Current Turn');
-const begin=app.indexOf('function renderBoardEconomy(){');
-const end=app.indexOf('function openEntryDialog(mode)',begin);
-assert(begin>=0&&end>begin);
-const ctx={state:null};vm.createContext(ctx);
-vm.runInContext(app.slice(begin,end),ctx);
-ctx.state={treasuryMode:false,riot:false,treasuryCoins:null,totalCoins:null,economyWinThreshold:null};
-assert.equal(vm.runInContext('renderBoardEconomy()',ctx),'');
-ctx.state={treasuryMode:true,riot:false,treasuryCoins:17,totalCoins:28,economyWinThreshold:13};
-let board=vm.runInContext('renderBoardEconomy()',ctx);
-assert.match(board,/Treasury<\/strong> 17 \/ 28 coins/);
-assert.match(board,/Wealth victory: <strong>13 coins<\/strong>/);
-assert.doesNotMatch(board,/Loot active|Purge 5/);
-ctx.state.riot=true;ctx.state.treasuryCoins=0;
-board=vm.runInContext('renderBoardEconomy()',ctx);
-assert.match(board,/RIOT · Treasury/);
-assert.match(board,/0 \/ 28 coins/);
-assert.doesNotMatch(board,/Loot active|Purge 5/);
-// The board header places the treasury between its title and chat, even on
-// narrow displays. The first and last grid columns are equally wide.
-assert(css.includes('grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)'));
-assert(css.includes('.game-board-header.has-treasury'));
-assert(css.includes('grid-column:1/-1;grid-row:2'));
-assert(css.includes('grid-template-rows:repeat(8,minmax(32px,1fr))!important'));
-assert(css.includes('grid-template-rows:repeat(2,minmax(clamp(135px,calc(21cqw + 23px),340px),max-content))'));
-assert(css.includes('min-width:0!important'),'Player board must be allowed to shrink');
-assert(css.includes('flex-direction:column!important;flex-wrap:nowrap!important'));
-// Labels belong to your OWN hidden roles; visual card backs stay textless.
-assert(app.includes("(visibility&1)?'Privately revealed':'Hidden'"));
-assert(!app.includes('<small>Hidden</small>'));
-assert(!tutorial.includes('<small>Hidden</small>'));
-assert(require('../tutorial/browser-harness').harness().app.querySelector('[data-player-id="you"]').textContent.includes('Hidden'));
-assert(require('../../public/js/components/role-cards').hidden().includes('aria-label="Hidden role"'),'Hidden card should still be accessible');
-// Rules need to explain Riot actions and fixed supply for both languages.
-assert(require('../../shared/i18n').get('treasuryModeHtml','en').includes('Treasury Mode has no mandatory Purge.'));
-assert(require('../../shared/i18n').get('treasuryModeHtml','jp').includes('召喚の解決中は略奪できません。')); 
-console.log('Treasury board header, equal-height actions, Riot rules, and own-versus-opponent Hidden text passed.');
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),panels=require('../../public/js/components/game-panels'),i18n=require('../../shared/i18n'),{harness}=require('../tutorial/browser-harness');
+const game=require('../../shared/game'),roomHarness=require('../helpers/browser-room-harness');
+const app=fs.readFileSync(require.resolve('../../public/js/app.js'),'utf8'),css=fs.readFileSync(require.resolve('../../public/css/game.css'),'utf8');
+for(const lang of ['en','jp']){
+ const room={code:'MODE',players:[{alive:true},{alive:false}],treasuryMode:true,riot:false,treasuryCoins:17,totalCoins:24,economyWinThreshold:14};
+ let html=panels.matchInfo({room,lang});assert(html.includes(i18n.get('modeStateOrder',lang)));assert(html.includes('17 / 24'));assert(html.includes('14'));assert(!html.includes('Loot active'));
+ html=panels.matchInfo({room:{...room,riot:true,treasuryCoins:0},lang});assert(html.includes(i18n.get('modeStateChaos',lang)));assert(html.includes('0 / 24'));
+ const classic=panels.matchInfo({room:{...room,treasuryMode:false},lang});assert(!classic.includes('game-board-treasury'));assert(!classic.includes('mode-state'));
+ const h=harness(lang);assert(h.app.querySelector('.table-board .table-match-info'));assert(h.app.querySelector('.table-board .game-deck-panel'));assert(!h.app.querySelector('.table-match-info .game-board-treasury'));
+ assert.equal(h.app.querySelectorAll('.game-outcome-panel').length,1);assert(h.app.querySelector('[data-player-id="you"]').textContent.includes(lang==='en'?'Hidden':'非公開'));
+ assert(h.app.querySelector('.game-board-header'));assert(!h.app.querySelector('.header-treasury'),'Classic tutorial has no treasury balance');
+ const view=roomHarness(lang),seat=id=>({id,name:id,ready:true,connected:true});
+ for(const factions of [false,true]){
+  const r=game.createGame('COIN',seat('host'));r.players.push(seat('guest'));r.revealFactions=factions;r.treasuryMode=true;game.startGame(r);
+  view.paint(game.publicState(r),game.privateState(r,'host'));
+  let header=view.app.querySelector('.game-board-header');assert(header.classList.contains('has-treasury'));assert.equal(header.querySelector('.header-treasury').textContent,i18n.get('treasuryBalance',lang,{count:r.treasuryCoins,total:r.totalCoins}));assert(view.app.querySelector('.table-match-info .board-treasury-balance'),'Detailed match information is retained');
+  r.treasuryCoins=0;view.paint(game.publicState(r),null);header=view.app.querySelector('.game-board-header');assert(header.querySelector('.header-treasury').classList.contains('is-riot'));assert.equal(header.querySelector('.header-treasury').textContent,i18n.get('treasuryBalance',lang,{count:0,total:r.totalCoins}),'Spectators also see the current zero balance in Chaos');assert(!header.querySelector('[data-reaction-toggle]'));
+  r.treasuryMode=false;view.paint(game.publicState(r),game.privateState(r,'host'));header=view.app.querySelector('.game-board-header');assert(!header.classList.contains('has-treasury'));assert(!header.querySelector('.header-treasury'),'Classic and Faction retain their normal header');
+ }
+}
+assert(app.includes('URAMAKU_PANELS.board({room:state'));assert(!app.includes('renderBoardEconomy'));assert(!app.includes('economyStatus'));
+assert(css.includes('.table-match-info{grid-column:4;grid-row:1'));assert(css.includes('.table-piles{grid-column:4;grid-row:2'));assert(css.includes('grid-template-rows:repeat(8,minmax(32px,1fr))!important'));
+assert(i18n.get('treasuryModeHtml','en').includes('Riot Mode has no mandatory Purge.'));assert(i18n.get('treasuryModeHtml','jp').includes('召喚の解決中は略奪できません。'));
+assert(require('../../public/js/components/role-cards').hidden().includes('aria-label="Hidden role"'));
+console.log('Shared in-board match information, Riot-only state/treasury/wealth, Classic unchanged, equal board/action/log height and bilingual hidden labels passed.');

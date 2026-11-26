@@ -19,17 +19,19 @@ function logText(message){
 }
 function showHint(){feedbackMessage=word('tutorialFollow');const el=document.getElementById('tutorialFeedback');if(el){el.textContent=feedbackMessage;el.hidden=false;}}
 function dealCards(){window.URAMAKU_FEEDBACK.animate({motions:window.URAMAKU_FEEDBACK.openingDeal(tutorial.view().room)},{container:app,lang:tutorialLanguage});}
+let tutorialPresentation=null;
+const reactionSession=window.URAMAKU_PLAYER_REACTIONS.install({container:app,getRoom:()=>tutorialPresentation?.room||tutorial.view().room,getYou:()=>tutorial.view().you,getLanguage:()=>tutorialLanguage});
 function handle(input){
+ if(window.URAMAKU_PRESENTATION.busy(app))return;
  const before=tutorial.view();
+ const previousStep=tutorial.step;
  if(!tutorial.dispatch(input).ok){showHint();return;}
  feedbackMessage='';targetAction=null;
  const after=tutorial.view();
  const replacement=input.type==='replace'?{code:before.room.code,playerId:'you',turnNumber:before.room.turnNumber,slot:input.cardIndex}:null;
- const effects=window.URAMAKU_FEEDBACK.changes(before.room,after.room,before.you,after.you,replacement);
- const previewRect=effects.motions?.some(m=>m.kind==='discard')?window.URAMAKU_CARD_MOTION.previewRect(app):null;
- render();
- window.URAMAKU_FEEDBACK.animate(effects,{container:app,lang:tutorialLanguage,previewRect});
- window.URAMAKU_FEEDBACK.playSounds(effects,window.URAMAKU_FEEDBACK.newLogEntries(before.room,after.room),{container:app});
+ window.URAMAKU_PRESENTATION.enqueue(app,{code:'tutorial',run:(complete,current)=>{
+  window.URAMAKU_FEEDBACK.present({container:app,before:before.room,after:after.room,oldYou:before.you,you:after.you,replacementChoice:replacement,lang:tutorialLanguage,current,render:(room,you)=>{tutorialPresentation={room,you,step:room.presentationPhase?previousStep:tutorial.step};render();},complete:()=>{if(!current())return;tutorialPresentation=null;render();complete();}});
+ }});
 }
 function chooseAction(action){
  const expected=tutorial.step.input;
@@ -38,7 +40,7 @@ function chooseAction(action){
  handle({type:'action',action});
 }
 function influenceCards(p,room,you){
- const own=p.id==='you',expected=tutorial.step.input,cards=[];
+ const own=p.id==='you',expected=room.presentationPhase?{type:'presentation'}:tutorial.step.input,cards=[];
  if(own){
   you.influences.forEach((role,index)=>{
    const type=expected.type==='loss'?'lose':expected.type==='replace'?'replace':null;
@@ -57,9 +59,8 @@ function influenceCards(p,room,you){
  room.revealedCards.filter(card=>card.playerId===p.id).forEach((lost,revealIndex)=>cards.push(window.URAMAKU_ROLE_CARDS.revealed({role:lost.role,name:roleName(lost.role),revealIndex,status:word('eliminated'),classes:['eliminated-role-card'],tooltip:panels.roleHint(room,lost.role,tutorialLanguage)})));
  return cards.join('');
 }
-function decisionMarkup(room,you){
- const input=tutorial.step.input;
- const markup=['pass','challenge'].includes(input.type)?panels.challenge({room,you,lang:tutorialLanguage}):['counter','decline'].includes(input.type)?panels.counter({room,lang:tutorialLanguage}):input.type==='information'?panels.information({you,lang:tutorialLanguage}):input.type==='replace'?panels.summon({room,you,lang:tutorialLanguage,allowDiscard:false}):'';
+function decisionMarkup(room,you,input=tutorial.step.input){
+ const markup=(['pass','challenge'].includes(input.type)||input.type==='counter'&&room.pending?.kind==='claim')?panels.challenge({room,you,lang:tutorialLanguage}):['counter','decline'].includes(input.type)?panels.counter({room,you,lang:tutorialLanguage}):input.type==='information'?panels.information({you,lang:tutorialLanguage}):input.type==='replace'?panels.summon({room,you,lang:tutorialLanguage,allowDiscard:false}):'';
  return markup?`<section class="panel stack game-decision-panel t-decision" aria-label="${esc(word('tutorialYourResponse'))}">${markup}</section>`:'';
 }
 function bindCardDecision(selector,callback){
@@ -67,20 +68,21 @@ function bindCardDecision(selector,callback){
 }
 function render(){
  window.URAMAKU_PRESENTATION?.sync(app,{code:'tutorial',lang:tutorialLanguage});
+ window.URAMAKU_RIOT_STATE?.sync(app,{room:tutorialPresentation?.room||tutorial.view().room,lang:tutorialLanguage});
  const movingCards=window.URAMAKU_CARD_MOTION?.capture(app)||[];
  roleTooltips.hide();
- const {room,you}=tutorial.view(),step=tutorial.step,input=step.input;
+ const {room,you}=tutorialPresentation||tutorial.view(),step=tutorialPresentation?.step||tutorial.step,input=room.presentationPhase?{type:'presentation'}:step.input;
  const progress=Math.round(tutorial.index/(window.URAMAKU_TUTORIAL.steps.length-1)*100);
  const allowed=input.type==='action'?input.action:false;
- app.innerHTML=`<div class="shell game-shell t-shell factions-off"><header class="mast"><div class="jp">裏 幕</div><div class="sub">URAMAKU · A GAME OF INFLUENCE</div></header><div class="t-header"><div><span class="t-eyebrow">${esc(word('tutorialMatch'))}</span><h1>${esc(word('tutorial'))}</h1><small>${esc(word('tutorialSeats'))}</small></div><div class="t-header-actions"><button type="button" id="languageToggle" class="language-toggle small" aria-label="${esc(word('languageToggleAria'))}">EN ⇄ JP</button><span>${esc(word('tutorialLessonProgress',{current:tutorial.index+1,total:window.URAMAKU_TUTORIAL.steps.length}))}</span><button type="button" id="backStep" class="small" ${tutorial.checkpoints.length<2?'disabled':''}>${esc(word('tutorialBack'))}</button><button type="button" id="restart" class="small">${esc(word('tutorialRestart'))}</button><a href="/?fromTutorial=1" class="t-exit">${esc(word('tutorialLobby'))}</a></div></div><div class="game-layout t-layout"><aside class="game-actions-sidebar"><div class="panel game-room-code t-empty-room" aria-hidden="true"></div><section class="panel game-actions-panel"><div class="section-title">${esc(word('actions'))}</div><div class="actions">${panels.actions({room,you,lang:tutorialLanguage,allowedAction:allowed})}</div></section></aside><div class="game-main"><section class="panel action-flow t-lesson" aria-live="polite"><div class="section-title">${esc(word('tutorialLesson'))} · ${progress}%</div><div class="t-progress"><div style="width:${progress}%"></div></div><h2>${esc(step.title[tutorialLanguage])}</h2><p>${esc(step.text[tutorialLanguage])}</p>${targetAction?`<p class="t-feedback">${esc(word('tutorialTarget',{player:playerName(room.players.find(p=>p.id===input.targetId))}))}</p>`:''}${decisionMarkup(room,you)}<p id="tutorialFeedback" class="t-feedback" role="status" ${feedbackMessage?'':'hidden'}>${esc(feedbackMessage)}</p>${input.type==='next'?`<div class="t-choices"><button type="button" id="continueLesson" class="t-primary">${esc(word('tutorialContinue'))}</button></div>`:''}${input.type==='end'?`<div class="t-choices"><a href="/?fromTutorial=1" class="t-primary t-end-link">${esc(word('tutorialLobby'))}</a></div>`:''}</section><section class="panel game-players-panel t-board"><div class="row t-board-head"><div class="section-title">${esc(word('playersInfluences'))}</div><span>${esc(word('tutorialRound',{round:tutorial.round}))}</span></div><div class="players">${room.players.map(p=>`<div class="player ${room.status==='playing'&&p.alive&&room.turnPlayerId===p.id?'active-player':''}${targetAction&&p.id===input.targetId?' selectable-target tutorial-highlight':''}" data-player-id="${p.id}" ${targetAction&&p.id===input.targetId?`role="button" tabindex="0" aria-label="${esc(playerName(p))}"`:''}><div class="player-meta"><div class="player-name-row"><div class="name">${esc(playerName(p))}${p.id==='you'?' '+esc(word('you')):''}</div></div><div class="player-coins">${esc(word('coins'))} ${p.coins}</div></div><div class="player-roles">${influenceCards(p,room,you)}</div></div>`).join('')}</div></section></div><aside class="game-sidebar">${panels.deck({room,you,lang:tutorialLanguage})}<section class="panel game-log-panel"><div class="section-title">${esc(word('gameLog'))}</div><div class="log" aria-live="polite">${room.log.slice().reverse().map((entry,index)=>`<div class="${index===0?'log-latest':''}">${esc(logText(entry))}</div>`).join('')}</div></section></aside></div>${window.URAMAKU_PROJECT.footer({lang:tutorialLanguage})}</div>`;
+ app.innerHTML=`<div class="shell game-shell t-shell factions-off"><header class="mast"><div class="jp">裏 幕</div><div class="sub">URAMAKU · A GAME OF INFLUENCE</div></header><div class="game-layout t-layout"><aside class="game-actions-sidebar"><div class="panel game-room-code t-empty-room" aria-hidden="true"></div><section class="panel game-actions-panel"><div class="section-title">${esc(word('actions'))}</div><div class="actions">${panels.actions({room,you,lang:tutorialLanguage,allowedAction:allowed})}</div></section></aside><div class="game-main"><section class="panel action-flow t-lesson" aria-live="polite"><div class="row t-lesson-head"><div class="section-title">${esc(word('tutorialLesson'))} · ${progress}%</div><div class="t-header-actions"><span>${esc(word('tutorialLessonProgress',{current:tutorial.index+1,total:window.URAMAKU_TUTORIAL.steps.length}))}</span><button type="button" id="backStep" class="small" ${tutorial.checkpoints.length<2?'disabled':''}>${esc(word('tutorialBack'))}</button><button type="button" id="restart" class="small">${esc(word('tutorialRestart'))}</button><a href="/?fromTutorial=1" class="t-exit">${esc(word('tutorialLobby'))}</a></div></div><div class="t-progress"><div style="width:${progress}%"></div></div><h2>${esc(step.title[tutorialLanguage])}</h2><p>${esc(step.text[tutorialLanguage])}</p>${targetAction?`<p class="t-feedback">${esc(word('tutorialTarget',{player:playerName(room.players.find(p=>p.id===input.targetId))}))}</p>`:''}${decisionMarkup(room,you,input)}<p id="tutorialFeedback" class="t-feedback" role="status" ${feedbackMessage?'':'hidden'}>${esc(feedbackMessage)}</p>${input.type==='next'?`<div class="t-choices"><button type="button" id="continueLesson" class="t-primary">${esc(word('tutorialContinue'))}</button></div>`:''}${input.type==='end'?`<div class="t-choices"><a href="/?fromTutorial=1" class="t-primary t-end-link">${esc(word('tutorialLobby'))}</a></div>`:''}</section><section class="panel game-players-panel t-board"><div class="game-board-header t-board-head${room.treasuryMode?' has-treasury':''}"><div class="section-title">${esc(word('playersInfluences'))}</div>${panels.boardTreasury({room,lang:tutorialLanguage})}<div class="row game-board-controls"><button id="languageToggle" type="button" class="language-toggle small" aria-label="${esc(word('languageToggleAria'))}">EN ⇄ JP</button>${window.URAMAKU_PLAYER_REACTIONS.controls({room,you,lang:tutorialLanguage})}</div></div>${panels.board({room,you,lang:tutorialLanguage,players:room.players.map(p=>`<div class="player ${room.status==='playing'&&p.alive&&room.turnPlayerId===p.id?'active-player':''}${targetAction&&p.id===input.targetId?' selectable-target tutorial-highlight':''}" data-player-id="${p.id}" ${targetAction&&p.id===input.targetId?`role="button" tabindex="0" aria-label="${esc(playerName(p))}"`:''}><div class="player-meta"><div class="player-name-row"><div class="name">${esc(playerName(p))}${p.id==='you'?' '+esc(word('you')):''}</div></div><div class="player-coins">${esc(word('coins'))} ${p.coins}</div></div><div class="player-roles">${influenceCards(p,room,you)}</div></div>`).join('')})}</section></div><aside class="game-sidebar">${panels.outcome({room,lang:tutorialLanguage})}<section class="panel game-log-panel"><div class="section-title">${esc(word('gameLog'))}</div><div class="log" aria-live="polite">${room.log.slice().reverse().map((entry,index)=>`<div class="${index===0?'log-latest':''}">${esc(logText(entry))}</div>`).join('')}</div></section></aside></div></div>`;
  window.URAMAKU_FEEDBACK.decorateActions(app,{lang:tutorialLanguage,tutorial:true});
  if(input.type==='action')app.querySelector(`[data-action="${input.action}"]`)?.classList.add('tutorial-highlight');
  const selector=input.type==='share'?`[data-share-private-target="${input.targetId}"][data-share-private-slot="${input.slot}"]`:input.type==='counter'?`[data-counter="${input.counter}"]`:input.type==='challenge'?'[data-challenge]':input.type==='pass'?'[data-pass]':input.type==='decline'?'[data-decline]':input.type==='information'?`[data-counter="${input.choice}"]`:null;
  if(selector)app.querySelector(selector)?.classList.add('tutorial-highlight');
  document.documentElement.lang=tutorialLanguage==='jp'?'ja':'en';
- document.getElementById('languageToggle').onclick=()=>{tutorialLanguage=tutorialLanguage==='en'?'jp':'en';I18N.setLanguage(tutorialLanguage);render();window.UramakuAudio?.renderToggle();};
- document.getElementById('backStep').onclick=()=>{tutorial.back();targetAction=null;feedbackMessage='';render();};
- document.getElementById('restart').onclick=()=>{tutorial.restart();targetAction=null;feedbackMessage='';render();dealCards();};
+ document.getElementById('languageToggle').onclick=()=>{tutorialLanguage=tutorialLanguage==='en'?'jp':'en';I18N.setLanguage(tutorialLanguage);render();window.UramakuAudio?.renderToggle?.();};
+ document.getElementById('backStep').onclick=()=>{window.URAMAKU_PRESENTATION.cancel(app);reactionSession.reset();window.URAMAKU_INTEL.cancel(app);tutorialPresentation=null;tutorial.back();targetAction=null;feedbackMessage='';render();};
+ document.getElementById('restart').onclick=()=>{window.URAMAKU_PRESENTATION.cancel(app);reactionSession.reset();window.URAMAKU_INTEL.cancel(app);tutorialPresentation=null;tutorial.restart();targetAction=null;feedbackMessage='';render();dealCards();};
  document.getElementById('continueLesson')?.addEventListener('click',()=>handle({type:'next'}));
  app.querySelectorAll('[data-action]').forEach(button=>button.onclick=()=>chooseAction(button.dataset.action));
  if(targetAction)bindCardDecision('.selectable-target[data-player-id]',card=>handle({type:'action',action:targetAction,targetId:card.dataset.playerId}));
@@ -94,6 +96,7 @@ function render(){
  app.querySelectorAll('[data-summon-choice]').forEach(button=>button.onclick=()=>{if(!document.getElementById('summonTray')?.hidden)handle({type:'summon',choice:button.dataset.summonChoice});});
  window.URAMAKU_PRESENTATION?.presentSummon(app,document.getElementById('summonTray'),{key:`tutorial:${room.turnNumber}:${you.summonDrawnRole}`});
  window.URAMAKU_CARD_MOTION?.restore(app,movingCards);
+ window.URAMAKU_INTEL?.sync(app,{code:'tutorial',lang:tutorialLanguage});reactionSession.sync();window.URAMAKU_RIOT_STATE?.sync(app,{room,lang:tutorialLanguage});
  window.URAMAKU_PRESENTATION?.sync(app,{lang:tutorialLanguage});
 }
 

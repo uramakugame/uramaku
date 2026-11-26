@@ -46,7 +46,7 @@ const pass=(room,claimant)=>{for(const p of room.players)if(p.alive&&p.id!==clai
 for(const sameRole of [false,true]){
  const room=fixture();room.players[0].influences=['magistrate','lord'];room.deck=[sameRole?'lord':'kingpin'];const before=view(room),observer=view(room,'b');assert(game.performAction(room,'a','summon').ok);pass(room,'a');const preview=view(room);
  assert.deepEqual(effects(before,preview).flips,[{id:'a',kind:'draw'}]);assert.deepEqual(effects(observer,view(room,'b')).flips,[]);
- assert(game.chooseSummon(room,'a','keep').ok);const keep=view(room);assert(game.chooseSummon(room,'a','replace',1).ok);
+ const keep=view(room);assert(game.chooseSummon(room,'a','replace',1).ok);
  const choice={code:room.code,playerId:'a',turnNumber:keep[0].turnNumber,slot:1};assert.deepEqual(effects(keep,view(room),choice).flips,[{id:'a',kind:'replace',slot:1,fromRole:'lord'}],'Only the selected influence turns, including an identical-role draw');
 }
 // Exercise the actual browser renderer and effect lifecycle with both languages.
@@ -68,7 +68,7 @@ for(const lang of ['en','jp']){
 {
  const source=fs.readFileSync(require.resolve('../../public/js/app.js'),'utf8'),start=source.indexOf(' const players=state.players.map(p=>{'),end=source.indexOf(" if(state.status==='lobby'){",start);
  const state={status:'playing',players:[{id:'b',name:'B',alive:true,coins:3,influenceCount:2}],revealedCards:[],sharedInvestigations:[]},me={id:'a',alive:true,influences:[],privateInvestigations:{b:{1:'kingpin'}}};
- const context={state,me,meId:'a',current:'a',targetSelectionAction:null,window:{URAMAKU_ROLE_CARDS:cards},esc:String,t:key=>key,roleName:id=>i18n.role(id,'en'),roleHint:()=>''};
+ const context={kickPendingId:null,kickEligible:()=>false,state,me,meId:'a',current:'a',targetSelectionAction:null,window:{URAMAKU_ROLE_CARDS:cards},esc:String,t:key=>key,roleName:id=>i18n.role(id,'en'),roleHint:()=>''};
  vm.createContext(context);const html=vm.runInContext(source.slice(start,end)+'\nplayers',context);const h=harness();h.app.innerHTML=html;
  const rendered=h.app.querySelectorAll('.room-role-card');assert.equal(rendered.length,2);assert.equal(rendered[0].dataset.influenceSlot,'0');assert(rendered[0].classList.contains('hidden-role-card'));assert.equal(rendered[1].dataset.influenceSlot,'1');assert(rendered[1].classList.contains('portrait-kingpin'));
 }

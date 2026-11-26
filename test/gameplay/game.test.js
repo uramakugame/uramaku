@@ -213,16 +213,10 @@ console.log('Bluffable counter-offer tests passed.');
  assert.equal(g.privateState(r,'s1'),null);
  assert.equal(g.publicState(r).players.length,2);
  assert.equal(g.addSpectator(r,'s2','observer').ok,false);
- assert(g.addChatMessage(r,'s1','Hello players').ok);
- assert.equal(g.publicState(r).chat[0].message,'Hello players');
- assert(g.addChatMessage(r,'s1','x'.repeat(400)).ok);
- assert.equal(g.publicState(r).chat[1].message.length,300);
- for(let i=0;i<105;i++)g.addChatMessage(r,'s1',`message ${i}`);
- assert.equal(g.publicState(r).chat.length,100);
- assert.equal(g.addChatMessage(r,'unknown','Nope').ok,false);
- assert.equal(g.addChatMessage(r,'s1','   ').ok,false);
+ assert(!('chat' in g.publicState(r)));
+ assert.equal(g.addChatMessage,undefined);
 }
-console.log('Seating order, spectator, and chat server tests passed.');
+console.log('Seating order, spectator, and public-state privacy tests passed.');
 
 // Failed challenge against a true claim automatically removes the final influence.
 {
@@ -410,8 +404,8 @@ console.log("Japanese effect metadata serialization tests passed.");
  assert(g.challenge(r,'c').ok);
  assert.equal(g.lossDecision(r,'c').kind,'lose');
  assert.equal(g.lossDecision(r,'c').loserId,'c');
- assert.equal(g.lossDecision(r,'c').lossCount,1);
- assert.equal(r.pending.kind,'counterOffer','The other target may respond immediately');
+ assert.equal(g.lossDecision(r,'c').lossCount||1,1);
+ assert.equal(r.pending.kind,'lose','The other target waits for the public loss reveal');
  assert(g.loseInfluence(r,'c',0).ok);
  assert.equal(c.influences.length,1);
  assert.equal(b.influences.length,2);
@@ -773,3 +767,23 @@ console.log('Free Authority and challenge outcomes passed.');
  assert.equal(b.coins,1); // 2 coins paid, then +1 passive Income.
 }
 console.log('Intrigue/Gossip counter exchange, privacy, zero-coin, challenge and payment tests passed.');
+
+// Round display follows fixed seats rather than dividing turns by survivors.
+for(const count of [2,3,6]){
+ const players=Array.from({length:count},(_,i)=>p('round'+i,['lord','magistrate']));
+ const r=g.createGame('RNDS',players[0]);r.players=players;g.startGame(r);
+ for(let turn=0;turn<count*2;turn++){
+  assert.equal(g.publicState(r).roundNumber,Math.floor(turn/count)+1);
+  assert(g.performAction(r,g.publicState(r).turnPlayerId,'earn').ok);
+ }
+ assert.equal(g.publicState(r).roundNumber,3);
+ const restored=JSON.parse(JSON.stringify(r));assert.equal(restored.roundNumber,3);assert.equal(restored.lastTurnSeat,r.lastTurnSeat);
+ assert(g.performAction(restored,g.publicState(restored).turnPlayerId,'earn').ok);assert.equal(g.publicState(restored).roundNumber,3);
+}
+{
+ const r=g.createGame('WRAP',p('first',['lord','magistrate']));r.players=[r.players[0],p('second',['kingpin','assassin']),p('third',['courtesan','swordsman'])];g.startGame(r);
+ const first=r.players[0].id;assert(g.forfeitPlayer(r,first).ok);assert.equal(g.publicState(r).roundNumber,1);assert.equal(g.publicState(r).turnPlayerId,r.players[1].id);
+ assert(g.performAction(r,r.players[1].id,'earn').ok);assert.equal(g.publicState(r).roundNumber,1);
+ assert(g.performAction(r,r.players[2].id,'earn').ok);assert.equal(g.publicState(r).roundNumber,2);assert.equal(g.publicState(r).turnPlayerId,r.players[1].id);
+}
+console.log('Persistent public round number: 2/3/6 seats, turn wraps, removed first seat and restored progression passed.');

@@ -22,13 +22,13 @@ for(const lang of ['en','jp']){
  const tip=h.document.body.querySelector('.role-quick-tooltip');assert.equal(tip.hidden,false);assert(tip.innerHTML.includes('tooltip-ability-name'));assert(tip.innerHTML.includes(i18n.roleEffect('magistrate','counter',lang)));
  h.dispatchDocument('keydown',{key:'Escape'});assert.equal(tip.hidden,true);
  h.dispatchDocument('focusin',{target:card});assert.equal(tip.hidden,false);
- h.click('#languageToggle');assert.equal(tip.hidden,true,'Rerender hides stale hover text');h.click('#languageToggle');
+ h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');assert.equal(tip.hidden,true,'Rerender hides stale hover text');h.setLanguage(h.document.documentElement.lang==='ja'?'en':'jp');
  while(h.value('tutorial.step.id')!=='your-extort')h.value('handle(tutorial.step.input)');
  h.click('[data-action="extort"]');
  const targets=h.app.querySelectorAll('.selectable-target[data-player-id]');assert.equal(targets.length,1);assert.equal(targets[0].dataset.playerId,'sora');assert.equal(targets[0].getAttribute('tabindex'),'0');
  assert(h.app.querySelector('.t-feedback').textContent.includes(lang==='jp'?'ソラ':'Sora'),'Target instruction names Sora');
  const before=h.state();h.click('[data-player-id="mei"]');h.click('[data-player-id="akira"]');assert.deepEqual(h.state(),before,'Other opponents cannot advance the lesson');
- h.click('[data-player-id="sora"]');assert.equal(h.value('tutorial.step.id'),'sora-intimidate');
+ h.click('[data-player-id="sora"]');assert.equal(h.value('tutorial.step.id'),'sora-enforce');
 }
 const css=read('public/css/source/06-lobby-and-interactions.css');
 assert(css.includes('.player:not(.active-player):not(.selectable-target){outline:none!important'),'Inactive-seat reset excludes selectable targets');

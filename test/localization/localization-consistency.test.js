@@ -53,7 +53,7 @@ assert(tutorial.includes('URAMAKU_ROLE_CARDS.revealed'));
 assert(tutorial.includes('URAMAKU_ROLE_CARDS.hidden'));
 assert(tutorial.includes('t-shell factions-off'));
 assert(html.indexOf('/shared/i18n.js')<html.indexOf('/shared/roles.js'),'Localized metadata must load after its glossary');
-assert(main.includes('languageToggleMarkup()}<button id="chatToggle"'), 'Room language toggle must be immediately left of Chat');
+assert(main.includes('languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}'), 'React follows the language toggle');
 assert(main.includes('i18n.get(\'howToHtml\',referenceLanguage)'));
 assert(tutorial.includes('URAMAKU_TUTORIAL'));
 for(const step of require('../../shared/tutorial').steps){
@@ -65,8 +65,8 @@ for(const step of require('../../shared/tutorial').steps){
 assert(html.indexOf('/shared/game.js')<html.indexOf('/shared/tutorial.js'));
 assert(html.indexOf('/shared/tutorial.js')<html.indexOf('/js/tutorial.js'));
 assert(!i18n.get('howToHtml','en').includes('undefined'));
-assert(i18n.get('treasuryModeHtml','en').includes('Basic actions (Riot)'));
-assert(i18n.get('treasuryModeHtml','jp').includes('基本アクション（暴動中）'));
+assert(i18n.get('treasuryModeHtml','en').includes('Basic actions (Chaos)'));
+assert(i18n.get('treasuryModeHtml','jp').includes('基本アクション（混乱中）'));
 assert(!main.slice(main.indexOf('function showRules(){')).includes('When the treasury is empty, <strong>Riot</strong>'),'How to play text should come from dictionary');
 assert(!i18n.get('basicNote','en').toLowerCase().includes('treasury'));
 assert(!i18n.get('basicNote','jp').includes('宝庫'));

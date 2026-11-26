@@ -12,13 +12,18 @@ function encode(room){const {seatTokens,...state}=room;return JSON.stringify(sta
 function cloneRoom(room){return {...JSON.parse(encode(room)),seatTokens:new Map(room.seatTokens||[])};}
 function validate(room){
   if(!room||!['lobby','playing','finished'].includes(room.status)||typeof room.code!=='string'||!Array.isArray(room.players)||!Array.isArray(room.deck)||!Array.isArray(room.discard))throw Error('Invalid room snapshot');
+  if(room.matchNumber!==undefined&&(!Number.isSafeInteger(room.matchNumber)||room.matchNumber<1))throw Error('Invalid saved match number');
   const members=[...room.players,...(room.spectators||[])];
   if(new Set(members.map(p=>p.id)).size!==members.length)throw Error('Duplicate saved seat');
   for(const p of room.players)if(typeof p.id!=='string'||typeof p.name!=='string'||!Number.isInteger(p.coins)||p.coins<0||!Array.isArray(p.influences))throw Error('Invalid saved player');
-  for(const field of ['spectators','log','revealedCards','sharedInvestigations','chat'])if(!Array.isArray(room[field]))throw Error('Incomplete room snapshot');
+  for(const field of ['spectators','log','revealedCards','sharedInvestigations'])if(!Array.isArray(room[field]))throw Error('Incomplete room snapshot');
   for(const role of [...room.deck,...room.discard,...room.players.flatMap(p=>p.influences)])if(!Object.hasOwn(ROLES,role))throw Error('Unknown saved role');
   if(!Number.isInteger(room.turn)||!Number.isInteger(room.turnNumber)||!room.log.every(line=>typeof line==='string'))throw Error('Invalid saved turn');
+  if(room.treasuryCoinsPerPlayer!==undefined&&![5,6,7].includes(room.treasuryCoinsPerPlayer))throw Error('Invalid saved Treasury coin supply');
   if(room.challengeLosses!==undefined&&(!Array.isArray(room.challengeLosses)||room.challengeLosses.some(q=>q.kind!=='lose'||q.parallel!==true||!room.players.some(p=>p.id===q.loserId&&p.alive)||!Number.isInteger(q.lossCount)||q.lossCount<1)))throw Error('Invalid saved challenge penalties');
+  if(room.pending?.responseDecisionId!==undefined&&(typeof room.pending.responseDecisionId!=='string'||!room.pending.responseDecisionId.length||room.pending.responseDecisionId.length>128))throw Error('Invalid saved target response ID');
+  if(room.pending?.targetResponse!==undefined&&!['undecided','allow'].includes(room.pending.targetResponse))throw Error('Invalid saved target response');
+  if(room.pending?.targetChallenged!==undefined&&typeof room.pending.targetChallenged!=='boolean')throw Error('Invalid saved target challenge');
   if(room.pending&&(!['claim','counterClaim','counterOffer','lose','information','informationShare','summon'].includes(room.pending.kind)))throw Error('Invalid pending decision');
 }
 class RoomStore{
@@ -72,7 +77,7 @@ class RoomStore{
       engagement.record(this.db,room,existing?JSON.parse(existing.state_json):null,remove);
       if(remove){this.db.prepare('DELETE FROM rooms WHERE code=?').run(room.code);this.db.prepare('DELETE FROM entry_intents WHERE code=?').run(room.code);return;}
       this.db.prepare('INSERT INTO rooms VALUES(?,?,?,?,?) ON CONFLICT(code) DO UPDATE SET snapshot_version=excluded.snapshot_version,revision=excluded.revision,state_json=excluded.state_json,updated_at=excluded.updated_at').run(room.code,VERSION,room.revision,encode(room),Date.now());
-      // At most eight seats plus spectators; update only changed credentials.
+      // At most six seats plus spectators; update only changed credentials.
       const prior=this.db.prepare('SELECT seat_id,token_hash FROM seat_credentials WHERE room_code=?').all(room.code);
       for(const p of prior)if(!room.seatTokens?.has(p.seat_id))this.db.prepare('DELETE FROM seat_credentials WHERE room_code=? AND seat_id=?').run(room.code,p.seat_id);
       for(const [id,hash] of room.seatTokens||[]){
