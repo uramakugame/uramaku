@@ -1,5 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),panels=require('../../public/js/components/game-panels'),i18n=require('../../shared/i18n'),{harness}=require('../tutorial/browser-harness');
+const game=require('../../shared/game'),roomHarness=require('../helpers/browser-room-harness');
 const app=fs.readFileSync(require.resolve('../../public/js/app.js'),'utf8'),css=fs.readFileSync(require.resolve('../../public/css/game.css'),'utf8');
 for(const lang of ['en','jp']){
  const room={code:'MODE',players:[{alive:true},{alive:false}],treasuryMode:true,riot:false,treasuryCoins:17,totalCoins:24,economyWinThreshold:14};
@@ -8,6 +9,15 @@ for(const lang of ['en','jp']){
  const classic=panels.matchInfo({room:{...room,treasuryMode:false},lang});assert(!classic.includes('game-board-treasury'));assert(!classic.includes('mode-state'));
  const h=harness(lang);assert(h.app.querySelector('.table-board .table-match-info'));assert(h.app.querySelector('.table-board .game-deck-panel'));assert(!h.app.querySelector('.table-match-info .game-board-treasury'));
  assert.equal(h.app.querySelectorAll('.game-outcome-panel').length,1);assert(h.app.querySelector('[data-player-id="you"]').textContent.includes(lang==='en'?'Hidden':'非公開'));
+ assert(h.app.querySelector('.game-board-header'));assert(!h.app.querySelector('.header-treasury'),'Classic tutorial has no treasury balance');
+ const view=roomHarness(lang),seat=id=>({id,name:id,ready:true,connected:true});
+ for(const factions of [false,true]){
+  const r=game.createGame('COIN',seat('host'));r.players.push(seat('guest'));r.revealFactions=factions;r.treasuryMode=true;game.startGame(r);
+  view.paint(game.publicState(r),game.privateState(r,'host'));
+  let header=view.app.querySelector('.game-board-header');assert(header.classList.contains('has-treasury'));assert.equal(header.querySelector('.header-treasury').textContent,i18n.get('treasuryBalance',lang,{count:r.treasuryCoins,total:r.totalCoins}));assert(view.app.querySelector('.table-match-info .board-treasury-balance'),'Detailed match information is retained');
+  r.treasuryCoins=0;view.paint(game.publicState(r),null);header=view.app.querySelector('.game-board-header');assert(header.querySelector('.header-treasury').classList.contains('is-riot'));assert.equal(header.querySelector('.header-treasury').textContent,i18n.get('treasuryBalance',lang,{count:0,total:r.totalCoins}),'Spectators also see the current zero balance in Chaos');assert(!header.querySelector('[data-reaction-toggle]'));
+  r.treasuryMode=false;view.paint(game.publicState(r),game.privateState(r,'host'));header=view.app.querySelector('.game-board-header');assert(!header.classList.contains('has-treasury'));assert(!header.querySelector('.header-treasury'),'Classic and Faction retain their normal header');
+ }
 }
 assert(app.includes('URAMAKU_PANELS.board({room:state'));assert(!app.includes('renderBoardEconomy'));assert(!app.includes('economyStatus'));
 assert(css.includes('.table-match-info{grid-column:4;grid-row:1'));assert(css.includes('.table-piles{grid-column:4;grid-row:2'));assert(css.includes('grid-template-rows:repeat(8,minmax(32px,1fr))!important'));

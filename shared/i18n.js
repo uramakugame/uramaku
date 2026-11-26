@@ -147,7 +147,7 @@
    stateReversal:{en:'{states}',jp:'{states}'},
    matchInformation:{en:'Match information',jp:'対戦情報'},playersRemaining:{en:'{count} players remaining',jp:'残り{count}人'},
    wealthGoal:{en:'Wealth victory: {count} coins',jp:'資産勝利：{count}コイン'},treasuryBalance:{en:'Treasury: {count} / {total} coins',jp:'宝庫：{count} / {total}コイン'},
-   discardPileTitle:{en:'Discard pile',jp:'捨て札'},discardPileCount:{en:'{count} discarded',jp:'捨て札 {count}枚'},drawPileLabel:{en:'DECK',jp:'山札'},discardPileLabel:{en:'DISCARD',jp:'捨て札'},currentRound:{en:'Round {round}',jp:'ラウンド {round}'},
+   discardPileTitle:{en:'Discard pile',jp:'捨て札'},discardPileCount:{en:'{count} discarded',jp:'捨て札 {count}枚'},drawPileLabel:{en:'DRAW',jp:'山札'},discardPileLabel:{en:'DISCARD',jp:'捨て札'},currentRound:{en:'Round {round}',jp:'ラウンド {round}'},
    lastOutcome:{en:'Latest outcome',jp:'直前の結果'},noOutcome:{en:'Waiting for the first action.',jp:'最初のアクションを待っています。'},
    outcomeTransfer:{en:'{from} −{count} · {to} +{count}',jp:'{from} −{count} · {to} +{count}'},outcomeGain:{en:'{player} +{count} coins',jp:'{player} +{count}コイン'},outcomeLoss:{en:'{player} loses {count} influences',jp:'{player}は影響力を{count}枚失う'},outcomeLossOne:{en:'{player} loses 1 influence',jp:'{player}は影響力を1枚失う'},
    maxPlayersLabel:{en:'Maximum players',jp:'最大参加人数'},maxPlayersHelp:{en:'Choose 2–6 players (default 6). Cannot be lower than the joined player count.',jp:'2〜6人から選択（初期値6）。参加済みの人数より少なく設定できません。'},
@@ -220,7 +220,7 @@
    resolvingStage:{en:'Resolving',jp:'解決中'},resolvingAction:{en:'Resolving action…',jp:'アクションを解決中…'},
    nextTurnStage:{en:'Next turn',jp:'次のターン'},playerTurnBegins:{en:'{player}’s turn begins.',jp:'{player}のターンが始まります。'},
    incomeStage:{en:'Income',jp:'収入'},playerReceivesNoIncome:{en:'The treasury is empty. No Income is received.',jp:'宝庫が空のため、収入はありません。'},playerReceivesIncome:{en:'{player} receives Income.',jp:'{player}が収入を受け取ります。'},
-   deckTitle:{en:'Deck',jp:'山札'},deckRemaining:{en:'cards remaining',jp:'残り枚数'},
+   deckTitle:{en:'Deck',jp:'山札'},deckRemainingCount:{en:'{count} remaining',jp:'残り{count}枚'},deckRemaining:{en:'cards remaining',jp:'残り枚数'},
    deckNextFaction:{en:'Next: {faction}',jp:'次のカード：{faction}'},
    deckReshuffle:{en:'Reshuffles on next draw',jp:'次に引く時に再シャッフル'},deckEmpty:{en:'Draw pile empty',jp:'山札は空です'},
    feedbackDiscarded:{en:'Discarded',jp:'捨て札'},feedbackLost:{en:'Influence lost',jp:'影響力を失った'},
@@ -315,6 +315,11 @@
    spectatorCapacity:{en:'This room has reached its spectator limit.',jp:'このルームの観戦者数が上限に達しています。'},
    kickOwnerOnly:{en:'Only the host can remove players.',jp:'プレイヤーを退出させられるのはホストだけです。'},
    kickUnavailable:{en:'This player cannot be removed.',jp:'このプレイヤーは退出させられません。'},
+   playAgain:{en:'Play again',jp:'もう一度遊ぶ'},
+   rematchWait:{en:'The owner can return everyone to the lobby to play again.',jp:'ルームのオーナーが全員をロビーに戻すと、もう一度遊べます。'},
+   rematchFinishedOnly:{en:'The match must finish before playing again.',jp:'もう一度遊ぶには、現在の対戦が終了している必要があります。'},
+   rematchOwnerOnly:{en:'Only the owner can return the room to the lobby.',jp:'ルームをロビーに戻せるのはオーナーだけです。'},
+   previousMatchRequest:{en:'This request belongs to a previous match.',jp:'この操作は前の対戦に対するものです。'},
    dialogClose:{en:'Close',jp:'閉じる'},
    kickOffline:{en:'Only disconnected players can be removed.',jp:'切断中のプレイヤーだけを退出させられます。'},
    kickOfflineOnly:{en:'Only disconnected players can be removed during a match.',jp:'対戦中は切断中のプレイヤーだけを退出させられます。'},
@@ -378,6 +383,7 @@
  const exact = Object.fromEntries(Object.values(STRINGS).flatMap(obj=>Object.values(obj).map(({en,jp})=>[en,jp])));
  // UI text assembled from room state: keep dynamic values separate from the dictionary.
  const PATTERNS=[
+  [/^(.+?) returned the room to the lobby for a new match\.$/,m=>`${m[1]}が次の対戦のためにルームをロビーに戻しました。`],
   [/^(?:ORDER|CHAOS)(?: → (?:ORDER|CHAOS))+$/,m=>m[0].split(' → ').map(state=>get(state==='CHAOS'?'modeStateChaos':'modeStateOrder','jp')).join(' → ')],
   [/^(.+?) allows the action without a counter\.$/,m=>`${m[1]}はカウンターせずに行動を認めました。`],
   // Concise board announcements. Order matters: match these before the generic log patterns.

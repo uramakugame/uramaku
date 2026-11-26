@@ -21,6 +21,7 @@
 }
 .game-shell .game-layout .game-players-panel .game-board-treasury strong{color:#654323}
 .game-shell .game-layout .game-players-panel .game-board-treasury.is-riot .board-treasury-balance strong{color:#a32a27}
+.game-shell .game-layout .game-players-panel .header-treasury.is-riot .board-treasury-balance{color:#a32a27}
 @media(max-width:1000px){
   .game-shell .game-layout .game-players-panel .game-board-header.has-treasury{
     grid-template-columns:minmax(0,1fr) auto;

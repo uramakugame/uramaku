@@ -241,10 +241,12 @@ io.on('connection',socket=>{
       if(next.status==='lobby'){
         next.players=next.players.filter(p=>p.id!==id);next.spectators=next.spectators.filter(p=>p.id!==id);
         if(p)next.log.push(`${p.name} left the lobby.`);
-        if(next.hostId===id)next.hostId=next.players[0]?.id||null;
+        if(next.hostId===id)next.hostId=next.players.find(other=>other.connected===true)?.id||next.players[0]?.id||null;
       }else if(p)p.connected=false;
       else next.spectators=next.spectators.filter(p=>p.id!==id);
-      next.seatTokens.delete(id);return {ok:true};
+      next.seatTokens.delete(id);
+      if(next.status==='finished'&&next.hostId===id){const candidates=next.players.filter(other=>next.seatTokens.has(other.id));next.hostId=candidates.find(other=>other.connected===true)?.id||candidates[0]?.id||null;}
+      return {ok:true};
     },{remove:closing});
     if(!reply(socket,cb,result))return;
     socketsByPlayer.delete(id);socket.data.playerId=null;socket.data.room=null;
@@ -257,14 +259,13 @@ io.on('connection',socket=>{
   on('kickPlayer',(data,cb)=>{
     const result=run(socket,'kickPlayer',data,(room,id)=>{
       if(room.hostId!==id)return {ok:false,error:'Only the host can remove players.'};
-      const offlineTarget=room.players.find(p=>p.id===data.targetId);
-      if(offlineTarget?.connected!==false)return {ok:false,error:'Only disconnected players can be removed.'};
       let r;
       if(room.status==='lobby')r=game.removeLobbyPlayer(room,id,data.targetId);
       else{
         if(room.hostId!==id)return {ok:false,error:'Only the host can remove players.'};
         const target=room.players.find(p=>p.id===data.targetId);
         if(room.status!=='playing'||!target||target.id===id||!target.alive||!target.influences.length)return {ok:false,error:'This player cannot be removed.'};
+        if(target.connected!==false)return {ok:false,error:'Only disconnected players can be removed.'};
         target.connected=false;
         r=target.alive?game.forfeitPlayer(room,target.id):{ok:true};
       }
@@ -278,7 +279,8 @@ io.on('connection',socket=>{
   on('reaction',(data,cb)=>{
     const code=socket.data.room,id=socket.data.playerId,room=rooms.get(code);
     if(!room||socketsByPlayer.get(id)!==socket||!room.players.some(p=>p.id===id)||!['playing','finished'].includes(room.status))return reply(socket,cb,{ok:false,error:'Only players in a match can react.'});
-    const now=Date.now(),event={roomCode:code,playerId:id,reaction:data.reaction,expiresAt:now+require('../shared/reactions').duration};
+    if(data.expectedMatch!==undefined&&data.expectedMatch!==(room.matchNumber||1))return reply(socket,cb,{ok:false,error:'This request belongs to a previous match.'});
+    const now=Date.now(),event={roomCode:code,matchNumber:room.matchNumber||1,playerId:id,reaction:data.reaction,expiresAt:now+require('../shared/reactions').duration};
     reply(socket,cb,{ok:true});
     for(const person of [...room.players,...room.spectators]){
       const recipient=socketsByPlayer.get(person.id);
@@ -290,6 +292,7 @@ io.on('connection',socket=>{
   on('setMaxPlayers',(data,cb)=>run(socket,'setMaxPlayers',data,(room,id)=>game.configureMaxPlayers(room,id,data.maxPlayers),cb));
   on('setChallengeTimer',(data,cb)=>run(socket,'setChallengeTimer',data,(room,id)=>game.configureChallengeTimer(room,id,data),cb));
   on('ready',(data,cb)=>run(socket,'ready',data,(room,id)=>{const p=room.players.find(p=>p.id===id);if(!p||room.status!=='lobby')return {ok:false,error:'Only lobby players can change readiness.'};p.ready=data.ready;return {ok:true};},cb));
+  on('rematch',(data,cb)=>run(socket,'rematch',data,(room,id)=>require('./rematch').returnToLobby(room,id),cb));
   on('startGame',(data,cb)=>run(socket,'startGame',data,(room,id)=>{
     if(room.hostId!==id)return {ok:false,error:'Only the host can start the game.'};
     if(room.status!=='lobby')return {ok:false,error:'This match has already started.'};

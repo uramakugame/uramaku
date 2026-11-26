@@ -18,7 +18,7 @@ Your existing local game's `data` folder has not been copied, overwritten or del
 
 ## Validation
 
-**Passed for this build:** `npm test` — 100/100 test files plus the compiled stylesheet check. The previous build also passed `npm run test:economy-stress` — 280/280 randomized matches with exact card and coin conservation; this presentation-only update does not change the game engine.
+**Passed for this build:** `npm test` — 101/101 test files plus the compiled stylesheet check. The previous build also passed `npm run test:economy-stress` — 280/280 randomized matches with exact card and coin conservation; the rematch update reuses the existing fresh-game engine without changing action rules.
 
 Coverage includes immediate counters, untimed post-expiry offers, stale-click races, no counter after a target challenge, loss-first Summon/concealment, parallel unavoidable losses, real Socket.IO/SQLite restart/retry recovery, failed-save rollback, EN/JP controls, readable reveal ordering, and current-rule restart/reconnect recovery.
 
@@ -28,7 +28,7 @@ Run those commands to repeat the checks locally. The automated UI checks execute
 
 The tutorial now has 43 lessons across six learner turns. Lesson 27 uses Sora’s genuine Enforce: pass, then lose Kingpin because you only have 1 coin. The late Gossip reveals Sora’s Courtesan + Magistrate. After Assassinate removes Courtesan, Sora uses Summon to draw a hidden replacement. Earn, then challenge Sora’s final Extort bluff to reveal Lord and win. Every balance, draw and turn uses the normal shared engine.
 
-Both the tutorial and multiplayer now show “Claim [Influence] ([Counter])”, “Challenge claim”, and Allow action last. A held counter receives the same gold border as held actions; bluff counters remain available. Hire Guard retains its displayed 5-coin cost. Repeated counter sequencing explanations are trimmed, and the tutorial still inherits the lobby’s English/Japanese setting.
+Both the tutorial and multiplayer now show “Claim [Influence] ([Counter])”, “Challenge claim”, and Allow action last. A held counter receives the same gold border as held actions; bluff counters remain available. Hire Guard keeps its 5-coin cost in the rules; its counter button shows only the claim and counter name. Repeated counter sequencing explanations are trimmed, and the tutorial still inherits the lobby’s English/Japanese setting.
 
 For visual checks, play through lesson 27, the final Summon and the final challenge in both languages. Verify that Sora’s replacement remains hidden until challenged, and that the attack and final card reveal finish before the victory cue. The full automated suite also checks both actual browser-controller paths and exact Back/replay checkpoints.
 
@@ -78,4 +78,13 @@ Coin gain/loss floats are centered on the player card again. Order/Chaos changes
 
 ## Reactions-only room update
 
-Chat is removed from both lobby and match, including server commands, snapshots and sound settings. React remains. Owner Kick appears only on offline players, with confirmation and a server-side reconnect check. No global Kick player mode remains. The public-beta footer is hidden in active/completed matches; the Home and waiting-lobby disclosures remain. Test in English and Japanese as owner, guest and spectator.
+Chat is removed from both lobby and match, including server commands, snapshots and sound settings. React remains. Owner Kick appears on every other lobby player regardless of presence. During a match it appears only on offline players, with confirmation and a server-side reconnect check. No global Kick player mode remains. The public-beta footer is hidden in active/completed matches; the Home and waiting-lobby disclosures remain. Test in English and Japanese as owner, guest and spectator.
+
+
+## Play again
+
+Finish a match, then choose **Play again** as the owner in the result dialog (or close it and use the board button). Confirm everyone returns to the same waiting lobby, with the same room code, name, visibility, capacity, modes, coin supply and timer settings. All players must mark ready again. Spectators stay spectators; players who left or were kicked are absent. Offline reserved seats remain available for reconnecting or the owner's existing offline Kick control.
+
+Start another match and check the fresh deal, round 1, hidden information, coin animations, reactions and Riot notices. Refresh or restart the local server during this second game to check reconnection. Try Play again as a guest: only the owner should have the control. An explicit owner departure passes ownership to a remaining player; a temporary disconnect does not. The new game adds a separate start/completion to metrics without adding a room creation.
+
+Automated coverage includes all four mode combinations, owner/phase authorization, clean private-state reset, failed-write rollback, repeated clicks and delayed requests, owner succession, bilingual controls, spectators, separate match metrics and a real Socket.IO/SQLite rematch followed by crash recovery. Decision-marker changes are not included.

@@ -24,3 +24,24 @@ try{
  attacker.disconnect();assert(clients[0].send('kickPlayer',{targetId:actor.id}).ok);assert.equal(game.lossDecision(room,'host').kind,'lose');assert.equal(game.lossDecision(room,'host').loserId,'host');assert(clients[0].send('loseInfluence',{cardIndex:0}).ok);
  console.log('Owner-only offline kick, reconnect protection, atomic rollback, normal forfeit continuation, durable token revocation and owed challenge loss passed.');
 }finally{h.close();}
+
+// Lobby removal is owner-only but deliberately independent of presence.
+for(const connected of [true,false]){
+ const h=harness();
+ try{
+  const host=h.client('owner'),guest=h.client('guest'),peer=h.client('peer');
+  const made=host.send('createRoom',{nickname:'Owner'}),code=made.code;
+  const joined=guest.send('joinRoom',{code,nickname:'Guest'});peer.send('joinRoom',{code,nickname:'Peer'});peer.send('ready',{ready:true});
+  const room=h.rooms.get(code);if(!connected)guest.disconnect();
+  assert(guest.send('kickPlayer',{targetId:'peer'}).error);assert(host.send('kickPlayer',{targetId:'owner'}).error);
+  const before=JSON.stringify(room),token=room.seatTokens.get('guest');
+  h.store.beforeCommit=()=>{throw Error('disk unavailable');};assert(host.send('kickPlayer',{targetId:'guest'}).error);h.store.beforeCommit=null;
+  assert.equal(JSON.stringify(room),before);assert.equal(room.seatTokens.get('guest'),token);assert(!guest.events.some(e=>e.event==='kicked'),'A failed save never ejects the lobby player');
+  assert(host.send('kickPlayer',{targetId:'guest'}).ok);assert.equal(room.code,code);assert.equal(room.status,'lobby');assert.equal(room.hostId,'owner');assert.deepEqual(room.players.map(p=>p.id),['owner','peer']);assert(!room.seatTokens.has('guest'));
+  assert.equal(guest.events.some(e=>e.event==='kicked'),connected,'Online guests receive the existing removal notice');assert(!h.sockets.has('guest'));
+  if(connected){assert.equal(guest.data.playerId,null);assert.equal(guest.data.room,null);assert(guest.send('ready',{ready:true}).error);}
+  assert(!h.store.loadAll()[0].seatTokens.has('guest'));assert(h.client('retry').send('resumeSession',{code,token:joined.resumeToken}).error);
+  assert(host.send('startGame').ok,'The remaining lobby can start normally');
+ }finally{h.close();}
+}
+console.log('Online/offline lobby Kick: owner authorization, self-kick rejection, failed-save rollback, removal notice, durable token/session revocation and normal start passed.');

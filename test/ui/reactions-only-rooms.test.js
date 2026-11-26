@@ -9,7 +9,7 @@ for(const lang of ['en','jp']){
    h.paint(g.publicState(r),you);assert(!h.app.querySelector('#chatToggle,#chatWindow,#chatInput,#chatSend'));
    assert.equal(!!h.app.querySelector('.project-footer'),status==='lobby');
    assert.equal(!!h.app.querySelector('[data-reaction-toggle]'),status!=='lobby'&&!!you);
-   assert(!h.app.querySelector('#kickModeToggle'));assert(!h.app.querySelector('[data-kick-id]'),'Connected players are not kickable');
+   assert(!h.app.querySelector('#kickModeToggle'));assert.equal(!!h.app.querySelector('[data-kick-id="guest"]'),status==='lobby'&&you?.id==='host','Only lobby owners can kick connected players');assert(!h.app.querySelector('[data-kick-id="host"]'),'No self-kick or guest owner controls');
   }
  }
  r.status='playing';r.players[1].connected=false;h.paint(g.publicState(r),g.privateState(r,'host'));assert(h.app.querySelector('[data-kick-id="guest"]'));h.paint(g.publicState(r),g.privateState(r,'guest'));assert(!h.app.querySelector('[data-kick-id]'));

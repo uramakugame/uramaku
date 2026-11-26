@@ -21,3 +21,9 @@ view.room={code:'DUAL',turnNumber:4,pending:{kind:'summon',decisionId:'summon-ch
 sender.send('loseInfluence',{cardIndex:1});assert.equal(sent.at(-1).packet.expectedDecision,'loss-choice');sent.at(-1).cb(null,{ok:true});
 view.you.id='claimant';sender.send('summonChoice',{choice:'replace',cardIndex:0});assert.equal(sent.at(-1).packet.expectedDecision,'summon-choice');sent.at(-1).cb(null,{ok:true});
 view.you.id='me';view.room.pending=null;sender.send('loseInfluence',{cardIndex:0});assert.equal(sent.at(-1).packet.expectedDecision,'loss-choice');sent.at(-1).cb(null,{ok:true});
+// The room stays the same across rematches, but the command context does not.
+view.room={code:'DUAL',matchNumber:2,turnNumber:1,pending:null};view.you={id:'me',commandSequence:20};
+sender.send('action',{action:'earn'});const priorGame=sent.at(-1);assert.equal(priorGame.packet.expectedMatch,2);
+sender.send('action',{action:'earn'});view.room.matchNumber=3;priorGame.cb(null,{ok:true});assert.equal(sent.at(-1),priorGame,'Queued requests from a previous match are discarded');
+sender.send('rematch');assert.equal(sent.at(-1).packet.expectedMatch,3);assert(sent.at(-1).packet.commandSequence>20);sent.at(-1).cb(null,{ok:true});
+console.log('Match-scoped commands retain seat sequences and cannot leak queued actions into a rematch.');

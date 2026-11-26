@@ -7,7 +7,7 @@ function create({socket,getView,report,uuid=()=>crypto.randomUUID(),schedule=set
   function pump(){
     if(!ready||inFlight||!queue.length)return;
     const job=queue[0],view=getView();
-    if(view.room?.code!==job.packet.expectedRoom){queue.shift();pump();return;}
+    if(view.room?.code!==job.packet.expectedRoom||(view.room.matchNumber||1)!==job.packet.expectedMatch){queue.shift();pump();return;}
     inFlight=true;const attemptGeneration=generation;
     socket.timeout(5000).emit(job.event,job.packet,(transportError,result)=>{
       if(attemptGeneration!==generation)return;
@@ -25,7 +25,7 @@ function create({socket,getView,report,uuid=()=>crypto.randomUUID(),schedule=set
       if(!ready||!socket.connected||!room){report('Reconnecting to your room. Please wait.');return false;}
       if(queue.length>=32){report('Please wait for your previous requests to finish.');return false;}
       sequence=Math.max(sequence,you?.commandSequence||0)+1;
-      const packet={...data,commandId:uuid(),commandSequence:sequence,expectedRoom:room.code};
+      const packet={...data,commandId:uuid(),commandSequence:sequence,expectedRoom:room.code,expectedMatch:room.matchNumber||1};
       if(decisions.has(event)||event==='action'||event==='sharePrivateIntel')packet.expectedTurn=room.turnNumber||0;
       if(decisions.has(event)){
         const decision=event==='loseInfluence'&&!(room.pending?.kind==='lose'&&room.pending.loserId===you?.id)?(room.challengeLosses||[]).find(q=>q.loserId===you?.id):room.pending;

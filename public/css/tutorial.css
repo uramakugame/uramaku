@@ -6,7 +6,7 @@
 /* The tutorial lesson occupies Current Turn's position in the shared room grid. */
 .t-shell .t-lesson{display:flex;flex-direction:column;min-width:0;min-height:240px;background:#f3e7d3;color:#241c1b;border:1px solid #b99a70;padding:18px 20px}
 .t-lesson h2{font-size:clamp(23px,2.2vw,30px);margin:12px 0}
-.t-lesson p{font-size:clamp(13px,1.1vw,16px);line-height:1.5;max-width:75ch}
+.t-lesson p{font-size:clamp(13px,1.1vw,16px);line-height:1.5;max-width:none}
 .t-progress{height:6px;background:#d8c7a9;margin:9px 0 0}
 .t-progress>div{height:100%;background:#a63536;transition:width .2s}
 .t-choices{display:flex;gap:9px;flex-wrap:wrap;margin-top:auto;padding-top:12px}

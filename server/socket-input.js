@@ -22,7 +22,7 @@ const shapes={
   setRevealFactions:{enabled:boolean}, setTreasuryMode:{enabled:optional(boolean),coinsPerPlayer:optional(value=>[5,6,7].includes(value))},
   setChallengeTimer:{enabled:optional(boolean),seconds:optional(value=>Number.isInteger(value)&&value>=10&&value<=60)},
   setMaxPlayers:{maxPlayers:value=>Number.isInteger(value)&&value>=2&&value<=6},
-  ready:{ready:boolean}, startGame:{},
+  ready:{ready:boolean}, startGame:{}, rematch:{},
   action:{action:word,targetId:optional(id)},
   passChallenge:{}, challenge:{}, loseInfluence:{cardIndex:slot}, declineCounter:{},
   counter:{counter:word},
@@ -35,6 +35,7 @@ const shapes={
 function validatePacket(event,data){
   const shape=shapes[event];
   if(!shape||!data||typeof data!=='object'||Array.isArray(data))return false;
+  if(data.expectedMatch!==undefined&&(!Number.isSafeInteger(data.expectedMatch)||data.expectedMatch<1))return false;
   if(data.commandId!==undefined&&(!id(data.commandId)||!Number.isSafeInteger(data.commandSequence)||data.commandSequence<1))return false;
   if(data.commandSequence!==undefined&&data.commandId===undefined)return false;
   if(data.expectedDecision!==undefined&&data.expectedDecision!==null&&!id(data.expectedDecision))return false;

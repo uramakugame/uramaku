@@ -26,6 +26,7 @@ class RoomTransitions{
       if(old)return old.fingerprint===hash?{...JSON.parse(old.result_json),duplicate:true}:{ok:false,error:'This request is no longer valid.'};
       if(seq<=(member.commandSequence||0))return{ok:false,error:'This request is no longer valid.'};
     }
+    if(data?.expectedMatch!==undefined&&data.expectedMatch!==(room.matchNumber||1))return{ok:false,error:'This request belongs to a previous match.'};
     const decision=event==='loseInfluence'?require('./game').lossDecision(room,seat):room.pending;
     const response=['counter','declineCounter'].includes(event)&&['claim','counterOffer'].includes(decision.kind);
     const decisionId=response?(decision.responseDecisionId||decision.decisionId):decision?.decisionId;
@@ -34,6 +35,12 @@ class RoomTransitions{
     const next=cloneRoom(room);
     if(command)[...next.players,...(next.spectators||[])].find(p=>p.id===seat).commandSequence=seq;
     const result=operation(next)||{ok:true};if(!result.ok)return result;
+    // An owner who explicitly left an ongoing game has no credential. Promote
+    // a remaining player once that game finishes so rematch stays reachable.
+    if(next.status==='finished'&&next.seatTokens.size&&!next.seatTokens.has(next.hostId)){
+      const candidates=next.players.filter(p=>next.seatTokens.has(p.id));
+      next.hostId=candidates.find(p=>p.connected===true)?.id||candidates[0]?.id||null;
+    }
     updateLifecycle(next);
     // Genuine no-ops do not rewrite a room unless recording a command receipt.
     if(!options.remove&&!command&&encode(next)===encode(room)&&JSON.stringify([...next.seatTokens])===JSON.stringify([...room.seatTokens]))return result;

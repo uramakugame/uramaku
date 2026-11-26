@@ -16,6 +16,11 @@
   if(role.counter&&role.counter!=='—')lines.push(`${word('counter',lang)} — ${lang==='jp'?role.counterJp:role.counter}: ${lang==='jp'?role.counterEffectJp:role.counterEffect}`);
   return lines.join('\n');
  }
+ // The compact header repeats the shared treasury balance for quick reference.
+ function boardTreasury({room,lang='en'}){
+  if(!room.treasuryMode||room.status==='lobby')return '';
+  return `<div class="game-board-treasury header-treasury ${room.riot?'is-riot':'is-order'}" role="status" aria-live="polite" aria-atomic="true"><strong class="board-treasury-balance">${esc(word('treasuryBalance',lang,{count:room.treasuryCoins,total:room.totalCoins}))}</strong></div>`;
+ }
  function matchInfo({room,lang='en'}){
   const mode=room.treasuryMode?(room.revealFactions?'modeTreasuryFaction':'modeTreasury'):(room.revealFactions?'modeFaction':'modeClassic');
   return `<section class="table-match-info" aria-label="${esc(word('matchInformation',lang))}"><div class="section-title">${esc(word('matchInformation',lang))}</div><strong class="table-mode">${esc(word(mode,lang))}</strong><span class="table-round">${esc(word('currentRound',lang,{round:room.roundNumber||1}))}</span><span class="table-remaining">${esc(word('playersRemaining',lang,{count:room.players?.filter(p=>p.alive).length||0}))}</span>${room.treasuryMode?`<div class="game-board-treasury ${room.riot?'is-riot':'is-order'}" role="status"><strong class="mode-state" data-mode-state>${esc(word(room.riot?'modeStateChaos':'modeStateOrder',lang))}</strong><span class="board-treasury-balance">${esc(word('treasuryBalance',lang,{count:room.treasuryCoins,total:room.totalCoins}))}</span><span class="board-wealth-goal">${esc(word('wealthGoal',lang,{count:room.economyWinThreshold}))}</span><small class="mode-state-notice" data-mode-state-notice aria-live="polite"></small></div>`:''}</section>`;
@@ -25,10 +30,10 @@
  }
  function deck({room,you,lang='en'}){
   const pile=room.drawPile||{},count=Number.isInteger(pile.count)&&pile.count>=0?pile.count:0,discard=room.discardPile?.count||0;
+  const quantity=(key,value,className)=>word(key,lang,{count:'@@count@@'}).split('@@count@@').map(text=>text?`<span>${esc(text)}</span>`:'').join(`<strong class="${className}">${value}</strong>`);
   const faction=room.revealFactions&&['order','underworld'].includes(pile.topFaction)?pile.topFaction:null;
-  const next=count>0&&faction?word('deckNextFaction',lang,{faction:word(faction,lang)}):'';
   const empty=count===0?word(pile.reshufflePending?'deckReshuffle':'deckEmpty',lang):'';
-  return `<section class="panel game-deck-panel table-piles" aria-label="${esc(word('deckTitle',lang))}"><div class="player-roles pile-roles"><div class="pile-column draw-pile"><div class="deck-count-label pile-label">${esc(word('drawPileLabel',lang))}</div><div class="deck-stack${count>1?' is-stacked':''}${count===0?' is-empty':''}" data-card-pile="draw">${count>0?cards.hidden({faction}):'<div class="deck-empty-slot"></div>'}${summonCard({room,you,lang})}</div><div class="deck-details" role="status" aria-live="polite" aria-atomic="true"><strong class="deck-count">${count}</strong></div></div><div class="pile-column discard-pile"><div class="deck-count-label pile-label">${esc(word('discardPileLabel',lang))}</div><div class="discard-stack${discard>1?' is-stacked':''}${discard===0?' is-empty':''}" data-card-pile="discard" aria-label="${esc(word('discardPileTitle',lang))}">${discard>0?cards.hidden():`<div class="deck-empty-slot"></div>`}</div><div class="deck-details"><strong class="discard-count">${discard}</strong></div></div></div>${next?`<small class="deck-next-faction">${esc(next)}</small>`:''}${empty?`<small class="deck-empty-note">${esc(empty)}</small>`:''}</section>`;
+  return `<section class="panel game-deck-panel table-piles" aria-label="${esc(word('deckTitle',lang))}"><div class="player-roles pile-roles"><div class="pile-column draw-pile"><div class="deck-stack${count>1?' is-stacked':''}${count===0?' is-empty':''}" data-card-pile="draw">${count>0?cards.hidden({faction}):'<div class="deck-empty-slot"></div>'}${summonCard({room,you,lang})}</div><div class="deck-details" role="status" aria-live="polite" aria-atomic="true">${quantity('deckRemainingCount',count,'deck-count')}</div></div><div class="pile-column discard-pile"><div class="discard-stack${discard>1?' is-stacked':''}${discard===0?' is-empty':''}" data-card-pile="discard" aria-label="${esc(word('discardPileTitle',lang))}">${discard>0?cards.hidden():`<div class="deck-empty-slot"></div>`}</div><div class="deck-details">${quantity('discardPileCount',discard,'discard-count')}</div></div></div>${empty?`<small class="deck-empty-note">${esc(empty)}</small>`:''}</section>`;
  }
  // Read only public resolved outcomes. Income and pending declarations do not
  // replace the previous result; no hidden role or investigation payload is read.
@@ -64,7 +69,7 @@
   }).join('');
  }
  function counterButtons(room,you,lang){
-  return (room.pending?.options||[]).map(id=>{const role=room.roles[id],held=(you?.influences||[]).includes(id),label=word('claimCounter',lang,{role:i18n.role(id,lang),counter:lang==='jp'?role.counterJp:role.counter});return `<button type="button" class="small counter-choice${held?' held':''}" data-counter="${id}">${esc(label)}${id==='swordsman'?`<span class="counter-cost"> · ${esc(word('actionCoinCost',lang,{count:5}))}</span>`:''}</button>`;}).join('');
+  return (room.pending?.options||[]).map(id=>{const role=room.roles[id],held=(you?.influences||[]).includes(id),label=word('claimCounter',lang,{role:i18n.role(id,lang),counter:lang==='jp'?role.counterJp:role.counter});return `<button type="button" class="small counter-choice${held?' held':''}" data-counter="${id}">${esc(label)}</button>`;}).join('');
  }
  function challenge({room,you,lang='en'}){
   const q=room.pending,combined=q?.kind==='claim'&&q.targetId===you?.id&&(q.options||[]).length>0;
@@ -92,6 +97,6 @@
   const own=debts.some(q=>q.loserId===you?.id);
   return `<p class="challenge-penalty-note" role="status">${esc(word(own?'challengeLossChoose':'challengeLossWaiting',lang,{players:debts.map(q=>room.players.find(p=>p.id===q.loserId)?.name||'').join(', ')}))}</p>`;
  }
- const api={actions,roleHint,challenge,counter,information,summon,deck,board,matchInfo,outcome,latestOutcome,challengeLoss};
+ const api={actions,roleHint,challenge,counter,information,summon,deck,board,boardTreasury,matchInfo,outcome,latestOutcome,challengeLoss};
  if(node)module.exports=api;if(root)root.URAMAKU_PANELS=api;
 })(typeof window!=='undefined'?window:null);

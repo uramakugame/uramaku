@@ -3,11 +3,11 @@
  'use strict';
  const sessions=new WeakMap();
  const word=(key,lang)=>root.URAMAKU_I18N.get(key,lang);
- function entry(container){let s=sessions.get(container);if(!s){s={code:null,event:0,notice:null,timer:null,animation:null};sessions.set(container,s);}return s;}
+ function entry(container){let s=sessions.get(container);if(!s){s={code:null,match:null,event:0,notice:null,timer:null,animation:null};sessions.set(container,s);}return s;}
  function clear(container){const s=entry(container);clearTimeout(s.timer);s.animation?.cancel?.();s.animation=null;s.notice=null;const notice=container.querySelector('[data-mode-state-notice]');if(notice)notice.textContent='';}
  function sync(container,{room,lang='en'}={}){
-  const s=entry(container),code=room?.code??null;
-  if(s.code!==code){clear(container);s.code=code;s.event=room?.stateTransitionNumber||0;}
+  const s=entry(container),code=room?.code??null,match=room?.matchNumber||1;
+  if(s.code!==code||s.match!==match){clear(container);s.code=code;s.match=match;s.event=room?.stateTransitionNumber||0;}
   if(s.notice&&(room?.stateTransitionNumber||0)>s.event)clear(container);
   const shell=container.querySelector('.game-shell');
   shell?.classList.toggle('riot-mode',!!room?.treasuryMode);
@@ -17,14 +17,14 @@
  }
  function label(states,lang){return states.length>1?states.map(state=>word(state==='chaos'?'modeStateChaos':'modeStateOrder',lang)).join(' → '):word(states[0]==='chaos'?'chaosStarted':'orderRestored',lang);}
  function events(before,after){
-  if(!before||before.code!==after?.code||!before.treasuryMode||!after.treasuryMode)return [];
+  if(!before||before.code!==after?.code||(before.matchNumber||1)!==(after?.matchNumber||1)||!before.treasuryMode||!after.treasuryMode)return [];
   return (after.stateTransitions||[]).filter(e=>e.id>(before.stateTransitionNumber||0));
  }
  function announce(container,{before,after,lang='en'}={}){
   const changes=events(before,after),s=entry(container);if(!changes.length)return;
   const last=changes.at(-1);if(s.code!==after.code||last.id<=s.event)return;s.event=last.id;
   const show=()=>{
-   if(s.code!==after.code||s.event!==last.id||after.status==='finished')return;
+   if(s.code!==after.code||s.match!==(after.matchNumber||1)||s.event!==last.id||after.status==='finished')return;
    clear(container);s.notice=changes.map(e=>e.state);
    const el=container.querySelector('[data-mode-state-notice]'),info=container.querySelector('.table-match-info');
    if(!el||!info)return;el.textContent=label(s.notice,lang);

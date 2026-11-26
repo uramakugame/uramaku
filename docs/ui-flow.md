@@ -6,7 +6,7 @@ The game uses the shared Actions sidebar, Current Turn area, player board and lo
 
 Summon automatically draws one private card after its claim resolves. The deck’s top card turns in place using the shared influence-card style. Its instructions and Discard draw button appear in Current Turn; clicking a held influence directly keeps and replaces. There is no modal or separate Keep step. Intrigue concealment also selects directly on the player’s cards. Other participants see waiting status and a hidden deck. Loot is unavailable to all players while Summon or challenge penalties are resolving.
 
-Room chat is draggable and resizable. Draft text, input focus and geometry survive state updates. Announcements stack over the board with independent expiry and staggered fade-outs. The victory dialog provides a route back to the lobby.
+React offers fixed bilingual messages without free-text chat. Announcements stack over the board with independent expiry and staggered fade-outs. After a match, the owner sees Play again in the victory dialog and on the board after dismissing it. This returns players and spectators to the same lobby, preserves room settings and valid seats, and clears the previous game. Everyone marks ready again before Start; participants who explicitly left or were kicked stay out. Guests can wait for the owner or leave.
 
 The shared card renderer, artwork catalog, localization and source stylesheets serve the live game and tutorial. UI checks are grouped under `test/ui/` and `test/tutorial/`.
 
@@ -63,4 +63,4 @@ Riot Mode uses Order (positive treasury) and Chaos (empty treasury) labels in th
 
 ## Reactions-only rooms
 
-Free-form chat, composer, chat notifications and chat-volume settings are removed. The server has no chat command and public snapshots contain no chat history. Preset React remains available to match players. Owner Kick buttons appear directly beside offline players only, with confirmation; reconnecting removes eligibility, and the server rechecks disconnection before committing. Active and completed match views omit the public-beta footer; Home, waiting lobbies and About retain their disclosures.
+Free-form chat, composer, chat notifications and chat-volume settings are removed. The server has no chat command and public snapshots contain no chat history. Preset React remains available to match players. Owner Kick buttons appear beside every other player in the waiting lobby, whether online or offline, with confirmation. During matches they appear only beside offline players; reconnecting removes match eligibility, and the server rechecks disconnection before committing. Active and completed match views omit the public-beta footer; Home, waiting lobbies and About retain their disclosures.

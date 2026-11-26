@@ -12,6 +12,7 @@ function encode(room){const {seatTokens,...state}=room;return JSON.stringify(sta
 function cloneRoom(room){return {...JSON.parse(encode(room)),seatTokens:new Map(room.seatTokens||[])};}
 function validate(room){
   if(!room||!['lobby','playing','finished'].includes(room.status)||typeof room.code!=='string'||!Array.isArray(room.players)||!Array.isArray(room.deck)||!Array.isArray(room.discard))throw Error('Invalid room snapshot');
+  if(room.matchNumber!==undefined&&(!Number.isSafeInteger(room.matchNumber)||room.matchNumber<1))throw Error('Invalid saved match number');
   const members=[...room.players,...(room.spectators||[])];
   if(new Set(members.map(p=>p.id)).size!==members.length)throw Error('Duplicate saved seat');
   for(const p of room.players)if(typeof p.id!=='string'||typeof p.name!=='string'||!Number.isInteger(p.coins)||p.coins<0||!Array.isArray(p.influences))throw Error('Invalid saved player');

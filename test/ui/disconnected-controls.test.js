@@ -11,13 +11,13 @@ for(const lang of ['en','jp'])for(const status of ['lobby','playing']){
  listeners.click({stopPropagation(){}});assert.equal(sent.length,0,'Cancel confirmation does not kick');
  accepted=true;listeners.click({stopPropagation(){}});assert.equal(sent.length,1);assert.equal(sent[0][0],'kickPlayer');assert.equal(sent[0][1].targetId,'sora');assert.equal(ctx.kickPendingId,'sora');assert(prompt.includes('<Sora>'));assert(rendered>0);
  listeners.click({stopPropagation(){}});assert.equal(sent.length,1,'A pending removal cannot submit twice');ctx.kickPendingId=null;
- for(const [owner,connected,alive,count,expected] of [[true,false,true,2,true],[true,true,true,2,false],[true,false,false,0,status==='lobby'],[false,false,true,2,false]]){
+ for(const [owner,connected,alive,count,expected] of [[true,false,true,2,true],[true,true,true,2,status==='lobby'],[true,false,false,0,status==='lobby'],[false,false,true,2,false]]){
   ctx.me.id=owner?'host':'guest';Object.assign(target,{connected,alive,influenceCount:count});assert.equal(ctx.kickEligible(target),expected);
  }
  ctx.state.status='finished';ctx.me.id='host';assert.equal(ctx.kickEligible(target),false);
- // A button from an earlier render must not kick a player who has reconnected.
- ctx.state.status=status;Object.assign(target,{connected:true,alive:true,influenceCount:2});listeners.click({stopPropagation(){}});assert.equal(sent.length,1);
+ // A reconnected player remains kickable in a lobby, but not during play.
+ ctx.state.status=status;Object.assign(target,{connected:true,alive:true,influenceCount:2});listeners.click({stopPropagation(){}});assert.equal(sent.length,status==='lobby'?2:1);
 }
 const css=fs.readFileSync(require.resolve('../../public/css/source/12-six-player-table.css'),'utf8');assert(css.includes('.player-presence{position:absolute;'));assert(css.includes('right:0;left:auto'));assert(css.includes('padding:2px 6px;font-size:.7rem'));assert(css.includes('border-color:#a26b63;background:#593432'));assert(css.includes('z-index:8'));
 assert(!app.includes('kickModeToggle'));for(const text of ['Only the host can remove players.','This player cannot be removed.','Only disconnected players can be removed.'])assert.notEqual(i18n.translate(text,'jp'),text);
-console.log('Direct owner/offline-only Kick, confirmation/cancel, pending-click suppression, reconnect/finished/eliminated guards and right-aligned presence passed in EN/JP.');
+console.log('Owner Kick for any lobby player and offline match players, confirmation/cancel, pending-click suppression, reconnect/finished/eliminated guards and right-aligned presence passed in EN/JP.');

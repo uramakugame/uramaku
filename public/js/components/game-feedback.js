@@ -24,6 +24,8 @@
   const text=(key,params)=>word(key,lang,params);
   if(room?.status!=='playing')return text('actionMatchInactive');
   if(!you?.alive)return text('actionSpectating');
+  // Buttons must look disabled until the handoff applies the next Income.
+  if(['action','turn'].includes(room.presentationPhase))return text('actionDecisionPending');
   if(room.pending||room.challengeLosses?.length)return text('actionDecisionPending');
   if(room.turnPlayerId!==you.id)return text('actionNotYourTurn');
   if(room.mandatoryPurge&&action!=='purge')return text('actionPurgeRequired');

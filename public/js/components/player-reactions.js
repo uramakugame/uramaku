@@ -11,7 +11,7 @@
  }
  function install({container,document=container.ownerDocument,window=root,socket=null,getRoom,getYou,getLanguage,report=()=>{},clock=()=>Date.now()}){
   if(instances.has(container))return instances.get(container);
-  const bubbles=new Map();let code=null,open=false,nextAt=0,inFlight=false,cooldownTimer,generation=0;
+  const bubbles=new Map();let code=null,match=null,open=false,nextAt=0,inFlight=false,cooldownTimer,generation=0;
   const find=id=>Array.from(container.querySelectorAll('.player[data-player-id]')).find(el=>el.dataset.playerId===id);
   function remove(entry){clearTimeout(entry.timer);entry.animation?.cancel?.();entry.element.remove();if(bubbles.get(entry.id)===entry)bubbles.delete(entry.id);}
   function reset(){generation++;open=false;nextAt=0;inFlight=false;clearTimeout(cooldownTimer);for(const entry of [...bubbles.values()])remove(entry);}
@@ -25,8 +25,8 @@
    Object.assign(entry.element.style,{width:width+'px',left:Math.max(12,Math.min(vw-width-12,box.left+box.width/2-width/2))+'px',top:Math.max(10,Math.min(vh-height-10,below?box.bottom+8:box.top-height-8))+'px'});
   }
   function sync(){
-   const room=getRoom(),roomCode=room?.code??null;
-   if(code!==roomCode){reset();code=roomCode;}
+   const room=getRoom(),roomCode=room?.code??null,matchNumber=room?.matchNumber||1;
+   if(code!==roomCode||match!==matchNumber){reset();code=roomCode;match=matchNumber;}
    const toggle=container.querySelector('[data-reaction-toggle]'),menu=container.querySelector('.reaction-menu');
    const cooling=nextAt>Date.now(),disabled=inFlight||cooling||(socket&&!socket.connected);
    if(toggle){toggle.disabled=!!disabled;toggle.title=cooling?word('reactionCooldown',getLanguage()):'';toggle.setAttribute('aria-expanded',String(open));toggle.onclick=()=>{if(!eligible(getRoom(),getYou())||disabled)return;open=!open;sync();};}
@@ -39,7 +39,7 @@
   }
   function receive(event){
    const room=getRoom(),remaining=Math.min(presets.duration,event?.expiresAt-clock());
-   if(event?.roomCode!==room?.code||!presets.valid(event?.reaction)||!Number.isFinite(remaining)||remaining<=0||!room.players.some(p=>p.id===event.playerId)||!find(event.playerId))return;
+   if(event?.roomCode!==room?.code||(event.matchNumber||1)!==(room.matchNumber||1)||!presets.valid(event?.reaction)||!Number.isFinite(remaining)||remaining<=0||!room.players.some(p=>p.id===event.playerId)||!find(event.playerId))return;
    sync();const previous=bubbles.get(event.playerId);if(previous?.expiresAt===event.expiresAt&&previous.reaction===event.reaction)return;
    if(previous)remove(previous);
    const element=document.createElement('div');element.className='player-reaction-bubble';element.setAttribute('role','status');element.setAttribute('aria-live','polite');element.setAttribute('data-player-reaction',event.playerId);document.body.appendChild(element);
@@ -50,10 +50,10 @@
   function choose(reaction){
    const room=getRoom(),you=getYou();
    if(!presets.valid(reaction)||!eligible(room,you)||inFlight||nextAt>Date.now()||socket&&!socket.connected)return;
-   const roomCode=room.code,version=generation;open=false;inFlight=true;nextAt=Date.now()+presets.cooldown;
+   const roomCode=room.code,matchNumber=room.matchNumber||1,version=generation;open=false;inFlight=true;nextAt=Date.now()+presets.cooldown;
    clearTimeout(cooldownTimer);cooldownTimer=setTimeout(sync,presets.cooldown);sync();
-   if(!socket){inFlight=false;receive({roomCode,playerId:you.id,reaction,expiresAt:clock()+presets.duration});sync();return;}
-   socket.timeout(3000).emit('reaction',{reaction},(error,result)=>{
+   if(!socket){inFlight=false;receive({roomCode,matchNumber,playerId:you.id,reaction,expiresAt:clock()+presets.duration});sync();return;}
+   socket.timeout(3000).emit('reaction',{reaction,expectedMatch:matchNumber},(error,result)=>{
     if(generation!==version||getRoom()?.code!==roomCode)return;
     inFlight=false;
     if(error||result?.error){nextAt=0;report(error?word('reactionFailed',getLanguage()):i18n.translate(result.error,getLanguage()));}

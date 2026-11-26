@@ -14,7 +14,7 @@ function bindLanguageToggle(){document.getElementById('languageToggle')?.addEven
 let roomCode=null, me=null, state=null, notice='', noticeTimer=null;
 const roleTooltips=window.URAMAKU_TOOLTIPS.install({getState:()=>state,getLanguage:()=>referenceLanguage});
 const reactionSession=window.URAMAKU_PLAYER_REACTIONS.install({container:app,socket,getRoom:()=>state,getYou:()=>me,getLanguage:()=>referenceLanguage,clock:()=>Date.now()+serverClockOffset,report:message=>show(message)});
-let announcedWinnerRoom=null;
+let announcedWinnerRoom=null,rematchPending=false;
 let targetSelectionAction=null;
 let roomNameDraft=null;
 let kickPendingId=null,kickRoomCode=null;
@@ -77,18 +77,28 @@ function send(event,data={}){
 // Live room snapshots, reconnects and notices
 socket.on('state',d=>{
  if(!roomCode||d?.room?.code!==roomCode)return;
+ if(state?.code===d.room.code&&(d.room.matchNumber||1)<(state.matchNumber||1))return;
+ if(state?.code===d.room.code&&(d.room.matchNumber||1)!==(state.matchNumber||1)){
+  window.URAMAKU_PRESENTATION.cancel(app);window.URAMAKU_COMMAND_SESSION.reset();reactionSession.reset();window.URAMAKU_INTEL.cancel(app);
+  document.querySelectorAll('.action-announcements,.rules-reference-overlay,#victoryDialog').forEach(el=>el.remove());
+  announcedWinnerRoom=null;rematchPending=false;previousAnnouncementRemovalAt=0;kickPendingId=null;kickRoomCode=null;targetSelectionAction=null;pendingReplacementChoice=null;
+  forcedPurgeKey=null;forcedPurgeExplainerOpen=false;forcedPurgeTargetSubmitted=false;roomNameDraft=null;
+ }
+
  if(Number.isFinite(d.serverNow))serverClockOffset=d.serverNow-Date.now();
  window.URAMAKU_PRESENTATION.enqueue(app,{code:d.room.code,run:(complete,current)=>presentRoomSnapshot(d,complete,current)});
 });
 function presentRoomSnapshot(d,complete,current){
  if(!current()||roomCode!==d.room.code){complete();return;}
- const previous=state,previousYou=me,next=d.room,nextYou=d.you,choice=pendingReplacementChoice;
+ const sameMatch=state?.code===d.room.code&&(state.matchNumber||1)===(d.room.matchNumber||1);
+ const previous=sameMatch?state:null,previousYou=sameMatch?me:null,next=d.room,nextYou=d.you,choice=pendingReplacementChoice;
  window.URAMAKU_ROOM_BROWSER_SESSION?.close();window.URAMAKU_COMMAND_SESSION?.resume();
  if(previous&&previous.code===next.code)for(const entry of window.URAMAKU_FEEDBACK.newLogEntries(previous,next)){
   const announcement=announcementForLog(entry);if(announcement)showActionAnnouncement(announcement);
  }
  function paint(room,you){
   state=room;me=you;roomCode=room.code;
+  if(room.status!=='finished'){rematchPending=false;document.getElementById('victoryDialog')?.remove();}
   if(!room.presentationPhase)syncMandatoryPurgeTargeting();else targetSelectionAction=null;
   render();
  }
@@ -207,7 +217,7 @@ function treasurySettingsMarkup(owner){
  const supply=state.treasuryCoinsPerPlayer??6;
  return `<label class="lobby-setting-value" for="treasuryCoinsPerPlayer"><span>${esc(t('treasurySupplyLabel'))}</span><select id="treasuryCoinsPerPlayer" ${owner?'':'disabled'}>${[5,6,7].map(count=>`<option value="${count}" ${supply===count?'selected':''}>${count}</option>`).join('')}</select><small>${esc(t('treasurySupplyHelp'))}</small></label>`;
 }
-function kickEligible(p){return state?.hostId===me?.id&&p.id!==me.id&&p.connected===false&&(state.status==='lobby'||state.status==='playing'&&p.alive&&p.influenceCount>0);}
+function kickEligible(p){return state?.hostId===me?.id&&p.id!==me.id&&(state.status==='lobby'||state.status==='playing'&&p.connected===false&&p.alive&&p.influenceCount>0);}
 function capacityMarkup(owner){
  return `<label class="lobby-setting-value" for="maxPlayers"><span>${esc(t('maxPlayersLabel'))}</span><select id="maxPlayers" ${owner?'':'disabled'}>${[2,3,4,5,6].map(n=>`<option value="${n}" ${n===(state.maxPlayers??6)?'selected':''} ${n<state.players.length?'disabled':''}>${n}</option>`).join('')}</select><small>${esc(t('maxPlayersHelp'))}</small></label>`;
 }
@@ -370,7 +380,7 @@ function render(){
  const lobby='';
  let game=''; if(state.status==='playing'||state.status==='finished') game=`
  <section class="panel game-actions-panel"><div class="row" style="justify-content:space-between"><div class="section-title">Actions</div></div><div class="actions">${window.URAMAKU_PANELS.actions({room:state,you:me,lang:referenceLanguage})}</div><button id="rulesButton" class="small actions-rules-bottom">Actions | How to play</button></section>`;
- app.innerHTML=shell(`${state.status==='lobby'?'':'<div class="game-layout"><div class="game-main">'+renderActionFlow()}<section class="panel game-players-panel"><div class="game-board-header"><div class="section-title">Players & Influences</div><div class="row game-board-controls">${state.status==='lobby'?'':`${languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}`}</div></div>${mandatoryPurgeExplainer()}${window.URAMAKU_PANELS.board({room:state,you:me,lang:referenceLanguage,players})}${state.spectators?.length?`<div class="spectator-list"><b>Spectators:</b> ${state.spectators.map(s=>`${esc(s.name)}${s.connected?'':' (disconnected)'}`).join(' · ')}</div>`:''}</section>${lobby}${game}${state.status==='lobby'?'':'</div><aside class="game-sidebar">'}${state.status==='lobby'?'':window.URAMAKU_PANELS.outcome({room:state,lang:referenceLanguage})}<section class="panel game-log-panel">${state.status==='lobby'?'':`<div class="game-room-code"><div class="room-code-heading"><span class="section-title">ROOM CODE</span><strong class="room-code-value" aria-label="Room code">${esc(state.code)}</strong></div><div class="room-code-controls"><button id="copy" class="small" type="button">Copy code</button><button id="exitRoom" class="small" type="button">Leave room</button></div></div>`}<div class="section-title">Game log · Recent events</div><div class="log" aria-live="polite">${state.log.slice().reverse().map((x,i)=>`<div class="${i===0?'log-latest':''}">${esc(x)}</div>`).join('')}</div></section>${state.status==='lobby'?'':'</aside></div>'}`);
+ app.innerHTML=shell(`${state.status==='lobby'?'':'<div class="game-layout"><div class="game-main">'+renderActionFlow()}<section class="panel game-players-panel"><div class="game-board-header${state.treasuryMode?' has-treasury':''}"><div class="section-title">Players & Influences</div>${window.URAMAKU_PANELS.boardTreasury({room:state,lang:referenceLanguage})}<div class="row game-board-controls">${state.status==='lobby'?'':`${rematchButtonMarkup()}${languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}`}</div></div>${mandatoryPurgeExplainer()}${window.URAMAKU_PANELS.board({room:state,you:me,lang:referenceLanguage,players})}${state.spectators?.length?`<div class="spectator-list"><b>Spectators:</b> ${state.spectators.map(s=>`${esc(s.name)}${s.connected?'':' (disconnected)'}`).join(' · ')}</div>`:''}</section>${lobby}${game}${state.status==='lobby'?'':'</div><aside class="game-sidebar">'}${state.status==='lobby'?'':window.URAMAKU_PANELS.outcome({room:state,lang:referenceLanguage})}<section class="panel game-log-panel">${state.status==='lobby'?'':`<div class="game-room-code"><div class="room-code-heading"><span class="section-title">ROOM CODE</span><strong class="room-code-value" aria-label="Room code">${esc(state.code)}</strong></div><div class="room-code-controls"><button id="copy" class="small" type="button">Copy code</button><button id="exitRoom" class="small" type="button">Leave room</button></div></div>`}<div class="section-title">Game log · Recent events</div><div class="log" aria-live="polite">${state.log.slice().reverse().map((x,i)=>`<div class="${i===0?'log-latest':''}">${esc(x)}</div>`).join('')}</div></section>${state.status==='lobby'?'':'</aside></div>'}`);
  if(state.status!=='lobby'){
    const layout=$('.game-layout'), actions=$('.game-actions-panel');
    if(layout&&actions){
@@ -423,7 +433,7 @@ function render(){
  window.URAMAKU_FEEDBACK.decorateActions(app,{room:state,you:me,lang:referenceLanguage});
  updateChallengeCountdown();
  positionActionAnnouncements();
- localizeRoom();bindLanguageToggle();
+ bindRematchButtons();localizeRoom();bindLanguageToggle();
  if($('#copy'))$('#copy').onclick=e=>copyRoomCode(e.currentTarget);
  if($('#exitRoom'))$('#exitRoom').onclick=exitCurrentRoom;
  if($('#revealFactions'))$('#revealFactions').onchange=e=>send('setRevealFactions',{enabled:e.target.checked});
@@ -583,13 +593,24 @@ function positionActionAnnouncements(){
  stack.style.left=`${x}px`;
  stack.style.top=`${y}px`;
 }
+function rematchButtonMarkup(){
+ return state?.status==='finished'&&state.hostId===me?.id?`<button class="small primary" type="button" data-rematch ${rematchPending?'disabled':''}>${esc(t('playAgain'))}</button>`:'';
+}
+function requestRematch(){
+ if(rematchPending||state?.status!=='finished'||state.hostId!==me?.id)return;
+ rematchPending=true;bindRematchButtons();
+ if(!send('rematch')){rematchPending=false;bindRematchButtons();}
+}
+function bindRematchButtons(){
+ document.querySelectorAll('[data-rematch]').forEach(button=>{button.disabled=rematchPending;button.onclick=requestRematch;});
+}
 function showVictory(winner,byWealth=false,goal=null){
  const old=document.getElementById('victoryDialog');if(old)old.remove();
  const backdrop=document.createElement('div');backdrop.id='victoryDialog';backdrop.className='victory-backdrop';
- backdrop.innerHTML=`<section class="panel victory-panel" role="dialog" aria-modal="true" aria-label="Match complete"><div class="section-title">Match complete</div><h2>${esc(winner)} ${byWealth?`wins by wealth${goal?` (${goal} coins)`:``}!`:`wins the game!`}</h2><div class="victory-actions"><button class="primary" id="victoryLeaveRoom">Leave room</button><button id="dismissVictory">Close</button></div></section>`;
- document.body.appendChild(backdrop);backdrop.querySelector('#dismissVictory').onclick=()=>backdrop.remove();backdrop.querySelector('#victoryLeaveRoom').onclick=()=>{backdrop.remove();exitCurrentRoom();};localizeRoom(backdrop);
+ backdrop.innerHTML=`<section class="panel victory-panel" role="dialog" aria-modal="true" aria-label="Match complete"><div class="section-title">Match complete</div><h2>${esc(winner)} ${byWealth?`wins by wealth${goal?` (${goal} coins)`:``}!`:`wins the game!`}</h2>${state?.hostId!==me?.id?`<p>${esc(t('rematchWait'))}</p>`:''}<div class="victory-actions">${rematchButtonMarkup()}<button class="primary" id="victoryLeaveRoom">Leave room</button><button id="dismissVictory">Close</button></div></section>`;
+ document.body.appendChild(backdrop);backdrop.querySelector('#dismissVictory').onclick=()=>backdrop.remove();backdrop.querySelector('#victoryLeaveRoom').onclick=()=>{backdrop.remove();exitCurrentRoom();};bindRematchButtons();localizeRoom(backdrop);
 }
-function show(s){kickPendingId=null;notice=s;clearTimeout(noticeTimer);render();noticeTimer=setTimeout(()=>{if(notice===s){notice='';render();}},5000);}
+function show(s){kickPendingId=null;rematchPending=false;notice=s;clearTimeout(noticeTimer);render();noticeTimer=setTimeout(()=>{if(notice===s){notice='';render();}},5000);}
 window.addEventListener('resize',positionActionAnnouncements);
 window.addEventListener('scroll',positionActionAnnouncements,{passive:true});
 render();

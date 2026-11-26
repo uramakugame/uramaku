@@ -39,7 +39,7 @@ for(const lang of ['en','jp']){
   assert(!risk.includes('challenge-risk'));assert(!risk.includes('both influences'));assert(!risk.includes('影響力を2枚とも'));
  }
  const counter=panels.counter({room:{...snapshot,pending:{kind:'counterOffer',options:['swordsman','assassin']}},you,lang});
- assert(counter.includes('data-counter="swordsman"'));assert(counter.includes('data-counter="assassin"'));assert(counter.includes('data-decline'));assert(counter.includes(i18n.get('actionCoinCost',lang,{count:5})));
+ assert(counter.includes('data-counter="swordsman"'));assert(counter.includes('data-counter="assassin"'));assert(counter.includes('data-decline'));assert(!counter.includes('counter-cost'));assert(!counter.includes(i18n.get('actionCoinCost',lang,{count:5})),'Hire Guard button shows only its claim label');assert(counter.includes(i18n.get('claimCounter',lang,{role:i18n.role('swordsman',lang),counter:lang==='jp'?snapshot.roles.swordsman.counterJp:snapshot.roles.swordsman.counter})));
  const info=panels.information({you:{coins:1,informationChoice:{unknownIndices:[0,1]}},lang});
  assert(info.match(/data-counter="concealAll" disabled/));assert(info.includes('data-counter="keepOne"'));assert(info.includes('data-counter="revealAll"'));
  assert(!panels.information({you:{coins:1,informationChoice:{unknownIndices:[0]}},lang}).includes('concealAll'));

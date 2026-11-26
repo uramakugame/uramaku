@@ -29,7 +29,7 @@ The existing Current Turn/Room Code height stays at 160 px on desktop. The tutor
 
 `presentation-flow.enqueue` keeps incoming room snapshots in order. Coin badges, transfers, flips, card motions, attacks, blocks and the border handoff register completion in the existing shared coordinator. A newly exposed private draw also holds completion until its flip finishes. Animation failures have cleanup fallbacks.
 
-Action controls are inert during the prior action and handoff; Income coin badges are cancelable nonblocking decorations, so controls and later snapshots proceed while the +1 is still visible. During blocking stages, the command boundary also rejects premature action clicks. Chat, Leave, language selection and the tutorial’s Back/Restart remain usable. Room navigation clears queued work and floating effects. Re-rendering transfers active card layers without replaying the sequence. Reduced motion applies the confirmed snapshot immediately.
+Action controls are visibly disabled and inert during the prior action and 520 ms handoff. The confirmed Income frame applies the new balance and enables affordable actions together; Income coin badges are cancelable nonblocking decorations, so controls and later snapshots proceed while the +1 is still visible. During blocking stages, the command boundary also rejects premature action clicks. React, Leave, language selection and the tutorial’s Back/Restart remain usable. Room navigation clears queued work and floating effects. Re-rendering transfers active card layers without replaying the sequence. Reduced motion applies the confirmed snapshot immediately.
 
 This queue is entirely in the browser. The authoritative server, SQLite commits, normal reconnect/restart handling and challenge deadlines continue normally. No presentation phase is persisted and no server-side animation timer or client-completion protocol is introduced.
 
@@ -45,7 +45,7 @@ Removed the old `responseVersion` rules fork, startup settings migration, saved-
 - Repeat Tax, Enforce and Intrigue concealment payments.
 - Finish each elimination action and both attack counters; the handoff should wait for attacks and loss reveals.
 - Keep a Summon draw, discard a draw, and prove a role claim; inspect the unchanged influence too.
-- Change languages during a sequence, use chat, and leave during a transfer. No old turn or floating token should return.
+- Change languages during a sequence, use React, and leave during a transfer. No old turn or floating token should return.
 - In the tutorial, Back/Restart cancels the old sequence and restores the checkpoint/deal.
 - Enable reduced motion and confirm immediate usable controls without a decorative delay.
 

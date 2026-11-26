@@ -10,11 +10,16 @@ async function main(){
   assert(flow.busy(h.app));assert.equal(h.value("send('action',{action:'earn'})"),false,'Outgoing Extort is still blocking');
   const tick=async()=>{for(let n=0;n<5;n++)await Promise.resolve();};
   for(const animation of animations.filter(a=>!a.done))animation.complete();await tick();assert(animations.some(a=>!a.done&&a.element.classList.contains('turn-handoff-ring')));
-  for(const animation of animations.filter(a=>!a.done))animation.complete();await tick();
+  assert.equal(h.value('state.presentationPhase'),'turn');assert.equal(h.value('me.coins'),2,'Incoming player still has the pre-Income balance during handoff');
+  for(const action of ['earn','assassinate'])assert(h.app.querySelector(`[data-action="${action}"]`).disabled,'Actions look disabled throughout the turn animation');
+  h.click('[data-action="earn"]');assert(!h.sent.some(([event])=>event==='action'),'A visibly disabled action cannot submit during handoff');
+  const rings=animations.filter(a=>!a.done&&a.element.classList.contains('turn-handoff-ring'));assert.equal(rings.length,2);rings[0].complete();await tick();assert(flow.busy(h.app));assert(h.app.querySelector('[data-action="earn"]').disabled,'Finishing only one border cannot release actions');
+  rings[1].complete();await tick();
+  assert.equal(h.value('me.coins'),3,'Income applies before controls become usable');assert(!h.app.querySelector('[data-action="earn"]').disabled);assert(!h.app.querySelector('[data-action="assassinate"]').disabled,'An action newly affordable through Income enables immediately');
   const income=animations.find(a=>!a.done&&a.element.classList.contains('coin-gain')&&a.element.textContent==='+1');assert(income);assert.equal(income.options.duration,1475,'Income keeps its existing visible duration');assert.equal(completed,1);assert(!flow.busy(h.app));assert(!h.app.querySelector('.actions').hasAttribute('inert'));
   h.click('[data-action="earn"]');assert.equal(h.sent.at(-1)[0],'action');assert.equal(h.sent.at(-1)[1].action,'earn','The real sidebar submits a new action while Income is still floating');
   flow.cancel(h.app);assert(!h.document.body.querySelector('.coin-gain'),'Navigation still cleans up nonblocking Income tokens');
  }
- console.log('Real EN/JP controller: prior action and handoff wait, Income +1 keeps 1475 ms duration while sidebar actions submit immediately, and room cancellation cleans decorations.');
+ console.log('Real EN/JP controller: prior action and handoff visibly disable actions, Income updates affordability and unlocks actions together, +1 keeps 1475 ms duration while sidebar actions submit immediately, and room cancellation cleans decorations.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

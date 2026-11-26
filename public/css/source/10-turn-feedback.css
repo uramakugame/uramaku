@@ -105,7 +105,7 @@
 .deck-details{display:flex;flex-direction:column;gap:3px;min-width:0;line-height:1.2}
 .deck-count{font-size:clamp(25px,2.3vw,34px);font-variant-numeric:tabular-nums;color:#6c332d}
 .deck-count-label{font-size:11px;color:#68533f}
-.deck-next-faction,.deck-empty-note{font-size:10px;color:#705942;overflow-wrap:anywhere}
+.deck-empty-note{font-size:10px;color:#705942;overflow-wrap:anywhere}
 .deck-empty-slot{position:absolute;inset:0;border:1px dashed #ad9576;box-sizing:border-box;background:#b99e7914}
 
 /* Summon reveals the deck's top card with the same full-bleed influence styles.
