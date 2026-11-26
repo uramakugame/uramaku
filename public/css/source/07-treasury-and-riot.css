@@ -1,4 +1,4 @@
-/* Treasury details sit between the board title and chat control.
+/* Treasury details share the board information area.
    Grid side columns are equal, so the treasury block stays truly centered. */
 .game-shell .game-layout .game-players-panel .game-board-header{
   display:flex;align-items:center;justify-content:space-between;gap:12px;

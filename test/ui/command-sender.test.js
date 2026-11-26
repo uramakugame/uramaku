@@ -7,9 +7,9 @@ const view={room:{code:'ABCD',turnNumber:3,pending:{decisionId:'choice-1'}},you:
 const sender=create({socket,getView:()=>view,report:m=>reports.push(m),uuid:()=>`id-${++counter}`,schedule:fn=>scheduled.push(fn)});
 assert.equal(sender.send('challenge'),false);sender.resume();
 assert(sender.send('challenge'));assert.equal(sent[0].packet.commandSequence,8);assert.equal(sent[0].packet.expectedDecision,'choice-1');assert.equal(sent[0].packet.expectedTurn,3);
-assert(sender.send('chatMessage',{message:'Hi'}));assert.equal(sent.length,1,'Commands remain ordered while awaiting an ACK');
+assert(sender.send('setRoomDetails',{name:'Room'}));assert.equal(sent.length,1,'Commands remain ordered while awaiting an ACK');
 sent[0].cb(Error('lost ACK'));scheduled.shift()();assert.equal(sent.length,2);assert.deepEqual(sent[1].packet,sent[0].packet,'Retry uses identical command ID and sequence');
-sent[1].cb(null,{ok:true,duplicate:true});assert.equal(sent.length,3);assert.equal(sent[2].packet.expectedTurn,undefined,'Chat is not tied to a game turn');
+sent[1].cb(null,{ok:true,duplicate:true});assert.equal(sent.length,3);assert.equal(sent[2].packet.expectedTurn,undefined,'Room settings are not tied to a game turn');
 sent[2].cb(null,{ok:true});sender.disconnect();assert.equal(sender.send('action',{action:'tax'}),false);
 sender.resume();sender.send('action',{action:'tax'});const stale=sent.at(-1);sender.reset();
 view.room.code='EFGH';view.you.commandSequence=0;sender.resume();sender.send('action',{action:'tax'});const fresh=sent.at(-1);

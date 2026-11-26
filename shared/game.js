@@ -51,7 +51,7 @@ function configureMaxPlayers(room,id,maxPlayers){
 const clone = x => JSON.parse(JSON.stringify(x));
 function shuffle(a) { for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 // Room setup and the reusable card deck
-function createGame(code, host) { return { code, name:`${host.name}'s room`,visibility:'private',maxPlayers:MAX_PLAYERS,hostId: host.id, status:'lobby', challengeTimerEnabled:true,challengeDurationSeconds:15,revealFactions:false, treasuryMode:false, treasuryCoinsPerPlayer:6,treasuryCoins:null, totalCoins:null, economyWinThreshold:null, mandatoryPurge:false, turnNumber:0, stateTransitionNumber:0,stateTransitions:[], cardMoveNumber:0, cardMoves:[], players:[host], spectators:[], chat:[], deck:[], discard:[], revealedCards:[], sharedInvestigations:[], turn:0, pending:null, challengeLosses:[], log:[`${host.name} created the room.`], winner:null }; }
+function createGame(code, host) { return { code, name:`${host.name}'s room`,visibility:'private',maxPlayers:MAX_PLAYERS,hostId: host.id, status:'lobby', challengeTimerEnabled:true,challengeDurationSeconds:15,revealFactions:false, treasuryMode:false, treasuryCoinsPerPlayer:6,treasuryCoins:null, totalCoins:null, economyWinThreshold:null, mandatoryPurge:false, turnNumber:0, stateTransitionNumber:0,stateTransitions:[], cardMoveNumber:0, cardMoves:[], players:[host], spectators:[], deck:[], discard:[], revealedCards:[], sharedInvestigations:[], turn:0, pending:null, challengeLosses:[], log:[`${host.name} created the room.`], winner:null }; }
 function draw(room) {
   if (!room.deck.length) { if (!room.discard.length) return null; room.deck = shuffle(room.discard.splice(0)); room.log.push('The discard pile was shuffled to form a new deck.'); }
   return room.deck.pop();
@@ -153,7 +153,7 @@ function publicState(room) {
   return { code:room.code,name:room.name||`${player(room,room.hostId)?.name||room.code}'s room`,visibility:room.visibility==='public'?'public':'private',revision:room.revision||0,status:room.status,maxPlayers:room.maxPlayers??MAX_PLAYERS,revealFactions:room.revealFactions===true,treasuryMode:isTreasury(room),treasuryCoins:room.treasuryCoins,totalCoins:room.totalCoins,economyWinThreshold:room.economyWinThreshold,riot:isRiot(room),purgeCost:purgeCost(room),mandatoryPurge:room.mandatoryPurge===true,turnNumber:room.turnNumber||0,winType:room.winType||null,hostId:room.hostId,turnPlayerId:current(room)?.id||null,nextTurnPlayerId:nextTurn(room)?.id||null,
     challengeTimerEnabled:room.challengeTimerEnabled!==false,challengeDurationSeconds:room.challengeDurationSeconds??15,treasuryCoinsPerPlayer:room.treasuryCoinsPerPlayer??6,
     players:room.players.map(p=>({id:p.id,name:p.name,coins:p.coins,alive:p.alive,ready:p.ready,connected:p.connected!==false,influenceCount:p.influences.length,...(room.status!=='lobby'&&room.revealFactions===true?{influenceFactions:p.influences.map(r=>ROLES[r]?.faction.startsWith('秩序')?'order':'underworld')}: {})})),
-    spectators:(room.spectators||[]).map(p=>({id:p.id,name:p.name,connected:p.connected!==false})), chat:clone(room.chat||[]),
+    spectators:(room.spectators||[]).map(p=>({id:p.id,name:p.name,connected:p.connected!==false})),
     challengeLosses:(room.challengeLosses||[]).map(q=>({kind:'lose',loserId:q.loserId,reason:q.reason,lossCount:q.lossCount||1,decisionId:q.decisionId})),
     pending:room.pending?{...pending,...(pending.kind==='claim'?{options:counterOptions(pending.action,player(room,pending.targetId))}:{}),...(pending.kind==='informationShare'?{roles:undefined,indices:undefined}:{}),...(pending.kind==='information'?{unknownIndices:undefined}:{}),claimantName:player(room,pending.claimantId)?.name,targetName:player(room,pending.targetId)?.name}:null,
     cardMoveNumber:room.cardMoveNumber||0,cardMoves:clone(room.cardMoves||[]),
@@ -783,7 +783,7 @@ function requestEndTurn(room,id) {
 }
 // A player leaving an active match forfeits rather than blocking other seats.
 // Lost influence stays public; the other players keep playing immediately.
-// Room membership, forfeits, spectators and chat
+// Room membership, forfeits and spectators
 function forfeitPlayer(room,id){
  const quitter=player(room,id);
  if(!quitter || room.status!=='playing'||!quitter.alive)return{ok:false,error:'No active influence to forfeit.'};
@@ -856,16 +856,7 @@ function addSpectator(room, id, name) {
   if(room.players.some(p=>p.name.toLowerCase()===clean.toLowerCase())||(room.spectators||[]).some(p=>p.name.toLowerCase()===clean.toLowerCase()))return{ok:false,error:'That nickname is already in use.'};
   room.spectators ||= []; room.spectators.push({id,name:clean,connected:true}); room.log.push(`${clean} joined as a spectator.`); return{ok:true};
 }
-function addChatMessage(room, id, message) {
-  const sender=player(room,id)||(room.spectators||[]).find(p=>p.id===id);
-  const content=String(message||'').trim().slice(0,300);
-  if(!sender)return{ok:false,error:'You are not in this room.'};
-  if(!content)return{ok:false,error:'Enter a message.'};
-  room.chat ||= []; room.chat.push({id,name:sender.name,message:content,at:Date.now()});
-  if(room.chat.length>100)room.chat.splice(0,room.chat.length-100);
-  return{ok:true};
-}
-const api={MAX_PLAYERS,configureMaxPlayers,lossDecision,beginTurn,configureChallengeTimer,configureTreasuryMode,expireChallenge,ROLES,createGame,publicState,privateState,startGame,treasuryInvariant,performAction,challenge,passChallenge,loseInfluence,chooseCounter,declineCounter,chooseSummon,revealIntrigue,chooseIntrigueSharing,sharePrivateIntel,finishTurn,requestEndTurn,performDeferredAction,addSpectator,addChatMessage,forfeitPlayer,removeLobbyPlayer};
+const api={MAX_PLAYERS,configureMaxPlayers,lossDecision,beginTurn,configureChallengeTimer,configureTreasuryMode,expireChallenge,ROLES,createGame,publicState,privateState,startGame,treasuryInvariant,performAction,challenge,passChallenge,loseInfluence,chooseCounter,declineCounter,chooseSummon,revealIntrigue,chooseIntrigueSharing,sharePrivateIntel,finishTurn,requestEndTurn,performDeferredAction,addSpectator,forfeitPlayer,removeLobbyPlayer};
 
 if(typeof module==='object'&&module.exports)module.exports=api;
 if(root)root.URAMAKU_GAME=api;

@@ -112,8 +112,8 @@ try {
   assert.equal(initial.at,now+15000);
   now+=2000;
   b.send('passChallenge');
-  a.send('chatMessage',{message:'Still waiting'});
-  assert.equal(timers.at(-1),initial,'Passing and chat do not reset the timer');
+  a.send('listRooms');
+  assert.equal(timers.at(-1),initial,'Passing and listing rooms do not reset the timer');
   const refreshed=client('refreshed');
   refreshed.send('resumeSession',{code,token:resumeToken});
   assert.equal(timers.at(-1),initial,'Refreshing does not reset the timer');

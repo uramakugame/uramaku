@@ -7,7 +7,7 @@ const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 const tutorial=fs.readFileSync(path.join(root,'js/tutorial.js'),'utf8');
 const tutorialCss=fs.readFileSync(path.join(root,'css/tutorial.css'),'utf8');
 const gameCss=fs.readFileSync(path.join(root,'css/source','08-responsive-room.css'),'utf8');
-const sharedCss=fs.readFileSync(path.join(root,'css/source','09-floating-chat-and-polish.css'),'utf8');
+const sharedCss=fs.readFileSync(path.join(root,'css/source','09-board-polish.css'),'utf8');
 
 // The decision describes the choice, but never duplicates the influence portraits.
 const start=app.indexOf('function renderPending(isTurn)');

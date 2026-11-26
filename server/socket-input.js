@@ -18,7 +18,6 @@ const shapes={
   stopRoomBrowser:{},
   setRoomDetails:{name:optional(text(40)),visibility:optional(value=>['public','private'].includes(value))},
   leaveRoom:{}, kickPlayer:{targetId:id},
-  chatMessage:{message:text(300)},
   reaction:{reaction:reactions.valid},
   setRevealFactions:{enabled:boolean}, setTreasuryMode:{enabled:optional(boolean),coinsPerPlayer:optional(value=>[5,6,7].includes(value))},
   setChallengeTimer:{enabled:optional(boolean),seconds:optional(value=>Number.isInteger(value)&&value>=10&&value<=60)},

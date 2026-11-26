@@ -75,3 +75,7 @@ Loot now uses your turn and is rejected off-turn or during every pending decisio
 ## Coin placement and state notifications
 
 Coin gain/loss floats are centered on the player card again. Order/Chaos changes now use the ordinary board notification stack as well as the persistent indicator. Notices are bilingual, nonblocking, and do not replay on refresh. See [focused checks](docs/coin-position-and-state-notices.md) and the [proposed Railway development setup](docs/railway-development.md).
+
+## Reactions-only room update
+
+Chat is removed from both lobby and match, including server commands, snapshots and sound settings. React remains. Owner Kick appears only on offline players, with confirmation and a server-side reconnect check. No global Kick player mode remains. The public-beta footer is hidden in active/completed matches; the Home and waiting-lobby disclosures remain. Test in English and Japanese as owner, guest and spectator.

@@ -30,9 +30,7 @@
 .game-layout .player-roles{flex-wrap:nowrap;gap:3px}
 .game-layout .room-role-card,.game-layout .hidden-role-card{width:70px;max-width:70px;flex:0 0 70px}
 .game-layout .player-meta{overflow-wrap:anywhere}
-#chatToggle.chat-unread{background:#a54c2d;color:#fff1d6;border-color:#f2b56d;animation:chat-notification-pulse 1.25s ease-in-out infinite}
-@keyframes chat-notification-pulse{0%,100%{box-shadow:0 0 0 0 #e1a45080}50%{box-shadow:0 0 0 9px #e1a45000}}
-@media(prefers-reduced-motion:reduce){#chatToggle.chat-unread{animation:none;outline:3px solid #e1a450}}
+@media(prefers-reduced-motion:reduce){}
 /* Rules text must wrap in each column rather than being clipped horizontally. */
 .rules-floating-window{min-width:600px;max-width:calc(100vw - 24px)}
 .rules-window-content .table-wrap{overflow-x:auto}
@@ -200,7 +198,6 @@
   .game-layout .game-actions-panel{grid-column:1;grid-row:2;min-width:0;margin:0;align-self:stretch;display:flex;flex-direction:column;gap:clamp(6px,1cqw,12px);container-type:inline-size}
   .game-layout .game-players-panel{grid-column:2;grid-row:2;min-width:0;margin:0;align-self:stretch}
   .game-layout>.game-sidebar{grid-column:3;grid-row:1 / span 3;min-width:0;align-self:start}
-  .game-layout .game-main>.panel:not(.game-players-panel),.game-layout .game-main>.chat-overlay{grid-column:2;grid-row:3}
   .game-layout .game-actions-panel .actions{flex:1 1 auto;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(4,minmax(0,1fr));gap:clamp(5px,2cqw,11px)}
   .game-layout .game-actions-panel .action{height:100%;min-height:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;gap:clamp(3px,1.5cqw,7px);padding:clamp(4px,2cqw,10px)}
   .game-layout .game-actions-panel .action b{font-size:clamp(9px,5cqw,15px);line-height:1.2;overflow-wrap:anywhere}

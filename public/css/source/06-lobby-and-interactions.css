@@ -113,12 +113,9 @@ img[src*="/assets/portraits/swordsman.jpg"]{object-position:75% 12%!important}
 @media(max-width:490px){.lobby-entry-actions{grid-template-columns:1fr;gap:10px}.lobby-entry-actions button{min-height:60px}.room-entry-dialog{padding:20px!important}}
 
 
-/* Lobby chat: same room conversation used during the match. */
+
 .lobby-roster-tools{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
-.lobby-chat-button{min-width:100px;background:#473527;color:#f6e7d1;border-color:#b89563}
-.lobby-chat-button:hover,.lobby-chat-button:focus-visible{background:#6a4932;color:#fff1d4}
-.lobby-chat-button.chat-unread{background:#a54c2d;color:#fff2da;border-color:#f2b56d}
-@media(max-width:490px){.lobby-roster-head{align-items:flex-start}.lobby-roster-tools{justify-content:flex-end}.lobby-chat-button{min-width:0}}
+@media(max-width:490px){.lobby-roster-head{align-items:flex-start}.lobby-roster-tools{justify-content:flex-end}}
 
 /* Room metadata and discovery extend the existing lobby/dialog styles. */
 .lobby-intro-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}

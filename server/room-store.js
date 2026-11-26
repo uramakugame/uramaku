@@ -15,7 +15,7 @@ function validate(room){
   const members=[...room.players,...(room.spectators||[])];
   if(new Set(members.map(p=>p.id)).size!==members.length)throw Error('Duplicate saved seat');
   for(const p of room.players)if(typeof p.id!=='string'||typeof p.name!=='string'||!Number.isInteger(p.coins)||p.coins<0||!Array.isArray(p.influences))throw Error('Invalid saved player');
-  for(const field of ['spectators','log','revealedCards','sharedInvestigations','chat'])if(!Array.isArray(room[field]))throw Error('Incomplete room snapshot');
+  for(const field of ['spectators','log','revealedCards','sharedInvestigations'])if(!Array.isArray(room[field]))throw Error('Incomplete room snapshot');
   for(const role of [...room.deck,...room.discard,...room.players.flatMap(p=>p.influences)])if(!Object.hasOwn(ROLES,role))throw Error('Unknown saved role');
   if(!Number.isInteger(room.turn)||!Number.isInteger(room.turnNumber)||!room.log.every(line=>typeof line==='string'))throw Error('Invalid saved turn');
   if(room.treasuryCoinsPerPlayer!==undefined&&![5,6,7].includes(room.treasuryCoinsPerPlayer))throw Error('Invalid saved Treasury coin supply');

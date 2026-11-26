@@ -11,20 +11,18 @@ function languageToggleMarkup(){return `<button id="languageToggle" class="langu
 function localizeRoom(root=document.body){i18n.apply(root,referenceLanguage);document.documentElement.lang=referenceLanguage==='jp'?'ja':'en';}
 function changeLanguage(lang){referenceLanguage=lang==='jp'?'jp':'en';i18n.setLanguage(referenceLanguage);const overlay=document.getElementById('rulesReferenceOverlay');if(overlay)overlay.remove();render();window.UramakuAudio?.renderToggle();if(overlay)showRules();const stack=document.getElementById('actionAnnouncements');if(stack)for(const toast of stack.children){if(toast.dataset.originalMessage)toast.textContent=tl(toast.dataset.originalMessage);}}
 function bindLanguageToggle(){document.getElementById('languageToggle')?.addEventListener('click',()=>changeLanguage(referenceLanguage==='en'?'jp':'en'));}
-let roomCode=null, me=null, state=null, notice='', noticeTimer=null, chatOpen=false, chatDraft='', unreadChat=0;
+let roomCode=null, me=null, state=null, notice='', noticeTimer=null;
 const roleTooltips=window.URAMAKU_TOOLTIPS.install({getState:()=>state,getLanguage:()=>referenceLanguage});
 const reactionSession=window.URAMAKU_PLAYER_REACTIONS.install({container:app,socket,getRoom:()=>state,getYou:()=>me,getLanguage:()=>referenceLanguage,clock:()=>Date.now()+serverClockOffset,report:message=>show(message)});
 let announcedWinnerRoom=null;
-let chatBounds=null, chatSizeObserver=null; // Window geometry persists across room-state renders.
 let targetSelectionAction=null;
 let roomNameDraft=null;
-let kickSelectionActive=false,kickPendingId=null,kickRoomCode=null;
+let kickPendingId=null,kickRoomCode=null;
 let pendingReplacementChoice=null;
 // One forced-Purge explanation per turn. Targeting starts automatically; the
 // explanation is dismissible without canceling the required action.
 let forcedPurgeKey=null, forcedPurgeExplainerOpen=false, forcedPurgeTargetSubmitted=false;
 function syncMandatoryPurgeTargeting(){
- if(kickSelectionActive)return;
  const required=state?.status==='playing'&&state.mandatoryPurge===true&&state.turnPlayerId===me?.id&&me?.alive&&(!state.pending);
  if(!required)return;
  const key=`${state.code}:${state.turnNumber}:${me.id}`;
@@ -86,28 +84,13 @@ function presentRoomSnapshot(d,complete,current){
  if(!current()||roomCode!==d.room.code){complete();return;}
  const previous=state,previousYou=me,next=d.room,nextYou=d.you,choice=pendingReplacementChoice;
  window.URAMAKU_ROOM_BROWSER_SESSION?.close();window.URAMAKU_COMMAND_SESSION?.resume();
- const beforeChat=previous?.chat||[],afterChat=next.chat||[];
- if(previous&&previous.code===next.code&&afterChat.length>beforeChat.length){
-  const incoming=afterChat.slice(beforeChat.length).filter(message=>message.id!==nextYou?.id);
-  if(incoming.length){UramakuAudio.play('chat');if(!chatOpen)unreadChat+=incoming.length;}
- }
  if(previous&&previous.code===next.code)for(const entry of window.URAMAKU_FEEDBACK.newLogEntries(previous,next)){
   const announcement=announcementForLog(entry);if(announcement)showActionAnnouncement(announcement);
  }
- const chatOnly=previous&&chatOpen&&previous.code===next.code&&JSON.stringify({...previous,chat:[],revision:0})===JSON.stringify({...next,chat:[],revision:0});
  function paint(room,you){
   state=room;me=you;roomCode=room.code;
   if(!room.presentationPhase)syncMandatoryPurgeTargeting();else targetSelectionAction=null;
-  if(chatOnly){
-   const list=document.querySelector('.chat-messages');
-   if(list){list.innerHTML=(state.chat||[]).map(m=>`<div class="chat-message"><b>${esc(m.name)}</b><span>${esc(m.message)}</span></div>`).join('')||`<p class="muted">${t('chatEmpty')}</p>`;list.scrollTop=list.scrollHeight;}
-  }else{
-   const chatInput=document.getElementById('chatInput');
-   const hadFocus=chatOpen&&chatInput&&document.activeElement===chatInput;
-   const cursor=hadFocus?chatInput.selectionStart:null;
-   render();
-   if(hadFocus){const input=document.getElementById('chatInput');if(input){input.focus();if(cursor!==null)input.setSelectionRange(cursor,cursor);}}
-  }
+  render();
  }
  window.URAMAKU_FEEDBACK.present({container:app,before:previous,after:next,oldYou:previousYou,you:nextYou,replacementChoice:choice,lang:referenceLanguage,render:paint,current,complete:()=>{
   if(!current())return;
@@ -144,7 +127,7 @@ socket.on('connect',()=>{
 socket.on('kicked',({message}={})=>{
  window.URAMAKU_COMMAND_SESSION.reset();
  try{sessionStorage.removeItem(SEAT_STORAGE_KEY);}catch{}
- state=null;me=null;roomCode=null;targetSelectionAction=null;forcedPurgeKey=null;forcedPurgeExplainerOpen=false;forcedPurgeTargetSubmitted=false;chatOpen=false;
+ state=null;me=null;roomCode=null;targetSelectionAction=null;forcedPurgeKey=null;forcedPurgeExplainerOpen=false;forcedPurgeTargetSubmitted=false;
  notice=message||'The host removed you from the room.';render();
 });
 function exitCurrentRoom(){
@@ -154,11 +137,11 @@ function exitCurrentRoom(){
    if(result?.error){show(result.error);return;}
    try{sessionStorage.removeItem(SEAT_STORAGE_KEY);}catch{}
    window.URAMAKU_COMMAND_SESSION.reset();
-   state=null;me=null;roomCode=null;targetSelectionAction=null;forcedPurgeKey=null;forcedPurgeExplainerOpen=false;forcedPurgeTargetSubmitted=false;chatOpen=false;announcedWinnerRoom=null;
+   state=null;me=null;roomCode=null;targetSelectionAction=null;forcedPurgeKey=null;forcedPurgeExplainerOpen=false;forcedPurgeTargetSubmitted=false;announcedWinnerRoom=null;
    notice='';render();
  });
 }
-function shell(content){const lobby=!state||state.status==='lobby';return `<div class="shell ${lobby?'lobby-shell':'game-shell'} ${state?.revealFactions?'factions-on':'factions-off'}">${lobby?window.URAMAKU_PROJECT.header({lang:referenceLanguage}):'<header class="mast"><div class="jp">裏 幕</div><div class="sub">URAMAKU · A GAME OF INFLUENCE</div></header>'}${notice?`<div class="notice">${esc(notice)}</div>`:''}${content}${window.URAMAKU_PROJECT.footer({lang:referenceLanguage})}</div>`;}
+function shell(content){const lobby=!state||state.status==='lobby';return `<div class="shell ${lobby?'lobby-shell':'game-shell'} ${state?.revealFactions?'factions-on':'factions-off'}">${lobby?window.URAMAKU_PROJECT.header({lang:referenceLanguage}):'<header class="mast"><div class="jp">裏 幕</div><div class="sub">URAMAKU · A GAME OF INFLUENCE</div></header>'}${notice?`<div class="notice">${esc(notice)}</div>`:''}${content}${lobby?window.URAMAKU_PROJECT.footer({lang:referenceLanguage}):''}</div>`;}
 
 function updateChallengeCountdown(){
  clearTimeout(challengeCountdownTimer);
@@ -224,11 +207,7 @@ function treasurySettingsMarkup(owner){
  const supply=state.treasuryCoinsPerPlayer??6;
  return `<label class="lobby-setting-value" for="treasuryCoinsPerPlayer"><span>${esc(t('treasurySupplyLabel'))}</span><select id="treasuryCoinsPerPlayer" ${owner?'':'disabled'}>${[5,6,7].map(count=>`<option value="${count}" ${supply===count?'selected':''}>${count}</option>`).join('')}</select><small>${esc(t('treasurySupplyHelp'))}</small></label>`;
 }
-function kickEligible(p){return state?.hostId===me?.id&&p.id!==me.id&&(state.status==='lobby'||state.status==='playing'&&p.alive&&p.influenceCount>0);}
-function kickControlsMarkup(){
- if(state?.hostId!==me?.id||state.status!=='playing')return '';
- return `<button id="kickModeToggle" type="button" class="small kick-mode-toggle" aria-pressed="${kickSelectionActive}" title="${esc(t('kickSelectMatch'))}" ${kickPendingId||!state.players.some(kickEligible)?'disabled':''}>${esc(t(kickSelectionActive?'kickCancel':'kickMode'))}</button>`;
-}
+function kickEligible(p){return state?.hostId===me?.id&&p.id!==me.id&&p.connected===false&&(state.status==='lobby'||state.status==='playing'&&p.alive&&p.influenceCount>0);}
 function capacityMarkup(owner){
  return `<label class="lobby-setting-value" for="maxPlayers"><span>${esc(t('maxPlayersLabel'))}</span><select id="maxPlayers" ${owner?'':'disabled'}>${[2,3,4,5,6].map(n=>`<option value="${n}" ${n===(state.maxPlayers??6)?'selected':''} ${n<state.players.length?'disabled':''}>${n}</option>`).join('')}</select><small>${esc(t('maxPlayersHelp'))}</small></label>`;
 }
@@ -269,7 +248,7 @@ function openEntryDialog(mode){
     socket.emit('confirmEntry',{code:prepared.code,token:prepared.resumeToken,intentId:prepared.intentId},res=>{
      if(settled)return;settled=true;clearTimeout(timer);submitting=false;
      if(res?.error){try{sessionStorage.removeItem(SEAT_STORAGE_KEY);}catch{}return fail(res.error);}
-     roomCode=res.code;if(action==='spectator')chatOpen=false;window.URAMAKU_COMMAND_SESSION?.resume();close();
+     roomCode=res.code;window.URAMAKU_COMMAND_SESSION?.resume();close();
     });
    };confirm();
   });
@@ -296,8 +275,6 @@ function render(){
  const movingCards=window.URAMAKU_CARD_MOTION?.capture(app)||[];
  roleTooltips.hide();
  clearTimeout(challengeCountdownTimer);
- // Preserve user-resized chat geometry even when room state forces a full render.
- if(chatOpen)captureChatBounds();
  if(!state?.presentationPhase)syncMandatoryPurgeTargeting();else targetSelectionAction=null; if(!state){
  app.innerHTML=shell(`<div class="lobby-welcome"><div class="lobby-welcome-intro"><span class="lobby-eyebrow">HIDDEN ROLES · OPEN STRATEGY</span><h1>Choose your next move.</h1><p>${esc(t('publicWelcome'))}</p>${window.URAMAKU_PROJECT.disclosure({lang:referenceLanguage})}</div><div class="lobby-entry-actions"><div class="lobby-entry-buttons"><button id="create" class="primary">Create room</button><button id="join">Join room</button><button id="browseRooms">${esc(t('browseRooms'))}</button></div><div class="lobby-entry-language">${languageToggleMarkup()}</div></div><a class="lobby-tutorial-link" href="/tutorial.html"><strong>New to URAMAKU?</strong> Try the guided tutorial <span aria-hidden="true">→</span></a>${window.URAMAKU_PROJECT.campaign({lang:referenceLanguage})}</div>`);
  $('#create').onclick=()=>openEntryDialog('create');
@@ -307,9 +284,8 @@ function render(){
  return;
  }
  const meId=me?.id, current=state.turnPlayerId, isTurn=current===meId;
- if(kickRoomCode!==state.code){kickSelectionActive=false;kickPendingId=null;kickRoomCode=state.code;}
+ if(kickRoomCode!==state.code){kickPendingId=null;kickRoomCode=state.code;}
  if(kickPendingId&&!state.players.some(p=>p.id===kickPendingId&&p.alive&&(state.status==='lobby'||p.influenceCount>0)))kickPendingId=null;
- if(state.hostId!==meId||!state.players.some(kickEligible))kickSelectionActive=false;
  if(targetSelectionAction&&!canChooseAction(targetSelectionAction))targetSelectionAction=null;
  const players=state.players.map(p=>{
   const isMe=p.id===meId, held=isMe?(me?.influences||[]):[];
@@ -360,9 +336,9 @@ function render(){
   const roleSlots=liveCards+
    (state.revealedCards||[]).filter(c=>c.playerId===p.id||(!c.playerId&&c.playerName===p.name)).map((c,revealIndex)=>window.URAMAKU_ROLE_CARDS.revealed({role:c.role,name:roleName(c.role),revealIndex,status:'Eliminated',classes:['eliminated-role-card'],tooltip:roleHint(c.role)})).join('');
   const indicator=state.status==='lobby'&&p.id===state.hostId?'<span class="turn-badge owner-badge">OWNER</span>':'';
-  const kick=kickSelectionActive&&kickEligible(p)?`<button class="lobby-kick small" type="button" data-kick-id="${esc(p.id)}" data-kick-name="${esc(p.name)}">${esc(t('kick'))}</button>`:'';
+  const kick=!kickPendingId&&kickEligible(p)?`<button class="lobby-kick small" type="button" data-kick-id="${esc(p.id)}" data-kick-name="${esc(p.name)}">${esc(t('kick'))}</button>`:'';
   const offline=p.connected===false?`<span class="player-offline">${esc(t('offline'))}</span>`:'';
-  return `<div class="player ${state.status==='playing'&&p.id===current?'active-player':''}${kick?' selectable-kick':''}" data-player-id="${esc(p.id)}"><div class="player-meta"><div class="player-name-row"><div class="name">${esc(p.name)} ${isMe?t('you'):''}</div>${indicator}${state.status==='lobby'?`<span class="lobby-ready ${p.ready?'is-ready':'is-not-ready'}">${p.ready?'Ready':'Not ready'}</span>`:''}</div><div class="player-coin-row"><div class="player-coins">Coins: ${p.coins}</div>${offline||kick?`<div class="player-presence">${offline}${kick}</div>`:''}</div></div><div class="player-roles">${roleSlots}</div></div>`;
+  return `<div class="player ${state.status==='playing'&&p.id===current?'active-player':''}" data-player-id="${esc(p.id)}"><div class="player-meta"><div class="player-name-row"><div class="name">${esc(p.name)} ${isMe?t('you'):''}</div>${indicator}${state.status==='lobby'?`<span class="lobby-ready ${p.ready?'is-ready':'is-not-ready'}">${p.ready?'Ready':'Not ready'}</span>`:''}</div><div class="player-coin-row"><div class="player-coins">Coins: ${p.coins}</div>${offline||kick?`<div class="player-presence">${offline}${kick}</div>`:''}</div></div><div class="player-roles">${roleSlots}</div></div>`;
  }).join('');
  if(state.status==='lobby'){
   const owner=state.hostId===meId;
@@ -370,8 +346,8 @@ function render(){
   const readyCount=state.players.length-waiting;
   if(!owner||roomNameDraft?.code!==state.code||!roomNameDraft.dirty||roomNameDraft.value.trim()===state.name)roomNameDraft={code:state.code,value:state.name||'',dirty:false};
 
-  const lobbyRoster=state.players.map(p=>`<div class="lobby-seat ${p.ready?'is-ready':'is-waiting'}"><div class="lobby-seat-monogram">${esc(p.name.slice(0,1).toUpperCase())}</div><div class="lobby-seat-detail"><strong>${esc(p.name)}${p.id===meId?' <span class="lobby-you">(you)</span>':''}</strong><small>${p.id===state.hostId?'Host · ':''}${p.connected?'Connected':'Offline'}</small></div><span class="lobby-seat-status">${p.ready?'Ready':'Not ready'}</span>${owner&&p.id!==meId?`<button class="lobby-kick" type="button" data-kick-id="${esc(p.id)}" data-kick-name="${esc(p.name)}" aria-label="Kick ${esc(p.name)}">Kick</button>`:''}</div>`).join('');
-  app.innerHTML=shell(`<div class="lobby-dashboard"><div class="lobby-intro"><div><span class="lobby-eyebrow">${esc(t(state.visibility==='public'?'publicMatch':'privateMatch'))}</span><h1>Gather your players</h1><p>Share your room code, choose your rule variant, and start when everyone is ready.</p></div><div class="lobby-intro-tools">${languageToggleMarkup()}<button id="exitRoom" type="button" class="lobby-exit">Leave room</button></div></div><div class="lobby-panels"><section class="panel lobby-room-panel"><div class="section-title">Room Code</div><div class="lobby-code-box"><span class="lobby-code" aria-label="Room code">${esc(state.code)}</span><button id="copy" type="button">Copy code</button></div><p class="lobby-detail">Send this code to friends so they can join from their devices.</p><form class="lobby-room-settings" id="roomDetails"><label for="roomName">${esc(t('roomNameLabel'))}</label><div class="lobby-room-name-input"><input id="roomName" type="text" maxlength="40" required value="${esc(roomNameDraft.value)}" ${owner?'':'disabled'}>${owner?`<button type="submit" class="small">${esc(t('roomDetailsSave'))}</button>`:''}</div><label for="roomVisibility">${esc(t('roomVisibilityLabel'))}</label><select id="roomVisibility" ${owner?'':'disabled'}><option value="private" ${state.visibility!=='public'?'selected':''}>${esc(t('roomPrivate'))}</option><option value="public" ${state.visibility==='public'?'selected':''}>${esc(t('roomPublic'))}</option></select><small>${esc(t('roomVisibilityHelp'))}</small></form><div class="section-title">Match settings</div>${capacityMarkup(owner)}<label class="lobby-option"><input id="revealFactions" type="checkbox" ${state.revealFactions?'checked':''} ${!owner?'disabled':''}><span><strong>Show hidden factions</strong><small>Optional mode: show Order or Underworld on card backs. Standard play keeps both hidden.${owner?'':' Only the host can change this setting.'}</small></span></label><label class="lobby-option"><input id="treasuryMode" type="checkbox" ${state.treasuryMode?'checked':''} ${!owner?'disabled':''}><span><strong>${esc(t('treasuryMode'))}</strong><small>${esc(t('treasuryDetail'))}${owner?'':esc(t('showFactionHost'))}</small></span></label>${treasurySettingsMarkup(owner)}<label class="lobby-option"><input id="challengeTimerEnabled" type="checkbox" ${state.challengeTimerEnabled!==false?'checked':''} ${!owner?'disabled':''}><span><strong>${esc(t('challengeTimerSetting'))}</strong><small>${esc(t('challengeTimerHelp'))}</small></span></label><label class="lobby-setting-value lobby-timer-duration" for="challengeDurationSeconds"><span>${esc(t('challengeDurationLabel'))}</span><input id="challengeDurationSeconds" type="number" inputmode="numeric" min="10" max="60" step="1" value="${state.challengeDurationSeconds??15}" ${!owner||state.challengeTimerEnabled===false?'disabled':''}><small>${esc(t('challengeDurationHint'))}</small></label><div class="lobby-reference-actions"><button id="lobbyRulesButton" type="button" class="small">Actions | How to play</button><button id="guidedTutorialButton" type="button" class="small">Guided Tutorial</button></div></section><section class="panel lobby-roster-panel"><div class="lobby-roster-head"><div><div class="section-title">Players</div><h2>${state.players.length} / ${state.maxPlayers??6} joined</h2></div><div class="lobby-roster-tools"><span class="lobby-ready-count">${readyCount} ready</span><button id="chatToggle" class="lobby-chat-button small" type="button">Open chat</button></div></div><div class="lobby-roster">${lobbyRoster}</div>${state.spectators?.length?`<p class="lobby-spectators">Spectators: ${state.spectators.map(p=>esc(p.name)).join(', ')}</p>`:''}<div class="lobby-ready-footer">${me?`<button id="ready" type="button" class="${state.players.find(p=>p.id===meId)?.ready?'':'primary'}">${state.players.find(p=>p.id===meId)?.ready?'✓ Ready · click to change':'Mark ready'}</button>`:'<span>Watching as spectator</span>'}${owner?`<button id="start" type="button" class="primary" ${state.players.length<2||waiting?'disabled':''}>Start match</button>`:''}</div><p class="lobby-detail">${state.players.length<2?'Invite at least one more player to begin.':waiting?`${waiting} player${waiting!==1?'s':''} still preparing.`:'Everyone is ready. The host can start the match.'}</p></section></div></div>${chatOpen?renderChat():''}`);
+  const lobbyRoster=state.players.map(p=>`<div class="lobby-seat ${p.ready?'is-ready':'is-waiting'}"><div class="lobby-seat-monogram">${esc(p.name.slice(0,1).toUpperCase())}</div><div class="lobby-seat-detail"><strong>${esc(p.name)}${p.id===meId?' <span class="lobby-you">(you)</span>':''}</strong><small>${p.id===state.hostId?'Host · ':''}${p.connected?'Connected':'Offline'}</small></div><span class="lobby-seat-status">${p.ready?'Ready':'Not ready'}</span>${!kickPendingId&&kickEligible(p)?`<button class="lobby-kick" type="button" data-kick-id="${esc(p.id)}" data-kick-name="${esc(p.name)}" aria-label="Kick ${esc(p.name)}">Kick</button>`:''}</div>`).join('');
+  app.innerHTML=shell(`<div class="lobby-dashboard"><div class="lobby-intro"><div><span class="lobby-eyebrow">${esc(t(state.visibility==='public'?'publicMatch':'privateMatch'))}</span><h1>Gather your players</h1><p>Share your room code, choose your rule variant, and start when everyone is ready.</p></div><div class="lobby-intro-tools">${languageToggleMarkup()}<button id="exitRoom" type="button" class="lobby-exit">Leave room</button></div></div><div class="lobby-panels"><section class="panel lobby-room-panel"><div class="section-title">Room Code</div><div class="lobby-code-box"><span class="lobby-code" aria-label="Room code">${esc(state.code)}</span><button id="copy" type="button">Copy code</button></div><p class="lobby-detail">Send this code to friends so they can join from their devices.</p><form class="lobby-room-settings" id="roomDetails"><label for="roomName">${esc(t('roomNameLabel'))}</label><div class="lobby-room-name-input"><input id="roomName" type="text" maxlength="40" required value="${esc(roomNameDraft.value)}" ${owner?'':'disabled'}>${owner?`<button type="submit" class="small">${esc(t('roomDetailsSave'))}</button>`:''}</div><label for="roomVisibility">${esc(t('roomVisibilityLabel'))}</label><select id="roomVisibility" ${owner?'':'disabled'}><option value="private" ${state.visibility!=='public'?'selected':''}>${esc(t('roomPrivate'))}</option><option value="public" ${state.visibility==='public'?'selected':''}>${esc(t('roomPublic'))}</option></select><small>${esc(t('roomVisibilityHelp'))}</small></form><div class="section-title">Match settings</div>${capacityMarkup(owner)}<label class="lobby-option"><input id="revealFactions" type="checkbox" ${state.revealFactions?'checked':''} ${!owner?'disabled':''}><span><strong>Show hidden factions</strong><small>Optional mode: show Order or Underworld on card backs. Standard play keeps both hidden.${owner?'':' Only the host can change this setting.'}</small></span></label><label class="lobby-option"><input id="treasuryMode" type="checkbox" ${state.treasuryMode?'checked':''} ${!owner?'disabled':''}><span><strong>${esc(t('treasuryMode'))}</strong><small>${esc(t('treasuryDetail'))}${owner?'':esc(t('showFactionHost'))}</small></span></label>${treasurySettingsMarkup(owner)}<label class="lobby-option"><input id="challengeTimerEnabled" type="checkbox" ${state.challengeTimerEnabled!==false?'checked':''} ${!owner?'disabled':''}><span><strong>${esc(t('challengeTimerSetting'))}</strong><small>${esc(t('challengeTimerHelp'))}</small></span></label><label class="lobby-setting-value lobby-timer-duration" for="challengeDurationSeconds"><span>${esc(t('challengeDurationLabel'))}</span><input id="challengeDurationSeconds" type="number" inputmode="numeric" min="10" max="60" step="1" value="${state.challengeDurationSeconds??15}" ${!owner||state.challengeTimerEnabled===false?'disabled':''}><small>${esc(t('challengeDurationHint'))}</small></label><div class="lobby-reference-actions"><button id="lobbyRulesButton" type="button" class="small">Actions | How to play</button><button id="guidedTutorialButton" type="button" class="small">Guided Tutorial</button></div></section><section class="panel lobby-roster-panel"><div class="lobby-roster-head"><div><div class="section-title">Players</div><h2>${state.players.length} / ${state.maxPlayers??6} joined</h2></div><div class="lobby-roster-tools"><span class="lobby-ready-count">${readyCount} ready</span></div></div><div class="lobby-roster">${lobbyRoster}</div>${state.spectators?.length?`<p class="lobby-spectators">Spectators: ${state.spectators.map(p=>esc(p.name)).join(', ')}</p>`:''}<div class="lobby-ready-footer">${me?`<button id="ready" type="button" class="${state.players.find(p=>p.id===meId)?.ready?'':'primary'}">${state.players.find(p=>p.id===meId)?.ready?'✓ Ready · click to change':'Mark ready'}</button>`:'<span>Watching as spectator</span>'}${owner?`<button id="start" type="button" class="primary" ${state.players.length<2||waiting?'disabled':''}>Start match</button>`:''}</div><p class="lobby-detail">${state.players.length<2?'Invite at least one more player to begin.':waiting?`${waiting} player${waiting!==1?'s':''} still preparing.`:'Everyone is ready. The host can start the match.'}</p></section></div></div>`);
   localizeRoom();bindLanguageToggle();
   document.getElementById('roomName')?.addEventListener('input',event=>{roomNameDraft={code:state.code,value:event.target.value,dirty:true};});
   document.getElementById('roomDetails')?.addEventListener('submit',event=>{event.preventDefault();const input=document.getElementById('roomName');if(owner&&input.checkValidity())send('setRoomDetails',{name:input.value.trim()});});
@@ -388,14 +364,13 @@ function render(){
   document.getElementById('lobbyRulesButton')?.addEventListener('click',showRules);
   document.getElementById('guidedTutorialButton')?.addEventListener('click',()=>{window.location.href='/tutorial.html';});
   document.getElementById('exitRoom')?.addEventListener('click',exitCurrentRoom);
-  bindChatUI();
   bindKickControls();
   return;
  }
  const lobby='';
  let game=''; if(state.status==='playing'||state.status==='finished') game=`
  <section class="panel game-actions-panel"><div class="row" style="justify-content:space-between"><div class="section-title">Actions</div></div><div class="actions">${window.URAMAKU_PANELS.actions({room:state,you:me,lang:referenceLanguage})}</div><button id="rulesButton" class="small actions-rules-bottom">Actions | How to play</button></section>`;
- app.innerHTML=shell(`${state.status==='lobby'?'':'<div class="game-layout"><div class="game-main">'+renderActionFlow()}<section class="panel game-players-panel"><div class="game-board-header"><div class="section-title">Players & Influences</div><div class="row game-board-controls">${state.status==='lobby'?'':`${kickControlsMarkup()}${languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}<button id="chatToggle" class="small">${chatOpen?'Close chat':'Open chat'}</button>`}</div></div>${mandatoryPurgeExplainer()}${window.URAMAKU_PANELS.board({room:state,you:me,lang:referenceLanguage,players})}${state.spectators?.length?`<div class="spectator-list"><b>Spectators:</b> ${state.spectators.map(s=>`${esc(s.name)}${s.connected?'':' (disconnected)'}`).join(' · ')}</div>`:''}</section>${lobby}${game}${chatOpen?renderChat():''}${state.status==='lobby'?'':'</div><aside class="game-sidebar">'}${state.status==='lobby'?'':window.URAMAKU_PANELS.outcome({room:state,lang:referenceLanguage})}<section class="panel game-log-panel">${state.status==='lobby'?'':`<div class="game-room-code"><div class="room-code-heading"><span class="section-title">ROOM CODE</span><strong class="room-code-value" aria-label="Room code">${esc(state.code)}</strong></div><div class="room-code-controls"><button id="copy" class="small" type="button">Copy code</button><button id="exitRoom" class="small" type="button">Leave room</button></div></div>`}<div class="section-title">Game log · Recent events</div><div class="log" aria-live="polite">${state.log.slice().reverse().map((x,i)=>`<div class="${i===0?'log-latest':''}">${esc(x)}</div>`).join('')}</div></section>${state.status==='lobby'?'':'</aside></div>'}`);
+ app.innerHTML=shell(`${state.status==='lobby'?'':'<div class="game-layout"><div class="game-main">'+renderActionFlow()}<section class="panel game-players-panel"><div class="game-board-header"><div class="section-title">Players & Influences</div><div class="row game-board-controls">${state.status==='lobby'?'':`${languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}`}</div></div>${mandatoryPurgeExplainer()}${window.URAMAKU_PANELS.board({room:state,you:me,lang:referenceLanguage,players})}${state.spectators?.length?`<div class="spectator-list"><b>Spectators:</b> ${state.spectators.map(s=>`${esc(s.name)}${s.connected?'':' (disconnected)'}`).join(' · ')}</div>`:''}</section>${lobby}${game}${state.status==='lobby'?'':'</div><aside class="game-sidebar">'}${state.status==='lobby'?'':window.URAMAKU_PANELS.outcome({room:state,lang:referenceLanguage})}<section class="panel game-log-panel">${state.status==='lobby'?'':`<div class="game-room-code"><div class="room-code-heading"><span class="section-title">ROOM CODE</span><strong class="room-code-value" aria-label="Room code">${esc(state.code)}</strong></div><div class="room-code-controls"><button id="copy" class="small" type="button">Copy code</button><button id="exitRoom" class="small" type="button">Leave room</button></div></div>`}<div class="section-title">Game log · Recent events</div><div class="log" aria-live="polite">${state.log.slice().reverse().map((x,i)=>`<div class="${i===0?'log-latest':''}">${esc(x)}</div>`).join('')}</div></section>${state.status==='lobby'?'':'</aside></div>'}`);
  if(state.status!=='lobby'){
    const layout=$('.game-layout'), actions=$('.game-actions-panel');
    if(layout&&actions){
@@ -448,9 +423,7 @@ function render(){
  window.URAMAKU_FEEDBACK.decorateActions(app,{room:state,you:me,lang:referenceLanguage});
  updateChallengeCountdown();
  positionActionAnnouncements();
- bindChatUI();
  localizeRoom();bindLanguageToggle();
- if(chatOpen&&$('.chat-messages'))$('.chat-messages').scrollTop=$('.chat-messages').scrollHeight;
  if($('#copy'))$('#copy').onclick=e=>copyRoomCode(e.currentTarget);
  if($('#exitRoom'))$('#exitRoom').onclick=exitCurrentRoom;
  if($('#revealFactions'))$('#revealFactions').onchange=e=>send('setRevealFactions',{enabled:e.target.checked});
@@ -484,90 +457,6 @@ function render(){
  // Turns advance only when the game engine completes the current action.
 }
 
-// The same room chat is available during setup and after the match begins.
-// Incoming chat-only state updates refresh the message list without touching
-// the compose input, preventing loss of focus, draft text, or cursor position.
-// The chat remains a floating room window during both lobby and gameplay.
-// Its position/size and composer draft survive incoming socket updates.
-function captureChatBounds(){
- const el=document.querySelector('#chatWindow');
- if(!el || !el.getBoundingClientRect)return;
- const b=el.getBoundingClientRect();
- if(b.width>0&&b.height>0)chatBounds={left:b.left,top:b.top,width:b.width,height:b.height};
-}
-function placeChatWindow(){
- const el=document.getElementById('chatWindow'); if(!el)return;
- const vw=window.innerWidth,vh=window.innerHeight,pad=12;
- if(!chatBounds){
-   const width=Math.min(470,Math.max(270,vw-pad*2));
-   const height=Math.min(490,Math.max(240,vh-pad*2));
-   chatBounds={left:Math.max(pad,vw-width-28),top:Math.max(pad,vh-height-28),width,height};
- }
- chatBounds.width=Math.min(chatBounds.width,Math.max(270,vw-pad*2));
- chatBounds.height=Math.min(chatBounds.height,Math.max(220,vh-pad*2));
- chatBounds.left=Math.max(pad,Math.min(chatBounds.left,vw-chatBounds.width-pad));
- chatBounds.top=Math.max(pad,Math.min(chatBounds.top,vh-chatBounds.height-pad));
- Object.assign(el.style,{left:`${chatBounds.left}px`,top:`${chatBounds.top}px`,width:`${chatBounds.width}px`,height:`${chatBounds.height}px`});
- chatSizeObserver?.disconnect();
- if(typeof ResizeObserver!=='undefined'){
-   chatSizeObserver=new ResizeObserver(()=>{
-     if(!el.isConnected)return;
-     const bounds=el.getBoundingClientRect();
-     if(bounds.width>0&&bounds.height>0){chatBounds={left:bounds.left,top:bounds.top,width:bounds.width,height:bounds.height};}
-   });
-   chatSizeObserver.observe(el);
- }
- const drag=el.querySelector('.chat-drag-handle');
- if(drag){
-   let active=null;
-   drag.addEventListener('pointerdown',e=>{
-     if(e.button!==0||e.target.closest('button'))return;
-     const b=el.getBoundingClientRect();
-     active={pointer:e.pointerId,x:e.clientX,y:e.clientY,left:b.left,top:b.top};
-     drag.setPointerCapture(e.pointerId);e.preventDefault();
-   });
-   drag.addEventListener('pointermove',e=>{
-     if(!active||active.pointer!==e.pointerId)return;
-     const b=el.getBoundingClientRect();
-     chatBounds.left=Math.max(pad,Math.min(active.left+e.clientX-active.x,window.innerWidth-b.width-pad));
-     chatBounds.top=Math.max(pad,Math.min(active.top+e.clientY-active.y,window.innerHeight-b.height-pad));
-     el.style.left=`${chatBounds.left}px`;el.style.top=`${chatBounds.top}px`;
-   });
-   const finish=e=>{if(active?.pointer===e.pointerId){active=null;captureChatBounds();}};
-   drag.addEventListener('pointerup',finish);drag.addEventListener('pointercancel',finish);
- }
-}
-function bindChatUI(){
- if(chatOpen)unreadChat=0;
- const button=$('#chatToggle');
- if(button){
-   button.classList.toggle('chat-unread',unreadChat>0);
-   button.textContent=chatOpen?'Close chat':unreadChat?`Open chat (${unreadChat} new)`:'Open chat';
-   button.setAttribute('aria-expanded',chatOpen?'true':'false');
-   button.onclick=()=>{if(chatOpen)captureChatBounds();chatOpen=!chatOpen;if(chatOpen)unreadChat=0;render();if(chatOpen)$('#chatInput')?.focus();};
- }
- if($('#chatSend'))$('#chatSend').onclick=sendChat;
- if($('#chatClose'))$('#chatClose').onclick=()=>{chatOpen=false;render();};
- const input=$('#chatInput');
- if(input){
-   input.value=chatDraft;
-   input.oninput=e=>{chatDraft=e.target.value;};
-   input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}};
- }
- if(chatOpen){placeChatWindow();if($('.chat-messages'))$('.chat-messages').scrollTop=$('.chat-messages').scrollHeight;}
-}
-// Floating room chat
-function renderChat(){const messages=state.chat||[];return `<div class="chat-backdrop" id="chatBackdrop"><section class="chat-modal" id="chatWindow" role="dialog" aria-label="Room chat window"><header class="chat-drag-handle" aria-label="Drag to move chat window" title="Drag to move"><strong>Room chat</strong><span class="chat-window-hint">Drag to move · resize from corner</span><button id="chatClose" class="small" type="button">Close</button></header><div class="chat-messages">${messages.map(m=>`<div class="chat-message"><b>${esc(m.name)}</b><span>${esc(m.message)}</span></div>`).join('')||'<p class="muted">No messages yet.</p>'}</div><div class="chat-compose"><input id="chatInput" maxlength="300" placeholder="Write a message…"><button id="chatSend" class="primary">Send</button></div></section></div>`;}
-function sendChat(){
- const input=$('#chatInput');
- const message=chatDraft.trim();
- if(!message||!input)return;
- send('chatMessage',{message});
- chatDraft='';input.value='';
- // Preserve the actual input node and return focus even after clicking Send.
- // Incoming chat-only state updates refresh the messages without a rerender.
- input.focus();
-}
 // Shared card selection and pending decisions
 function bindCardDecision(selector,onSelect){
  document.querySelectorAll(selector).forEach(card=>{
@@ -602,28 +491,20 @@ function canChooseAction(action){
 }
 function actionLabel(action){return roleAction(action);}
 function bindKickControls(){
- const toggle=document.getElementById('kickModeToggle');
- toggle?.addEventListener('click',()=>{if(kickPendingId||state.hostId!==me?.id)return;kickSelectionActive=!kickSelectionActive;targetSelectionAction=null;render();});
- const choose=(id,name)=>{
-  const target=state.players.find(p=>p.id===id);
-  if((state.status!=='lobby'&&!kickSelectionActive)||kickPendingId||!target||!kickEligible(target))return;
-  const key=state.status==='lobby'?'kickLobbyConfirm':'kickMatchConfirm';
-  if(!window.confirm(t(key,{name})))return;
-  kickSelectionActive=false;kickPendingId=id;render();
-  if(!send('kickPlayer',{targetId:id})){kickPendingId=null;render();}
- };
  document.querySelectorAll('[data-kick-id]').forEach(button=>{
   button.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')event.stopPropagation();});
-  button.addEventListener('click',event=>{event.stopPropagation();choose(button.dataset.kickId,button.dataset.kickName);});
+  button.addEventListener('click',event=>{
+   event.stopPropagation();
+   const id=button.dataset.kickId,target=state.players.find(p=>p.id===id);
+   if(kickPendingId||!target||!kickEligible(target))return;
+   const key=state.status==='lobby'?'kickLobbyConfirm':'kickMatchConfirm';
+   if(!window.confirm(t(key,{name:target.name})))return;
+   kickPendingId=id;render();
+   if(!send('kickPlayer',{targetId:id})){kickPendingId=null;render();}
+  });
  });
- for(const card of document.querySelectorAll('.player.selectable-kick')){
-  const p=state.players.find(p=>p.id===card.dataset.playerId);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',t('kick')+' '+p.name);
-  card.onclick=event=>{if(event.target.closest('button,.room-role-card'))return;choose(p.id,p.name);};
-  card.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&event.target===card){event.preventDefault();choose(p.id,p.name);}};
- }
 }
 function chooseAction(action){
- if(kickSelectionActive)kickSelectionActive=false;
  if(state.mandatoryPurge&&action!=='purge'){show('Mandatory Purge: you must Purge this turn.');return;}
  if(!canChooseAction(action))return;
  if(action==='tax'&&state.riot){show('Tax is unavailable while the treasury is empty.');return;}

@@ -213,16 +213,10 @@ console.log('Bluffable counter-offer tests passed.');
  assert.equal(g.privateState(r,'s1'),null);
  assert.equal(g.publicState(r).players.length,2);
  assert.equal(g.addSpectator(r,'s2','observer').ok,false);
- assert(g.addChatMessage(r,'s1','Hello players').ok);
- assert.equal(g.publicState(r).chat[0].message,'Hello players');
- assert(g.addChatMessage(r,'s1','x'.repeat(400)).ok);
- assert.equal(g.publicState(r).chat[1].message.length,300);
- for(let i=0;i<105;i++)g.addChatMessage(r,'s1',`message ${i}`);
- assert.equal(g.publicState(r).chat.length,100);
- assert.equal(g.addChatMessage(r,'unknown','Nope').ok,false);
- assert.equal(g.addChatMessage(r,'s1','   ').ok,false);
+ assert(!('chat' in g.publicState(r)));
+ assert.equal(g.addChatMessage,undefined);
 }
-console.log('Seating order, spectator, and chat server tests passed.');
+console.log('Seating order, spectator, and public-state privacy tests passed.');
 
 // Failed challenge against a true claim automatically removes the final influence.
 {

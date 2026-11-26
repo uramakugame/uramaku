@@ -22,7 +22,7 @@ for(const nickname of [123,{},[],true,'x'.repeat(19),'bad\nname','bad\u0000name'
   const c=h.client('bad-name');assert(c.send('createRoom',{nickname}).error);
 }
 for(const message of [123,{},'x'.repeat(301),'bad\u0000message']){
-  const before=JSON.stringify(room);b.send('chatMessage',{message});assert.equal(JSON.stringify(room),before);
+  const before=JSON.stringify(room);assert.equal(b.handlers.chatMessage,undefined);assert.equal(validatePacket('chatMessage',{message}),false);assert.equal(JSON.stringify(room),before);
 }
 for(const event of ['setRevealFactions','setTreasuryMode']){
   const before=JSON.stringify(room);a.send(event,{enabled:'false'});assert.equal(JSON.stringify(room),before);
@@ -37,7 +37,7 @@ onInput(socket,'startGame',()=>{throw new Error('SECRET DATABASE INTERNALS');});
 let response;handlers.startGame({},r=>response=r);
 assert.equal(response.error,'The request could not be completed.');
 handlers.startGame({});assert(!JSON.stringify(events).includes('SECRET'));
-assert.doesNotThrow(()=>a.handlers.chatMessage({message:'Still works'},42));assert.equal(room.chat.at(-1).message,'Still works');
+assert.doesNotThrow(()=>a.handlers.ready({ready:true},42));assert(room.players.find(p=>p.id==='a').ready);
 const i18n=require('../../shared/i18n');
 for(const message of ['Invalid request.','The request could not be completed.','Leave your current room before joining another.','Everyone must be connected to start.']){
  assert.equal(i18n.translate(message,'en'),message);assert.notEqual(i18n.translate(message,'jp'),message,'Japanese error translation: '+message);

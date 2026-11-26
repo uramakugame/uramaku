@@ -15,7 +15,7 @@ function settings(env={}){
   maxConnections:integer(env,'MAX_CONNECTIONS',2048),maxConnectionsPerIp:integer(env,'MAX_CONNECTIONS_PER_IP',128),
   trustedProxyHops,trustRailwayProxy,
   create:integer(env,'RATE_CREATE_PER_10_MIN',30),entry:integer(env,'RATE_ENTRY_PER_MIN',120),
-  browse:integer(env,'RATE_BROWSE_PER_MIN',240),chat:integer(env,'RATE_CHAT_PER_MIN',30),
+  browse:integer(env,'RATE_BROWSE_PER_MIN',240),reactions:integer(env,'RATE_REACTIONS_PER_MIN',30),
   packets:integer(env,'RATE_PACKETS_PER_SEC',30),ipPackets:integer(env,'RATE_IP_PACKETS_PER_SEC',300),
   maxBuckets:integer(env,'MAX_RATE_BUCKETS',10000)
 };}
@@ -68,14 +68,8 @@ class AbuseGuard{
     else if(['prepareEntry','confirmEntry','joinRoom','joinSpectator','resumeSession'].includes(event)){group='entry';limit=c.entry;}
     else if(event==='listRooms'){group='browse';limit=c.browse;}
     else if(event==='reaction'){
-      if(!this.take(`ip:${ip}:reactions`,c.chat*8,period))return false;
+      if(!this.take(`ip:${ip}:reactions`,c.reactions*8,period))return false;
       return this.take(`seat:${socket.data?.playerId||socket.id}:reactions`,1,require('../shared/reactions').cooldown);
-    }else if(event==='chatMessage'){
-      // Bound individual chat seats as well as aggregate traffic behind NAT.
-      if(!this.take(`ip:${ip}:chat`,c.chat*8,period))return false;
-      group='chat';limit=c.chat;
-      const identity=socket.data?.playerId||socket.id;
-      return this.take(`seat:${identity}:chat`,limit,period);
     }else return true;
     return this.take(`ip:${ip}:${group}`,limit,period);
   }

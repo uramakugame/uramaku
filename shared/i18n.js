@@ -89,7 +89,7 @@
    "metricsCompletionNote":{en:"Completion rate is the share of matches started in the selected period that have finished so far. Completed counts use the day each match ended, so they can include starts from an earlier period. Kicks and forfeits that end a match also count as completion.",jp:"完了率は、選択した期間に開始した対戦のうち現在までに終了した割合です。完了数は終了日で集計するため、以前の期間に開始した対戦も含まれます。キックや棄権によって終了した対戦も完了に含みます。"},
    "metricsDurationNote":{en:"Duration runs from start to finish, including challenge timers and disconnected waiting time. Daily rows show the latest 90 days in the all-time view; all-time totals include every recorded day.",jp:"対戦時間は開始から終了までで、チャレンジ待ちや切断中の待機時間を含みます。全期間表示の日別表は直近90日分ですが、合計には記録された全期間を含みます。"},
    "metricsHistoryNote":{en:"Tracking starts when this update is installed. Previously deleted rooms and matches already in progress at installation cannot be counted retrospectively. Local tutorial activity and homepage visits are not included.",jp:"この更新の導入時から記録します。既に削除されたルームや導入前から進行中の対戦は遡って集計できません。ローカルのチュートリアル利用とホームページ閲覧は含みません。"},
-   "metricsPrivacyNote":{en:"Only aggregate activity is retained for analytics. No player names, IP addresses, reconnect tokens, chat messages, cards or persistent visitor identifiers are stored in the analytics tables.",jp:"利用統計には集計値のみを保存します。プレイヤー名、IPアドレス、再接続トークン、チャット、カード、永続的な訪問者IDは統計テーブルに保存しません。"},
+   "metricsPrivacyNote":{en:"Only aggregate activity is retained for analytics. No player names, IP addresses, reconnect tokens, cards or persistent visitor identifiers are stored in the analytics tables.",jp:"利用統計には集計値のみを保存します。プレイヤー名、IPアドレス、再接続トークン、カード、永続的な訪問者IDは統計テーブルに保存しません。"},
    "metricsUpdated":{en:"Last updated",jp:"最終更新"},
   },
   ui:{
@@ -126,10 +126,6 @@
    players:{en:'Players',jp:'プレイヤー'},playersInfluences:{en:'Players & Influences',jp:'プレイヤーと影響力'},
    gameLog:{en:'Game log · Recent events',jp:'ゲームログ · 最近の出来事'},
    spectators:{en:'Spectators:',jp:'観戦者：'},coins:{en:'Coins:',jp:'コイン：'},
-   chat:{en:'Open chat',jp:'チャットを開く'},closeChat:{en:'Close chat',jp:'チャットを閉じる'},
-   chatTitle:{en:'Room chat',jp:'ルームチャット'},chatClose:{en:'Close',jp:'閉じる'},chatSend:{en:'Send',jp:'送信'},
-   chatPlaceholder:{en:'Write a message…',jp:'メッセージを入力…'},chatEmpty:{en:'No messages yet.',jp:'まだメッセージはありません。'},
-   chatHint:{en:'Drag to move · resize from corner',jp:'ドラッグで移動 · 角をドラッグしてサイズ変更'},
    createRoom:{en:'Create room',jp:'ルームを作成'},joinRoom:{en:'Join room',jp:'ルームに参加'},
    privateMatch:{en:'PRIVATE MATCH · 2–6 PLAYERS',jp:'プライベート対戦 · 2〜6人'},
    introTitle:{en:'Gather your players',jp:'プレイヤーを集めよう'},
@@ -157,7 +153,6 @@
    maxPlayersLabel:{en:'Maximum players',jp:'最大参加人数'},maxPlayersHelp:{en:'Choose 2–6 players (default 6). Cannot be lower than the joined player count.',jp:'2〜6人から選択（初期値6）。参加済みの人数より少なく設定できません。'},
    maxPlayersInvalid:{en:'Room capacity must be a whole number from 2 to 6.',jp:'最大参加人数は2〜6の整数で設定してください。'},maxPlayersOccupied:{en:'Room capacity cannot be lower than the number of joined players.',jp:'参加済みの人数より少なく設定できません。'},
    capacityExceeded:{en:'Room capacity exceeded.',jp:'ルームの最大参加人数を超えています。'},
-   kickMode:{en:'Kick player',jp:'プレイヤーを退出させる'},kickCancel:{en:'Cancel kick',jp:'退出操作をキャンセル'},kickSelectLobby:{en:'Select one player to remove.',jp:'退出させるプレイヤーを1人選んでください。'},kickSelectMatch:{en:'Select one player to kick.',jp:'退出させるプレイヤーを1人選んでください。'},
    'This room is full.':{en:'This room is full.',jp:'ルームは満員です。'},
    'The treasury is empty. Order has collapsed.':{en:'The treasury is empty. Order has collapsed.',jp:'宝庫が空になり、秩序が崩壊した。'},
    'Order has been restored.':{en:'Order has been restored.',jp:'秩序が回復した。'},
@@ -230,7 +225,7 @@
    deckReshuffle:{en:'Reshuffles on next draw',jp:'次に引く時に再シャッフル'},deckEmpty:{en:'Draw pile empty',jp:'山札は空です'},
    feedbackDiscarded:{en:'Discarded',jp:'捨て札'},feedbackLost:{en:'Influence lost',jp:'影響力を失った'},
    soundSettings:{en:'Sound settings',jp:'音声設定'},soundClose:{en:'Close sound settings',jp:'音声設定を閉じる'},
-   soundMaster:{en:'Master volume',jp:'全体音量'},soundGameplay:{en:'Gameplay sounds',jp:'ゲーム効果音'},soundChat:{en:'Chat sounds',jp:'チャット通知音'},
+   soundMaster:{en:'Master volume',jp:'全体音量'},soundGameplay:{en:'Gameplay sounds',jp:'ゲーム効果音'},
    soundOn:{en:'Sound on',jp:'音声オン'},soundOff:{en:'Sound off',jp:'音声オフ'},soundEnable:{en:'Enable game sounds',jp:'ゲーム音声をオンにする'},soundMute:{en:'Mute game sounds',jp:'ゲーム音声をミュート'},
    soundWarning:{en:'Challenge deadline warning',jp:'チャレンジ締切の通知音'},soundTest:{en:'Test sound',jp:'音声を試す'},
    challengeCountdown:{en:'Challenge window · {seconds}s remaining',jp:'チャレンジ受付 · 残り{seconds}秒'},
@@ -320,6 +315,8 @@
    spectatorCapacity:{en:'This room has reached its spectator limit.',jp:'このルームの観戦者数が上限に達しています。'},
    kickOwnerOnly:{en:'Only the host can remove players.',jp:'プレイヤーを退出させられるのはホストだけです。'},
    kickUnavailable:{en:'This player cannot be removed.',jp:'このプレイヤーは退出させられません。'},
+   dialogClose:{en:'Close',jp:'閉じる'},
+   kickOffline:{en:'Only disconnected players can be removed.',jp:'切断中のプレイヤーだけを退出させられます。'},
    kickOfflineOnly:{en:'Only disconnected players can be removed during a match.',jp:'対戦中は切断中のプレイヤーだけを退出させられます。'},
    invalidRequest:{en:'Invalid request.',jp:'リクエストが無効です。'},
    requestFailed:{en:'The request could not be completed.',jp:'リクエストを完了できませんでした。'},
@@ -440,7 +437,6 @@
   [/^(.+?) wins the game\.$/,m=>`${m[1]}の勝利！`],
   [/^(.+?)'s turn begins\. (.+?) receives 1 passive Income\.$/,m=>`${m[1]}のターン開始。${m[2]}が自動収入1コインを得ました。`],
   [/^(\d+)% COMPLETE$/,m=>`${m[1]}% 完了`],
-  [/^Open chat \((\d+) new\)$/,m=>`チャットを開く（新着${m[1]}件）`],
   [/^Coins: (\d+)$/,m=>`コイン：${m[1]}`],
   [/^(\d+) \/ (\d+) joined$/,m=>`${m[1]} / ${m[2]} 人参加`],
   [/^(\d+) ready$/,m=>`${m[1]} 人準備完了`],
@@ -523,7 +519,7 @@
    const nodes=rootNode.querySelectorAll?rootNode.querySelectorAll('*'):[];
    const include=[rootNode,...nodes];
    for(const element of include){
-     if(!element||element.nodeType!==1||element.closest('.chat-message,.player-name-row .name,.lobby-seat-monogram,.lobby-seat-detail strong,.lobby-code,.room-code-value,.lobby-spectators,.room-browser-name,.room-browser-code'))continue;
+     if(!element||element.nodeType!==1||element.closest('.player-name-row .name,.lobby-seat-monogram,.lobby-seat-detail strong,.lobby-code,.room-code-value,.lobby-spectators,.room-browser-name,.room-browser-code'))continue;
      for(const attr of ['aria-label','title','placeholder']){
        if(element.hasAttribute(attr))element.setAttribute(attr,translate(element.getAttribute(attr),lang));
      }

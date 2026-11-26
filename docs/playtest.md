@@ -26,7 +26,7 @@ Exercise an action claim, everyone passing early, the default fifteen-second tim
 
 Test the first Earn after reloading, later Earn actions, Hire Blade and Assassinate payments, Extort, Intrigue concealment and Enforce. Verify the correct amounts and recipients, that effects run once, and that a faded badge never flashes back. Coin gain/loss badges now last 1.475 seconds; transfer badges last 1.175 seconds.
 
-Try master mute, gameplay volume, chat volume and the deadline-warning switch. Check persistence after reload and confirm the turn cue is audible even when Income or other log entries arrive in the same update. Keep another participant's browser open to check which sounds and information are local.
+Try master mute, gameplay volume and the deadline-warning switch. Check persistence after reload and confirm the turn cue is audible even when Income or other log entries arrive in the same update. Keep another participant's browser open to check which sounds and information are local.
 
 ## Treasury transitions
 

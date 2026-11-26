@@ -256,6 +256,9 @@ io.on('connection',socket=>{
   });
   on('kickPlayer',(data,cb)=>{
     const result=run(socket,'kickPlayer',data,(room,id)=>{
+      if(room.hostId!==id)return {ok:false,error:'Only the host can remove players.'};
+      const offlineTarget=room.players.find(p=>p.id===data.targetId);
+      if(offlineTarget?.connected!==false)return {ok:false,error:'Only disconnected players can be removed.'};
       let r;
       if(room.status==='lobby')r=game.removeLobbyPlayer(room,id,data.targetId);
       else{
@@ -271,7 +274,6 @@ io.on('connection',socket=>{
     const guest=socketsByPlayer.get(data.targetId);
     if(guest){guest.data.playerId=null;guest.data.room=null;guest.emit('kicked',{message:'The host removed you from the room.'});}socketsByPlayer.delete(data.targetId);
   });
-  on('chatMessage',(data,cb)=>run(socket,'chatMessage',data,(room,id)=>game.addChatMessage(room,id,data.message),cb));
   // Reactions are transient social events, with no game-state or database write.
   on('reaction',(data,cb)=>{
     const code=socket.data.room,id=socket.data.playerId,room=rooms.get(code);

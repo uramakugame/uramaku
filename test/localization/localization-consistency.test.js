@@ -53,7 +53,7 @@ assert(tutorial.includes('URAMAKU_ROLE_CARDS.revealed'));
 assert(tutorial.includes('URAMAKU_ROLE_CARDS.hidden'));
 assert(tutorial.includes('t-shell factions-off'));
 assert(html.indexOf('/shared/i18n.js')<html.indexOf('/shared/roles.js'),'Localized metadata must load after its glossary');
-assert(main.includes('languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}<button id="chatToggle"'), 'React must be immediately left of Chat, after the language toggle');
+assert(main.includes('languageToggleMarkup()}${window.URAMAKU_PLAYER_REACTIONS.controls({room:state,you:me,lang:referenceLanguage})}'), 'React follows the language toggle');
 assert(main.includes('i18n.get(\'howToHtml\',referenceLanguage)'));
 assert(tutorial.includes('URAMAKU_TUTORIAL'));
 for(const step of require('../../shared/tutorial').steps){

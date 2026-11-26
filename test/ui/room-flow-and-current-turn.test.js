@@ -29,16 +29,8 @@ assert.equal(room.pending.kind,'counterOffer');
 const offer=room.pending;room.pending=null;assert(game.performDeferredAction(room,offer).ok);
 assert.equal(room.pending.kind,'information');
 assert.equal(room.pending.action,'intrigue');
-// Modal no longer blocks the table; it supports header drag and native resizing.
-assert(app.includes('class="chat-modal" id="chatWindow"'));
-assert(app.includes('class="chat-drag-handle"'));
-assert(app.includes("drag.addEventListener('pointermove'"));
-assert(app.includes('chatSizeObserver=new ResizeObserver'));
-assert(app.includes('function captureChatBounds(){'));
-assert(css.includes('resize:both'));
-assert(css.includes('pointer-events:none!important'));
-assert(css.includes('pointer-events:auto!important'));
-assert(app.includes('if(chatOnly){'),'Incoming messages should not overwrite the active chat draft');
+// Free-form chat is unavailable in every room phase.
+assert(!app.includes('chatToggle'));assert(!app.includes('renderChat'));
 // All exits have one consistent label, including the victory dialog.
 assert(app.includes('id="victoryLeaveRoom">Leave room</button>'));
 assert(app.includes('id="exitRoom" class="small" type="button">Leave room</button>'));
@@ -52,4 +44,4 @@ assert(css.includes('.action-flow.has-target-selection{border-left:4px solid #a3
 assert(css.includes('transform:translate(-50%,-50%)'),'Action announcements should anchor to board center');
 assert(app.includes('function positionActionAnnouncements()'),'Announcement location should follow board geometry');
 assert(css.includes('.game-room-code .room-code-heading'));
-console.log('Floating chat, phase labels, Intrigue server flow, faction styling, winner exit and target highlights passed.');
+console.log('Chat-free controls, phase labels, Intrigue server flow, faction styling, winner exit and target highlights passed.');

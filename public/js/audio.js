@@ -2,12 +2,12 @@
 (function(){
  'use strict';
  let ctx=null,muted=false,settingsOpen=false;
- const defaults={master:.65,gameplay:1,chat:.7,deadline:true};
+ const defaults={master:.65,gameplay:1,deadline:true};
  let settings={...defaults};
  try{
   muted=localStorage.getItem('uramakuMuted')==='1';
   const saved=JSON.parse(localStorage.getItem('uramakuSoundSettings')||'null');
-  for(const key of ['master','gameplay','chat'])if(Number.isFinite(saved?.[key]))settings[key]=Math.max(0,Math.min(1,saved[key]));
+  for(const key of ['master','gameplay'])if(Number.isFinite(saved?.[key]))settings[key]=Math.max(0,Math.min(1,saved[key]));
   if(typeof saved?.deadline==='boolean')settings.deadline=saved.deadline;
  }catch{}
  const persist=()=>{try{localStorage.setItem('uramakuMuted',muted?'1':'0');localStorage.setItem('uramakuSoundSettings',JSON.stringify(settings));}catch{}};
@@ -19,7 +19,7 @@
   return ctx;
  }
  function tone(frequency,duration,options={}){
-  const level=settings.master*settings[options.channel==='chat'?'chat':'gameplay'];
+  const level=settings.master*settings.gameplay;
   if(muted||!level)return;
   try{
    const c=context();if(!c)return;
@@ -51,9 +51,8 @@
  function play(kind,{delay=0}={}){
   if(kind==='deadline'&&!settings.deadline)return;
   if((kind==='draw'||kind==='discard')&&paper(kind,{delay}))return;
-  const note=(frequency,duration,options={})=>tone(frequency,duration,{...options,delay:delay+(options.delay||0),channel:kind==='chat'?'chat':'gameplay'});
-  if(kind==='chat'){note(784,.11,{volume:.022});note(1046,.18,{delay:.09,volume:.025});}
-  else if(kind==='click')note(630,.045,{volume:.012,endFrequency:440});
+  const note=(frequency,duration,options={})=>tone(frequency,duration,{...options,delay:delay+(options.delay||0),channel:'gameplay'});
+  if(kind==='click')note(630,.045,{volume:.012,endFrequency:440});
   else if(kind==='confirm'){note(392,.11,{volume:.02});note(588,.17,{delay:.075,volume:.022});}
   else if(kind==='coin'){note(740,.09,{volume:.025});note(988,.19,{delay:.075,volume:.025});}
   else if(kind==='intrigue'){note(310,.2,{type:'triangle',volume:.017});note(465,.28,{delay:.1,type:'triangle',volume:.018});}
@@ -89,13 +88,13 @@
   const text=(key)=>window.URAMAKU_I18N?.get(key,lang)||key;
   let controls=document.getElementById('uramakuSoundControls');
   if(!controls){controls=document.createElement('div');controls.id='uramakuSoundControls';controls.className='sound-controls';document.body.appendChild(controls);}
-  controls.innerHTML=`<button id="uramakuSoundToggle" class="sound-toggle" type="button" aria-pressed="${!muted}" aria-label="${text(muted?'soundEnable':'soundMute')}">${muted?'🔇':'🔊'} ${text(muted?'soundOff':'soundOn')}</button><button id="uramakuSoundSettings" class="sound-settings-button" type="button" aria-expanded="${settingsOpen}" aria-controls="uramakuSoundPanel">${text('soundSettings')}</button><section id="uramakuSoundPanel" class="sound-settings-panel panel" aria-label="${text('soundSettings')}" ${settingsOpen?'':'hidden'}><div class="sound-panel-heading"><strong>${text('soundSettings')}</strong><button id="closeSoundSettings" type="button" aria-label="${text('soundClose')}">×</button></div>${[['master','soundMaster'],['gameplay','soundGameplay'],['chat','soundChat']].map(([key,label])=>`<label class="sound-volume-row" for="sound-${key}"><span>${text(label)}</span><output id="sound-${key}-value">${Math.round(settings[key]*100)}%</output><input id="sound-${key}" data-sound-volume="${key}" type="range" min="0" max="100" value="${Math.round(settings[key]*100)}"></label>`).join('')}<label class="sound-warning-row"><input id="soundDeadline" type="checkbox" ${settings.deadline?'checked':''}>${text('soundWarning')}</label><button type="button" id="testGameSound">${text('soundTest')}</button></section>`;
+  controls.innerHTML=`<button id="uramakuSoundToggle" class="sound-toggle" type="button" aria-pressed="${!muted}" aria-label="${text(muted?'soundEnable':'soundMute')}">${muted?'🔇':'🔊'} ${text(muted?'soundOff':'soundOn')}</button><button id="uramakuSoundSettings" class="sound-settings-button" type="button" aria-expanded="${settingsOpen}" aria-controls="uramakuSoundPanel">${text('soundSettings')}</button><section id="uramakuSoundPanel" class="sound-settings-panel panel" aria-label="${text('soundSettings')}" ${settingsOpen?'':'hidden'}><div class="sound-panel-heading"><strong>${text('soundSettings')}</strong><button id="closeSoundSettings" type="button" aria-label="${text('soundClose')}">×</button></div>${[['master','soundMaster'],['gameplay','soundGameplay']].map(([key,label])=>`<label class="sound-volume-row" for="sound-${key}"><span>${text(label)}</span><output id="sound-${key}-value">${Math.round(settings[key]*100)}%</output><input id="sound-${key}" data-sound-volume="${key}" type="range" min="0" max="100" value="${Math.round(settings[key]*100)}"></label>`).join('')}<label class="sound-warning-row"><input id="soundDeadline" type="checkbox" ${settings.deadline?'checked':''}>${text('soundWarning')}</label><button type="button" id="testGameSound">${text('soundTest')}</button></section>`;
   controls.querySelector('#uramakuSoundToggle').onclick=()=>{muted=!muted;persist();renderToggle();controls.querySelector('#uramakuSoundToggle').focus();if(!muted)play('confirm');};
   controls.querySelector('#uramakuSoundSettings').onclick=()=>{settingsOpen=!settingsOpen;renderToggle();controls.querySelector(settingsOpen?'#sound-master':'#uramakuSoundSettings').focus();};
   controls.querySelector('#closeSoundSettings').onclick=closeSettings;
   controls.querySelectorAll('[data-sound-volume]').forEach(input=>{
    input.oninput=()=>{settings[input.dataset.soundVolume]=Number(input.value)/100;controls.querySelector(`#sound-${input.dataset.soundVolume}-value`).textContent=input.value+'%';persist();};
-   input.onchange=()=>play(input.dataset.soundVolume==='chat'?'chat':'confirm');
+   input.onchange=()=>play('confirm');
   });
   controls.querySelector('#soundDeadline').onchange=e=>{settings.deadline=e.target.checked;persist();};
   controls.querySelector('#testGameSound').onclick=()=>play('turn');

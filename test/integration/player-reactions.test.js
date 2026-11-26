@@ -4,7 +4,7 @@ const {launch,until}=require('../helpers/live-server'),{RoomStore}=require('../.
 const presets=require('../../shared/reactions');
 for(const reaction of presets.ids)assert(validatePacket('reaction',{reaction}));for(const reaction of ['<script>','Challenge','',null,{},1])assert.equal(validatePacket('reaction',{reaction}),false);
 let now=1000;const guard=new AbuseGuard(settings(),()=>now),seat={id:'socket-a',data:{playerId:'seat-a'},handshake:{address:'127.0.0.1'}};
-assert(guard.allow(seat,'reaction',{}));assert.equal(guard.allow(seat,'reaction',{}),false);now+=3999;assert.equal(guard.allow(seat,'reaction',{}),false);now++;assert(guard.allow(seat,'reaction',{}));assert(guard.allow(seat,'chatMessage',{}),'Reaction cooldown does not consume the normal chat-seat allowance');
+assert(guard.allow(seat,'reaction',{}));assert.equal(guard.allow(seat,'reaction',{}),false);now+=3999;assert.equal(guard.allow(seat,'reaction',{}),false);now++;assert(guard.allow(seat,'reaction',{}));assert(guard.allow(seat,'listRooms',{}),'Reaction cooldown does not consume the room-browsing allowance');
 async function main(){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'uramaku-reactions-')),file=path.join(dir,'state.sqlite');let server,db;
  const ask=(client,event,data={})=>client.timeout(3000).emitWithAck(event,data);

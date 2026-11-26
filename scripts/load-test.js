@@ -59,7 +59,7 @@ async function runCase(roomCount,{duration=30,thinkMs=300,seed=20261124}={}){
   await synchronize(crew);await send(crew[0],'startGame');await synchronize(crew);
  }
  async function loop(crew,index){
-  const roll=random(seed+index),pick=a=>a[Math.floor(roll()*a.length)];let reconnected=false,lastChat=Date.now(),step=0;
+  const roll=random(seed+index),pick=a=>a[Math.floor(roll()*a.length)];let reconnected=false,lastReaction=Date.now(),step=0;
   while(Date.now()<startAt+duration*1000){
    await synchronize(crew);
    let r=crew[0].state.room;
@@ -75,7 +75,7 @@ async function runCase(roomCount,{duration=30,thinkMs=300,seed=20261124}={}){
     if(JSON.stringify(bot.state.you.influences)!==JSON.stringify(hand))throw Error('Reconnect changed private hand');
     stats.reconnects++;reconnected=true;continue;
    }
-   if(Date.now()-lastChat>10000){await send(crew[0],'chatMessage',{message:'Benchmark chat'});lastChat=Date.now();continue;}
+   if(Date.now()-lastReaction>10000){await send(crew[0],'reaction',{reaction:require('../shared/reactions').ids[0]});lastReaction=Date.now();continue;}
    const botFor=id=>crew.find(b=>b.state.you.id===id),debt=r.challengeLosses?.length&&(!r.pending||roll()<.5)?r.challengeLosses[0]:null;
    let bot,event,data;
    const q=debt||r.pending;
