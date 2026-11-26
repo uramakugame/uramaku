@@ -74,9 +74,9 @@
    if(decisionKey(after,you)&&decisionKey(after,you)!==decisionKey(before,oldYou))result.sounds.push(after.pending?.kind==='summon'&&after.pending.stage==='preview'?'draw':'response');
   }
   if(before.status!=='playing'){
-   // A teaching introduction may already have dealt hands before turn one.
-   if(before.status==='lobby'&&after.status==='playing'&&!before.players?.some(p=>p.influenceCount>0))result.motions.push(...openingDeal(after));
-   return result;
+   if(before.status!=='lobby'||after.status!=='playing')return result;
+   // Fresh deals skip setup balances; a predealt introduction still presents Income.
+   if(!before.players?.some(p=>p.influenceCount>0)){result.motions.push(...openingDeal(after));return result;}
   }
   for(const p of after.players||[]){const old=(before.players||[]).find(x=>x.id===p.id);if(old&&p.coins!==old.coins)result.coins.push({id:p.id,delta:p.coins-old.coins});if(old&&p.id!==you?.id&&p.influenceCount<old.influenceCount)result.cards.push({id:p.id,type:'loss'});}
   if(after.pending?.kind==='summon'&&after.pending.stage==='preview'&&after.pending.claimantId===you?.id&&(before.pending?.kind!=='summon'||before.pending.stage!=='preview'))result.cards.push({id:you.id,type:'draw'});
@@ -184,7 +184,9 @@
  // A completed turn has two public coin events: its action, then the next
  // player's Income. Render the action balance before presenting that Income.
  function timeline(before,after,oldYou,you){
-  if(!before||before.code!==after?.code||before.status!=='playing'||after.turnNumber!==before.turnNumber+1)return [{room:after,you}];
+  if(!before||before.code!==after?.code||after.turnNumber!==before.turnNumber+1)return [{room:after,you}];
+  const firstIncome=before.status==='lobby'&&after.status==='playing'&&before.players?.some(p=>p.influenceCount>0);
+  if(before.status!=='playing'&&!firstIncome)return [{room:after,you}];
   const incoming=after.players?.find(p=>p.id===after.turnPlayerId);if(!incoming)return [{room:after,you}];
   const entries=newLogEntries(before,after);let income=null;
   for(let index=entries.length-1;index>=0;index--){
@@ -193,6 +195,7 @@
    if(entries[index]===`${incoming.name} receives no Income because the treasury is empty.`){income={amount:0,entry:entries[index]};break;}
   }
   if(!income)return [{room:after,you}];
+  if(firstIncome)return [{room:{...after,presentationPhase:'income',presentationIncome:income.amount},you}];
   const copy=value=>value?JSON.parse(JSON.stringify(value)):value;
   const actionRoom=copy(after),actionYou=copy(you),incomingPlayer=actionRoom.players.find(p=>p.id===incoming.id);
   incomingPlayer.coins-=income.amount;if(actionYou?.id===incoming.id)actionYou.coins-=income.amount;
