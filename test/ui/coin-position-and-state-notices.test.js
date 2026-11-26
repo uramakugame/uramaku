@@ -11,6 +11,29 @@ async function main(){
   const tokens=h.document.body.querySelectorAll('.coin-gain,.coin-loss');assert.equal(tokens.length,2);for(const token of tokens){assert.equal(token.style.left,'220px');assert.equal(token.style.top,'98px');}
   assert(animations.every(a=>a.options.duration===1475));let idle=false;h.window.URAMAKU_PRESENTATION.whenIdle(h.app,()=>idle=true);assert(idle);h.window.URAMAKU_PRESENTATION.cancel(h.app);assert(!h.document.body.querySelector('.coin-gain,.coin-loss'));
  }
+ // A six-seat board is rebuilt immediately after nonblocking Income. The
+ // old tile becomes detached, and the final board/scroll position can differ.
+ // Both ordinary coin changes and Income must follow the same live slot.
+ for(const lang of ['en','jp'])for(const nonBlockingCoins of [false,true])for(const row of [0,1]){
+  const h=harness(lang),frames=new Map(),finished=[];let frameId=0,offset=90;
+  h.window.matchMedia=()=>({matches:false});h.window.URAMAKU_PRESENTATION.cancel(h.app);
+  h.window.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};
+  h.window.cancelAnimationFrame=id=>frames.delete(id);
+  const proto=Object.getPrototypeOf(h.app);
+  proto.getBoundingClientRect=function(){const tile=this.classList.contains('player')?this:this.closest('.player');if(!tile)return{left:0,top:0,width:0,height:0};const n=Number(tile.dataset.playerId.slice(1)),left=40+n%3*250,top=offset+Math.floor(n/3)*280;return{left,top:top+(this.classList.contains('player-coins')?38:0),width:this.classList.contains('player')?230:50,height:240};};
+  proto.animate=function(){return{finished:{then(resolve){finished.push(resolve);}},cancel(){}};};
+  const paint=()=>{h.app.innerHTML=Array.from({length:6},(_,i)=>'<div class="player" data-player-id="p'+i+'"><div class="player-coins">Coins: 3</div></div>').join('');};
+  const tick=()=>{const pending=[...frames.values()];frames.clear();for(const callback of pending)callback();};
+  paint();h.window.URAMAKU_FEEDBACK.animate({coins:[{id:'p'+row*3,delta:1},{id:'p'+row*3,delta:-2}]},{container:h.app,lang,nonBlockingCoins});
+  const tokens=h.document.body.querySelectorAll('.coin-gain,.coin-loss');assert.equal(tokens.length,2);
+  for(const token of tokens){assert.equal(token.style.left,'155px');assert.equal(token.style.top,(offset+row*280+38)+'px');}
+  const old=h.app.querySelector('[data-player-id="p'+row*3+'"]');offset=150;paint();assert.notEqual(h.app.querySelector('[data-player-id="p'+row*3+'"]'),old);tick();
+  for(const token of tokens)assert.equal(token.style.top,(offset+row*280+38)+'px','Rerender anchors feedback to its original row in the new board');
+  offset-=110;tick();for(const token of tokens)assert.equal(token.style.top,(offset+row*280+38)+'px','Scrolling tracks the same player card');
+  let idle=false;h.window.URAMAKU_PRESENTATION.whenIdle(h.app,()=>idle=true);assert.equal(idle,nonBlockingCoins,'Position updates must not change Income interactivity');
+  for(const complete of finished)complete();assert.equal(frames.size,0,'Finishing cancels positioning callbacks');assert(!h.document.body.querySelector('.coin-gain,.coin-loss'));
+  h.window.URAMAKU_FEEDBACK.animate({coins:[{id:'p'+row*3,delta:1}]},{container:h.app,lang,nonBlockingCoins});h.window.URAMAKU_PRESENTATION.cancel(h.app);assert.equal(frames.size,0,'Navigation cancels positioning callbacks');
+ }
  // Real multiplayer snapshots reach the ordinary announcement system after
  // effects settle; rerenders and reconnects never replay a transition.
  for(const lang of ['en','jp'])for(const reduced of [true,false]){
@@ -26,6 +49,6 @@ async function main(){
   assert(g.performAction(r,'b','overthrow','a').ok);h.handlers.state({room:g.publicState(r),you:g.privateState(r,'a')});await drain();toast=h.document.body.querySelector('.state-transition-notice');assert(toast.classList.contains('state-order'));assert.equal(h.document.body.querySelectorAll('.state-transition-notice').length,1,'A newer state replaces its old state notice');assert.equal(toast.textContent,h.window.URAMAKU_I18N.get('stateOrderNotice',switched));assert(h.app.querySelector('[data-lose]'),'An outstanding influence decision remains available');
   const spectator=roomHarness(lang);spectator.paint(g.publicState(r),null);spectator.handlers.state({room:g.publicState(r),you:null});await Promise.resolve();assert(!spectator.document.body.querySelector('.state-transition-notice'),'An initial/reconnected observer receives no historical announcement');
  }
- console.log('Top-center coin feedback with preserved y/timing/Income interactivity; real EN/JP Order/Chaos notifications, reduced motion, effect ordering, locale changes, latest-state replacement, no replay and pending-choice visibility passed.');
+ console.log('Top-center first/second-row coin feedback follows rerenders and scrolling with preserved timing/Income interactivity; real EN/JP Order/Chaos notifications, reduced motion, effect ordering, locale changes, latest-state replacement, no replay and pending-choice visibility passed.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

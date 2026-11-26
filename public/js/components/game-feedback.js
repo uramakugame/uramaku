@@ -195,8 +195,8 @@
   incomingPlayer.coins-=income.amount;if(actionYou?.id===incoming.id)actionYou.coins-=income.amount;
   if(actionRoom.treasuryMode){actionRoom.treasuryCoins+=income.amount;actionRoom.riot=actionRoom.treasuryCoins===0;actionRoom.purgeCost=actionRoom.riot?5:7;}
   const index=actionRoom.log.lastIndexOf(income.entry);if(index>=0)actionRoom.log=actionRoom.log.slice(0,index);
-  Object.assign(actionRoom,{turnPlayerId:before.turnPlayerId,nextTurnPlayerId:incoming.id,turnNumber:before.turnNumber,status:'playing',winner:null,winType:null,pending:null,mandatoryPurge:false,presentationPhase:'action'});
-  const turnRoom={...actionRoom,turnPlayerId:incoming.id,turnNumber:after.turnNumber,presentationPhase:'turn'};
+  Object.assign(actionRoom,{turnPlayerId:before.turnPlayerId,nextTurnPlayerId:incoming.id,turnNumber:before.turnNumber,roundNumber:before.roundNumber,status:'playing',winner:null,winType:null,pending:null,mandatoryPurge:false,presentationPhase:'action'});
+  const turnRoom={...actionRoom,turnPlayerId:incoming.id,turnNumber:after.turnNumber,roundNumber:after.roundNumber,presentationPhase:'turn'};
   return [{room:actionRoom,you:actionYou},{room:turnRoom,you:actionYou,turn:{from:before.turnPlayerId,to:incoming.id}}, {room:{...after,presentationPhase:'income',presentationIncome:income.amount},you}];
  }
  function present({container,before,after,oldYou,you,replacementChoice=null,lang='en',render,complete,current=()=>true}){
@@ -325,15 +325,29 @@
    if(type!=='discard'&&!flipped.has(el)&&!moving.has(el))pulse(el,[{opacity:.45,transform:'translateY(-5px)'},{opacity:1,transform:'translateY(0)'}],300);
    if(type==='loss'&&el){const r=el.getBoundingClientRect();float(word(type==='loss'?'feedbackLost':'feedbackDiscarded',lang),r.left+r.width/2,r.top+r.height/2,28,-30,'feedback-card',400,flow?.revealDelay(container,id)||0);}
   }
-  function float(text,x,y,dx,dy,kind,duration,delay=0,blocking=true){
+  function float(text,x,y,dx,dy,kind,duration,delay=0,blocking=true,anchor=null){
    const token=document.createElement('span');token.className='feedback-token '+kind;token.textContent=text;token.setAttribute('aria-hidden','true');
    // A delayed cleanup must never expose the unfaded underlying element.
    token.style.opacity='0';token.style.left=x+'px';token.style.top=y+'px';document.body.appendChild(token);
-   const release=flow?.hold(container,()=>remove(),{blocking});let closed=false,timer;
-   const remove=()=>{if(closed)return;closed=true;clearTimeout(timer);token.remove();release?.();};
+   const release=flow?.hold(container,()=>remove(),{blocking});let closed=false,timer,positionFrame;
+   const remove=()=>{if(closed)return;closed=true;clearTimeout(timer);if(positionFrame!==undefined)root?.cancelAnimationFrame?.(positionFrame);token.remove();release?.();};
+   // Income remains visible through the final turn render. Resolve the live
+   // player again so a detached tile's old viewport position cannot pin it
+   // over another row. The same anchor is used for every coin gain/loss.
+   const position=()=>{
+    if(closed)return;
+    const point=anchor?.();if(!point){remove();return;}
+    token.style.left=point.x+'px';token.style.top=point.y+'px';
+    positionFrame=root?.requestAnimationFrame?.(position);
+   };
+   if(anchor)position();
    try{const animation=token.animate?.([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`,opacity:0}],{duration,delay,easing:'ease-out',fill:'forwards'});animation?.finished?.then(remove,remove);timer=setTimeout(remove,delay+duration+100);}catch{remove();}
   }
-  for(const change of effects.coins||[]){const el=find(change.id),coin=el?.querySelector('.player-coins');if(!coin)continue;const r=el.getBoundingClientRect(),coinTop=coin.getBoundingClientRect().top;float((change.delta>0?'+':'')+change.delta,r.left+r.width/2,coinTop,0,-24,change.delta>0?'coin-gain':'coin-loss',1475,0,!nonBlockingCoins);}
+  for(const change of effects.coins||[]){
+   const anchor=()=>{const el=find(change.id),coin=el?.querySelector('.player-coins');if(!coin)return null;const tile=el.getBoundingClientRect();return{x:tile.left+tile.width/2,y:coin.getBoundingClientRect().top};};
+   const point=anchor();if(!point)continue;
+   float((change.delta>0?'+':'')+change.delta,point.x,point.y,0,-24,change.delta>0?'coin-gain':'coin-loss',1475,0,!nonBlockingCoins,anchor);
+  }
   for(const transfer of effects.transfers||[]){
    const a=find(transfer.from)?.querySelector('.player-coins')?.getBoundingClientRect(),b=find(transfer.to)?.querySelector('.player-coins')?.getBoundingClientRect();
    if(a&&b)float(transfer.amount===1?word('oneCoin',lang):word('actionCoinCost',lang,{count:transfer.amount}),a.left+a.width/2,a.top,b.left+b.width/2-a.left-a.width/2,b.top-a.top,'coin-transfer',1175);

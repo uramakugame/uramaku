@@ -147,7 +147,7 @@
    stateReversal:{en:'{states}',jp:'{states}'},
    matchInformation:{en:'Match information',jp:'対戦情報'},playersRemaining:{en:'{count} players remaining',jp:'残り{count}人'},
    wealthGoal:{en:'Wealth victory: {count} coins',jp:'資産勝利：{count}コイン'},treasuryBalance:{en:'Treasury: {count} / {total} coins',jp:'宝庫：{count} / {total}コイン'},
-   discardPileTitle:{en:'Discard pile',jp:'捨て札'},discardPileCount:{en:'{count} discarded',jp:'捨て札 {count}枚'},drawPileLabel:{en:'Draw',jp:'山札'},discardPileLabel:{en:'Discard',jp:'捨て札'},
+   discardPileTitle:{en:'Discard pile',jp:'捨て札'},discardPileCount:{en:'{count} discarded',jp:'捨て札 {count}枚'},drawPileLabel:{en:'DECK',jp:'山札'},discardPileLabel:{en:'DISCARD',jp:'捨て札'},currentRound:{en:'Round {round}',jp:'ラウンド {round}'},
    lastOutcome:{en:'Latest outcome',jp:'直前の結果'},noOutcome:{en:'Waiting for the first action.',jp:'最初のアクションを待っています。'},
    outcomeTransfer:{en:'{from} −{count} · {to} +{count}',jp:'{from} −{count} · {to} +{count}'},outcomeGain:{en:'{player} +{count} coins',jp:'{player} +{count}コイン'},outcomeLoss:{en:'{player} loses {count} influences',jp:'{player}は影響力を{count}枚失う'},outcomeLossOne:{en:'{player} loses 1 influence',jp:'{player}は影響力を1枚失う'},
    maxPlayersLabel:{en:'Maximum players',jp:'最大参加人数'},maxPlayersHelp:{en:'Choose 2–6 players (default 6). Cannot be lower than the joined player count.',jp:'2〜6人から選択（初期値6）。参加済みの人数より少なく設定できません。'},

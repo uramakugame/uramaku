@@ -8,7 +8,7 @@ function conservation(){const all=[...t.room.deck,...t.room.discard,...t.room.re
 while(t.step.input.type!=='end'){
  conservation();states.set(t.step.id,JSON.parse(JSON.stringify(t.view())));const saved=JSON.stringify(t.room),index=t.index;
  assert.equal(t.dispatch({type:'wrong'}).ok,false);assert.equal(t.index,index);assert.equal(JSON.stringify(t.room),saved);
- assert(t.dispatch(t.step.input).ok);if(t.room.turnNumber!==lastTurn){turns.push(t.view().room.turnPlayerId);lastTurn=t.room.turnNumber;}
+ assert(t.dispatch(t.step.input).ok);assert.equal(t.view().room.roundNumber,t.round,'Shared round matches tutorial round');if(t.room.turnNumber!==lastTurn){turns.push(t.view().room.turnPlayerId);lastTurn=t.room.turnNumber;}
 }
 conservation();assert.equal(t.room.status,'finished');assert.equal(t.room.winner,'You');assert.equal(t.round,6);assert.equal(t.room.players[0].coins,2);assert.deepEqual(t.room.players[0].influences,['assassin']);
 assert.deepEqual(turns,['you','mei','akira','sora','you','mei','akira','sora','you','mei','sora','you','sora','you','sora','you','sora']);

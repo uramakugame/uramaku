@@ -18,7 +18,7 @@ async function main(){
   assert(other.includes('data-pass'));assert(!other.includes('data-counter='));assert(!other.includes('data-decline'));
  }
  for(const lang of ['en','jp']){
-  const h=harness(lang);assert(!h.app.querySelector('#languageToggle'));assert.equal(h.document.documentElement.lang,lang==='jp'?'ja':'en');h.value("while(tutorial.step.id!=='gossip')handle(tutorial.step.input)");assert.equal(h.state().room.pending.kind,'claim');assert(h.app.querySelector('[data-challenge]'));assert(h.app.querySelector('[data-counter="courtesan"]'));assert(h.app.querySelector('[data-decline]'));assert(!h.app.querySelector('[data-pass]'));
+  const h=harness(lang);assert(h.app.querySelector('#languageToggle'));assert.equal(h.document.documentElement.lang,lang==='jp'?'ja':'en');h.value("while(tutorial.step.id!=='gossip')handle(tutorial.step.input)");assert.equal(h.state().room.pending.kind,'claim');assert(h.app.querySelector('[data-challenge]'));assert(h.app.querySelector('[data-counter="courtesan"]'));assert(h.app.querySelector('[data-decline]'));assert(!h.app.querySelector('[data-pass]'));
   const before=h.state();h.click('[data-challenge]');assert.deepEqual(h.state(),before,'Guide rejects unrequested choices without advancing');h.click('[data-counter="courtesan"]');assert.equal(h.value('tutorial.step.id'),'gossip-result');
  }
  const css=fs.readFileSync(require.resolve('../../public/css/source/03-game-components.css'),'utf8');assert.match(css,/\.action\.held,\s*\.game-shell \.decision-buttons \.counter-choice\.held\{\s*border:2px solid #d8a354!important/,'Actions and held counters share the approved gold-border rule');

@@ -51,7 +51,7 @@ function configureMaxPlayers(room,id,maxPlayers){
 const clone = x => JSON.parse(JSON.stringify(x));
 function shuffle(a) { for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 // Room setup and the reusable card deck
-function createGame(code, host) { return { code, name:`${host.name}'s room`,visibility:'private',maxPlayers:MAX_PLAYERS,hostId: host.id, status:'lobby', challengeTimerEnabled:true,challengeDurationSeconds:15,revealFactions:false, treasuryMode:false, treasuryCoinsPerPlayer:6,treasuryCoins:null, totalCoins:null, economyWinThreshold:null, mandatoryPurge:false, turnNumber:0, stateTransitionNumber:0,stateTransitions:[], cardMoveNumber:0, cardMoves:[], players:[host], spectators:[], deck:[], discard:[], revealedCards:[], sharedInvestigations:[], turn:0, pending:null, challengeLosses:[], log:[`${host.name} created the room.`], winner:null }; }
+function createGame(code, host) { return { code, name:`${host.name}'s room`,visibility:'private',maxPlayers:MAX_PLAYERS,hostId: host.id, status:'lobby', challengeTimerEnabled:true,challengeDurationSeconds:15,revealFactions:false, treasuryMode:false, treasuryCoinsPerPlayer:6,treasuryCoins:null, totalCoins:null, economyWinThreshold:null, mandatoryPurge:false, turnNumber:0, roundNumber:0, lastTurnSeat:null, stateTransitionNumber:0,stateTransitions:[], cardMoveNumber:0, cardMoves:[], players:[host], spectators:[], deck:[], discard:[], revealedCards:[], sharedInvestigations:[], turn:0, pending:null, challengeLosses:[], log:[`${host.name} created the room.`], winner:null }; }
 function draw(room) {
   if (!room.deck.length) { if (!room.discard.length) return null; room.deck = shuffle(room.discard.splice(0)); room.log.push('The discard pile was shuffled to form a new deck.'); }
   return room.deck.pop();
@@ -66,7 +66,7 @@ function startGame(room) {
   room.totalCoins=room.treasuryMode ? room.treasuryCoinsPerPlayer*room.players.length : null;
   room.treasuryCoins=room.treasuryMode ? (room.treasuryCoinsPerPlayer-1)*room.players.length : null;
   room.economyWinThreshold=room.treasuryMode ? (room.players.length===2?10:room.players.length===3?12:14) : null;
-  room.mandatoryPurge=false;room.turnNumber=0;room.stateTransitionNumber=0;room.stateTransitions=[];room.cardMoveNumber=0;room.cardMoves=[];
+  room.mandatoryPurge=false;room.turnNumber=0;room.roundNumber=0;room.lastTurnSeat=null;room.stateTransitionNumber=0;room.stateTransitions=[];room.cardMoveNumber=0;room.cardMoves=[];
   room.players.forEach(p => { p.influences=[draw(room),draw(room)]; p.coins=1; p.alive=true; p.ready=true; p.connected=true; p.intrigueVisibility=[0,0]; p.lastInvestigation=null; p.privateInvestigations={}; });
   room.status='playing'; room.turn=0; room.pending=null;room.challengeLosses=[];room.finishAfterChallengesId=null;room.pendingWealthWinnerId=null;
   room.log.push('The game has begun. Everyone starts with 1 coin.'); beginTurn(room);
@@ -125,6 +125,12 @@ function beginTurn(room) {
   const p=current(room);if(!p)return;
   // Monotonic turn identifier lets the client prompt once per compulsory turn,
   // including when reconnecting in the middle of a match.
+  // Original seats stay fixed after elimination. A round advances only when
+  // turn order wraps, even if the first seat no longer holds an influence.
+  const seat=room.players.findIndex(other=>other.id===p.id);
+  if(!room.roundNumber)room.roundNumber=1;
+  else if(Number.isInteger(room.lastTurnSeat)&&seat<=room.lastTurnSeat)room.roundNumber++;
+  room.lastTurnSeat=seat;
   room.turnNumber=(room.turnNumber||0)+1;
   const amount=treasuryWithdrawal(room,p,1);
   room.log.push(amount?`${p.name} receives ${amount} Income (now ${p.coins}).`:`${p.name} receives no Income because the treasury is empty.`);
@@ -150,7 +156,7 @@ function publicLog(room){
 }
 function publicState(room) {
   const {drawnRole,...pending}=room.pending||{};
-  return { code:room.code,name:room.name||`${player(room,room.hostId)?.name||room.code}'s room`,visibility:room.visibility==='public'?'public':'private',revision:room.revision||0,status:room.status,maxPlayers:room.maxPlayers??MAX_PLAYERS,revealFactions:room.revealFactions===true,treasuryMode:isTreasury(room),treasuryCoins:room.treasuryCoins,totalCoins:room.totalCoins,economyWinThreshold:room.economyWinThreshold,riot:isRiot(room),purgeCost:purgeCost(room),mandatoryPurge:room.mandatoryPurge===true,turnNumber:room.turnNumber||0,winType:room.winType||null,hostId:room.hostId,turnPlayerId:current(room)?.id||null,nextTurnPlayerId:nextTurn(room)?.id||null,
+  return { code:room.code,name:room.name||`${player(room,room.hostId)?.name||room.code}'s room`,visibility:room.visibility==='public'?'public':'private',revision:room.revision||0,status:room.status,maxPlayers:room.maxPlayers??MAX_PLAYERS,revealFactions:room.revealFactions===true,treasuryMode:isTreasury(room),treasuryCoins:room.treasuryCoins,totalCoins:room.totalCoins,economyWinThreshold:room.economyWinThreshold,riot:isRiot(room),purgeCost:purgeCost(room),mandatoryPurge:room.mandatoryPurge===true,turnNumber:room.turnNumber||0,roundNumber:room.roundNumber||1,winType:room.winType||null,hostId:room.hostId,turnPlayerId:current(room)?.id||null,nextTurnPlayerId:nextTurn(room)?.id||null,
     challengeTimerEnabled:room.challengeTimerEnabled!==false,challengeDurationSeconds:room.challengeDurationSeconds??15,treasuryCoinsPerPlayer:room.treasuryCoinsPerPlayer??6,
     players:room.players.map(p=>({id:p.id,name:p.name,coins:p.coins,alive:p.alive,ready:p.ready,connected:p.connected!==false,influenceCount:p.influences.length,...(room.status!=='lobby'&&room.revealFactions===true?{influenceFactions:p.influences.map(r=>ROLES[r]?.faction.startsWith('秩序')?'order':'underworld')}: {})})),
     spectators:(room.spectators||[]).map(p=>({id:p.id,name:p.name,connected:p.connected!==false})),
